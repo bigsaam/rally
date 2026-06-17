@@ -98,8 +98,8 @@ Search the code for "security boundary" to find the spots that call this out.
 
 - [x] **Scaffold** — Docker Compose (PocketBase + SvelteKit + Tailwind + Caddy)
 - [x] **Step 1** — trips collection + the trip page rendering live from a seed
-- [ ] Step 2 — create-trip flow + share-link generation
-- [ ] Step 3 — identity-lite (name + client_id) and rejoin
+- [x] **Step 2** — create-trip flow + share-link generation
+- [x] **Step 3** — identity-lite (name + client_id) and rejoin
 - [ ] Step 4 — RSVP
 - [ ] Step 5 — gear list + claims
 - [ ] Step 6 — meal slots + signups

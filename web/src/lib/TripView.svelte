@@ -1,8 +1,15 @@
 <script>
   import { fmtDate, fmtDateRange } from '$lib/format.js';
 
-  /** @type {{ data: any, ownerMode?: boolean }} */
-  let { data, ownerMode = false } = $props();
+  /**
+   * @type {{
+   *   data: any,
+   *   ownerMode?: boolean,
+   *   currentParticipantId?: string | null,
+   *   top?: import('svelte').Snippet
+   * }}
+   */
+  let { data, ownerMode = false, currentParticipantId = null, top } = $props();
   const trip = $derived(data.trip);
   const participants = $derived(data.participants);
   const gear = $derived(data.gear);
@@ -22,6 +29,8 @@
 </script>
 
 <main class="mx-auto max-w-2xl px-4 pb-24 pt-6 sm:px-6">
+  {#if top}{@render top()}{/if}
+
   {#if ownerMode}
     <div class="mb-4 rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
       Owner mode — editing controls arrive in later build steps.
@@ -53,8 +62,10 @@
     </h2>
     <ul class="divide-y divide-stone-100 overflow-hidden rounded-2xl bg-white shadow-sm">
       {#each participants as p}
-        <li class="flex items-center justify-between px-5 py-3">
-          <span class="font-medium">{p.display_name}</span>
+        <li class="flex items-center justify-between px-5 py-3" class:bg-rally-50={p.id === currentParticipantId}>
+          <span class="font-medium">
+            {p.display_name}{#if p.id === currentParticipantId}<span class="ml-1 text-xs font-normal text-rally-600">(you)</span>{/if}
+          </span>
           <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {rsvpStyles[p.rsvp_status] ?? 'bg-stone-100 text-stone-500'}">
             {rsvpLabel[p.rsvp_status] ?? 'No reply'}
           </span>
