@@ -1,0 +1,56 @@
+# Rally — production stack (pulls prebuilt images from GHCR; no local build).
+#
+#   op run -- docker compose -f docker-compose.prod.yml pull
+#   op run -- docker compose -f docker-compose.prod.yml up -d
+#
+# Put a tunnel/reverse proxy in front of the published Caddy port. On the
+# homelab that's a Cloudflare Tunnel routing rally.<your-domain> →
+# http://<host>:8080 (the cloudflared config + tunnel token live in the private
+# infra, not here). Set IMAGE_OWNER/IMAGE_TAG + PB_SUPERUSER_* in
+# .env (op:// URIs in prod).
+
+services:
+  pocketbase:
+    image: ghcr.io/${IMAGE_OWNER:-bigsaam}/rally-pocketbase:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    volumes:
+      - pb_data:/pb/pb_data
+    environment:
+      - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:?set in .env}"
+      - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:?set in .env}"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - '/pb/pocketbase superuser upsert "$$PB_SUPERUSER_EMAIL" "$$PB_SUPERUSER_PASSWORD" || true; exec /pb/pocketbase serve --http=0.0.0.0:8090'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8090/api/health']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    image: ghcr.io/${IMAGE_OWNER:-bigsaam}/rally-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      - PB_URL=http://pocketbase:8090
+      - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:?set in .env}"
+      - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:?set in .env}"
+    depends_on:
+      pocketbase:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:80" # front this with your Cloudflare Tunnel / reverse proxy
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - web
+      - pocketbase
+
+volumes:
+  pb_data:
+  caddy_data:
