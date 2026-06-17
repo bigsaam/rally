@@ -111,13 +111,13 @@ Search the code for "security boundary" to find the spots that call this out.
 - [x] **Step 1** — trips collection + the trip page rendering live from a seed
 - [x] **Step 2** — create-trip flow + share-link generation
 - [x] **Step 3** — identity-lite (name + client_id) and rejoin
-- [ ] Step 4 — RSVP
-- [ ] Step 5 — gear list + claims
-- [ ] Step 6 — meal slots + signups
-- [ ] Step 7 — packing checklist
-- [ ] Step 8 — realtime wiring
-- [ ] Step 9 — token / API-rule security hardening
-- [ ] Step 10 — polish (mobile, optimistic UI, presence)
+- [x] **Step 4** — RSVP (Going / Maybe / Can't)
+- [x] **Step 5** — gear list + claims (collision-safe: `remaining` gates claiming)
+- [x] **Step 6** — meal slots + signups (with dish note)
+- [x] **Step 7** — packing checklist (shared + personal)
+- [x] **Step 8** — realtime (PocketBase subscriptions → live refresh)
+- [ ] Step 9 — token / API-rule security hardening (rules still open)
+- [ ] Step 10 — polish (optimistic UI, presence, design-system extras)
 
 Demo trip share token: **`demo-rally-weekend`**
 
@@ -130,6 +130,10 @@ Recorded so we don't lose them; each needs a dedicated planning pass.
   calendar view** across trips. The UI should not over-index on one trip. This
   implies cross-trip identity (ties into the optional accounts / OAuth-linking
   discussion in `docs/api-layer.md`).
+- **Carpooling / convoy:** a trip can have multiple **cars/groups**, each with
+  their own sub-plan (who's in the car, departure time, route, snacks) that runs
+  independently until everyone converges at the destination. A sub-group is a
+  scoped view over the same trip.
 - **Platforms:** responsive web (now) → installable **PWA** → native **iOS +
   Android via Capacitor** wrapping the same SvelteKit app, all consuming the same
   PocketBase instance API. A native app asks for an **instance URL** (self-host)

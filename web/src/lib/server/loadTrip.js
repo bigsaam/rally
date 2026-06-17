@@ -72,11 +72,12 @@ export async function loadTripByShareToken(shareToken) {
     };
   });
 
-  /** @type {Record<string, Array<{id: string, participantName: string, dish_note: string}>>} */
+  /** @type {Record<string, Array<{id: string, participant: string, participantName: string, dish_note: string}>>} */
   const signupsBySlot = {};
   for (const s of mealSignups) {
     (signupsBySlot[s.meal_slot] ??= []).push({
       id: s.id,
+      participant: s.participant,
       participantName: nameById[s.participant] ?? 'Someone',
       dish_note: s.dish_note
     });
