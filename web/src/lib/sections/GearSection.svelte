@@ -33,9 +33,13 @@
     if (!currentParticipantId || busy) return;
     busy = g.id;
     try {
-      await pb()
+      const client = pb();
+      await client
         .collection('gear_claims')
         .create({ gear_item: g.id, participant: currentParticipantId, qty_claimed: Math.max(1, g.remaining) });
+      // Also drop it on my personal packing list so I remember to pack it.
+      // Skip if one already exists (re-claim after release, double-submit).
+      await addToMyPacking(client, g);
       await invalidateAll();
     } catch (_) {
       /* reconciled on next load */
@@ -44,13 +48,47 @@
     }
   }
 
+  /** @param {ReturnType<typeof pb>} client @param {any} g */
+  async function addToMyPacking(client, g) {
+    try {
+      const existing = await client
+        .collection('packing_items')
+        .getFirstListItem(
+          client.filter('from_gear = {:gi} && participant = {:p}', { gi: g.id, p: currentParticipantId })
+        );
+      if (existing) return; // already on my list
+    } catch (_) {
+      // not found — create it
+    }
+    await client.collection('packing_items').create({
+      trip: tripId,
+      participant: currentParticipantId,
+      label: g.name,
+      is_shared: false,
+      checked: false,
+      from_gear: g.id
+    });
+  }
+
   /** @param {any} g */
   async function release(g) {
     const mine = myClaim(g);
     if (!mine || busy) return;
     busy = g.id;
     try {
-      await pb().collection('gear_claims').delete(mine.id);
+      const client = pb();
+      await client.collection('gear_claims').delete(mine.id);
+      // Remove the auto-added packing item (if it's still there & unchanged).
+      try {
+        const linked = await client
+          .collection('packing_items')
+          .getFirstListItem(
+            client.filter('from_gear = {:gi} && participant = {:p}', { gi: g.id, p: currentParticipantId })
+          );
+        if (linked) await client.collection('packing_items').delete(linked.id);
+      } catch (_) {
+        /* nothing linked */
+      }
       await invalidateAll();
     } catch (_) {
       /* reconciled */

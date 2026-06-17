@@ -82,6 +82,9 @@
     <span class="font-body font-bold text-cocoa-900" class:line-through={item.checked} class:text-cocoa-500={item.checked}>
       {item.label}
     </span>
+    {#if item.from_gear}
+      <span class="ml-auto font-body text-[11px] font-extrabold text-coral-600">bringing</span>
+    {/if}
   </button>
 {/snippet}
 

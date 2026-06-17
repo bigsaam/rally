@@ -113,7 +113,8 @@ export async function loadTripByShareToken(shareToken) {
       is_shared: p.is_shared,
       checked: p.checked,
       participant: p.participant,
-      participantName: p.participant ? (nameById[p.participant] ?? 'Someone') : null
+      participantName: p.participant ? (nameById[p.participant] ?? 'Someone') : null,
+      from_gear: p.from_gear || null
     }))
   };
 }
