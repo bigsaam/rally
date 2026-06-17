@@ -1,5 +1,11 @@
 <script>
+  import Card from '$lib/ui/Card.svelte';
+  import CardHeader from '$lib/ui/CardHeader.svelte';
+  import Chip from '$lib/ui/Chip.svelte';
+  import Avatar from '$lib/ui/Avatar.svelte';
+  import ClaimRow from '$lib/ui/ClaimRow.svelte';
   import { fmtDate, fmtDateRange } from '$lib/format.js';
+  import { gearEmoji } from '$lib/avatar.js';
 
   /**
    * @type {{
@@ -10,150 +16,150 @@
    * }}
    */
   let { data, ownerMode = false, currentParticipantId = null, top } = $props();
+
   const trip = $derived(data.trip);
   const participants = $derived(data.participants);
   const gear = $derived(data.gear);
   const meals = $derived(data.meals);
 
-  /** @type {Record<string, string>} */
-  const rsvpStyles = {
-    going: 'bg-green-100 text-green-800',
-    maybe: 'bg-amber-100 text-amber-800',
-    out: 'bg-stone-200 text-stone-600'
-  };
-  /** @type {Record<string, string>} */
-  const rsvpLabel = { going: 'Going', maybe: 'Maybe', out: 'Out' };
+  const going = $derived(participants.filter((/** @type {any} */ p) => p.rsvp_status === 'going').length);
+  const maybe = $derived(participants.filter((/** @type {any} */ p) => p.rsvp_status === 'maybe').length);
+  const openGear = $derived(gear.filter((/** @type {any} */ g) => g.remaining > 0).length);
 
-  const personalPacking = $derived(data.packing.filter((/** @type {any} */ p) => !p.is_shared));
   const sharedPacking = $derived(data.packing.filter((/** @type {any} */ p) => p.is_shared));
+  const personalPacking = $derived(data.packing.filter((/** @type {any} */ p) => !p.is_shared));
+
+  /** @type {Record<string, string>} */
+  const statusEmoji = { going: '🔥', maybe: '🤔', out: '💤' };
 </script>
 
-<main class="mx-auto max-w-2xl px-4 pb-24 pt-6 sm:px-6">
-  {#if top}{@render top()}{/if}
-
-  {#if ownerMode}
-    <div class="mb-4 rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800">
-      Owner mode — editing controls arrive in later build steps.
-    </div>
-  {/if}
-
-  <!-- Trip header -->
-  <header class="rounded-2xl bg-rally-700 px-5 py-6 text-white shadow-sm sm:px-7 sm:py-8">
-    <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{trip.name}</h1>
-    <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-rally-100">
-      {#if trip.location}<span>📍 {trip.location}</span>{/if}
-      {#if trip.start_date}<span>🗓 {fmtDateRange(trip.start_date, trip.end_date)}</span>{/if}
-    </div>
-    {#if trip.description}
-      <div class="prose-sm mt-3 text-rally-50/90">{@html trip.description}</div>
+<div class="min-h-full bg-sand-100 pb-10">
+  <div class="mx-auto max-w-[460px] px-4">
+    {#if ownerMode}
+      <div class="mt-4 rounded-md bg-sun-200 px-4 py-2.5 text-sm font-bold text-sun-600">
+        ✨ Owner mode — editing controls land in the next steps.
+      </div>
     {/if}
-    {#if trip.expense_link}
-      <a href={trip.expense_link} target="_blank" rel="noopener"
-        class="mt-3 inline-block text-sm font-medium text-white underline underline-offset-2">
-        Split expenses ↗
-      </a>
-    {/if}
-  </header>
 
-  <!-- RSVP -->
-  <section class="mt-6">
-    <h2 class="mb-2 px-1 text-sm font-semibold uppercase tracking-wide text-stone-500">
-      Who's coming · {participants.length}
-    </h2>
-    <ul class="divide-y divide-stone-100 overflow-hidden rounded-2xl bg-white shadow-sm">
-      {#each participants as p}
-        <li class="flex items-center justify-between px-5 py-3" class:bg-rally-50={p.id === currentParticipantId}>
-          <span class="font-medium">
-            {p.display_name}{#if p.id === currentParticipantId}<span class="ml-1 text-xs font-normal text-rally-600">(you)</span>{/if}
-          </span>
-          <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold {rsvpStyles[p.rsvp_status] ?? 'bg-stone-100 text-stone-500'}">
-            {rsvpLabel[p.rsvp_status] ?? 'No reply'}
-          </span>
-        </li>
-      {/each}
-    </ul>
-  </section>
+    <!-- Trip header -->
+    <header class="px-2 pb-4 pt-6 text-center">
+      <h1 class="font-display text-[27px] font-bold leading-[1.05] text-cocoa-900">{trip.name}</h1>
+      <div class="mt-1 font-body text-sm font-extrabold text-coral-600">
+        {#if trip.start_date}{fmtDateRange(trip.start_date, trip.end_date)}{/if}{#if trip.start_date && trip.location} · {/if}{trip.location}
+      </div>
+      <div class="mt-3 flex flex-wrap justify-center gap-1.5">
+        <Chip tone="coral">🎉 {going} going</Chip>
+        {#if maybe > 0}<Chip tone="sun">🤔 {maybe} maybe</Chip>{/if}
+        <Chip tone="berry">🎒 {openGear} open</Chip>
+      </div>
+      {#if trip.expense_link}
+        <a
+          href={trip.expense_link}
+          target="_blank"
+          rel="noopener"
+          class="mt-3 inline-block font-body text-[13px] font-extrabold text-cocoa-500 underline underline-offset-2"
+        >
+          💸 Split expenses ↗
+        </a>
+      {/if}
+    </header>
 
-  <!-- Gear -->
-  <section class="mt-6">
-    <h2 class="mb-2 px-1 text-sm font-semibold uppercase tracking-wide text-stone-500">Gear</h2>
-    <ul class="space-y-2">
-      {#each gear as g}
-        <li class="rounded-2xl bg-white px-5 py-3 shadow-sm">
-          <div class="flex items-baseline justify-between gap-3">
-            <span class="font-medium">{g.name}</span>
-            {#if g.remaining === 0}
-              <span class="shrink-0 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-800">Covered</span>
-            {:else}
-              <span class="shrink-0 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
-                {g.remaining} of {g.qty_needed} needed
+    {#if top}{@render top()}{/if}
+
+    <div class="flex flex-col gap-3.5">
+      <!-- People -->
+      <Card>
+        <CardHeader icon="🙌" iconBg="var(--color-coral-200)" title="Who's coming?">
+          {#snippet action()}
+            <span class="font-body text-[12.5px] font-extrabold text-cocoa-500">{going} going</span>
+          {/snippet}
+        </CardHeader>
+        <div class="flex flex-col gap-2">
+          {#each participants as p}
+            <div class="flex items-center gap-2.5" class:opacity-50={p.rsvp_status === 'out'}>
+              <Avatar name={p.display_name} size={30} />
+              <span class="font-body text-sm font-extrabold text-cocoa-900">
+                {p.display_name}{#if p.id === currentParticipantId}<span class="font-bold text-cocoa-500"> (you)</span>{/if}
               </span>
+              <span class="ml-auto text-[15px]">
+                {p.rsvp_status ? statusEmoji[p.rsvp_status] : '·'}
+              </span>
+            </div>
+          {/each}
+        </div>
+      </Card>
+
+      <!-- Gear -->
+      <Card>
+        <CardHeader icon="🎒" iconBg="var(--color-sun-200)" title="Who's bringing what?" />
+        {#if gear.length === 0}
+          <p class="py-2 text-center font-body text-sm font-bold text-cocoa-500">Nothing on the list yet.</p>
+        {:else}
+          {#each gear as g, i}
+            <ClaimRow
+              emoji={gearEmoji(g.category)}
+              emojiBg={g.remaining === 0 ? 'var(--color-coral-200)' : 'var(--color-sun-200)'}
+              name={g.qty_needed > 1 ? `${g.name} ×${g.qty_needed}` : g.name}
+              note="up for grabs!"
+              claimedBy={g.claims.length ? g.claims.map((/** @type {any} */ c) => c.participantName).join(' & ') : null}
+              divider={i !== 0}
+            />
+          {/each}
+          <div class="mt-2.5 text-center font-body text-xs font-extrabold text-cocoa-500">
+            {openGear === 0 ? '🎉 All covered!' : `${openGear} still open`}
+          </div>
+        {/if}
+      </Card>
+
+      <!-- Meals -->
+      <Card>
+        <CardHeader icon="🍳" iconBg="var(--color-berry-200)" title="What's for food?" />
+        {#each meals as m, i}
+          <div class="flex flex-col gap-0.5 py-2.5 {i !== 0 ? 'border-t border-sand-200' : ''}">
+            <div class="flex items-baseline justify-between">
+              <span class="font-body text-sm font-extrabold text-cocoa-900">{m.label}</span>
+              <span class="font-body text-xs font-bold text-cocoa-500">{fmtDate(m.date)}</span>
+            </div>
+            {#if m.signups.length}
+              {#each m.signups as s}
+                <span class="font-body text-[13px] font-bold text-cocoa-700">
+                  {s.participantName}{#if s.dish_note} — {s.dish_note}{/if}
+                </span>
+              {/each}
+            {:else}
+              <span class="font-body text-[13px] font-bold text-cocoa-500">nobody yet</span>
             {/if}
           </div>
-          {#if g.category}<p class="text-xs text-stone-400">{g.category}</p>{/if}
-          {#if g.claims.length}
-            <p class="mt-1 text-sm text-stone-500">
-              Claimed by {g.claims.map((/** @type {any} */ c) => c.participantName).join(', ')}
-            </p>
-          {/if}
-        </li>
-      {/each}
-    </ul>
-  </section>
-
-  <!-- Meals -->
-  <section class="mt-6">
-    <h2 class="mb-2 px-1 text-sm font-semibold uppercase tracking-wide text-stone-500">Meals</h2>
-    <ul class="space-y-2">
-      {#each meals as m}
-        <li class="rounded-2xl bg-white px-5 py-3 shadow-sm">
-          <div class="flex items-baseline justify-between">
-            <span class="font-medium">{m.label}</span>
-            <span class="text-xs text-stone-400">{fmtDate(m.date)}</span>
-          </div>
-          {#if m.signups.length}
-            <ul class="mt-1 space-y-0.5 text-sm text-stone-600">
-              {#each m.signups as s}
-                <li>{s.participantName}{#if s.dish_note} — {s.dish_note}{/if}</li>
-              {/each}
-            </ul>
-          {:else}
-            <p class="mt-1 text-sm italic text-stone-400">No one signed up yet</p>
-          {/if}
-        </li>
-      {/each}
-    </ul>
-  </section>
-
-  <!-- Packing -->
-  <section class="mt-6">
-    <h2 class="mb-2 px-1 text-sm font-semibold uppercase tracking-wide text-stone-500">Packing</h2>
-    {#if sharedPacking.length}
-      <p class="mb-1 px-1 text-xs font-medium text-stone-400">Shared</p>
-      <ul class="mb-3 divide-y divide-stone-100 overflow-hidden rounded-2xl bg-white shadow-sm">
-        {#each sharedPacking as p}
-          <li class="flex items-center gap-3 px-5 py-2.5">
-            <span class="text-lg">{p.checked ? '✅' : '⬜️'}</span>
-            <span class:line-through={p.checked} class:text-stone-400={p.checked}>{p.label}</span>
-          </li>
         {/each}
-      </ul>
-    {/if}
-    {#if personalPacking.length}
-      <p class="mb-1 px-1 text-xs font-medium text-stone-400">Personal</p>
-      <ul class="divide-y divide-stone-100 overflow-hidden rounded-2xl bg-white shadow-sm">
-        {#each personalPacking as p}
-          <li class="flex items-center gap-3 px-5 py-2.5">
-            <span class="text-lg">{p.checked ? '✅' : '⬜️'}</span>
-            <span class="flex-1" class:line-through={p.checked} class:text-stone-400={p.checked}>{p.label}</span>
-            {#if p.participantName}<span class="text-xs text-stone-400">{p.participantName}</span>{/if}
-          </li>
-        {/each}
-      </ul>
-    {/if}
-  </section>
+      </Card>
 
-  <p class="mt-8 text-center text-xs text-stone-400">
-    Read-only preview · RSVP, claims, and check-offs become interactive in the next steps.
-  </p>
-</main>
+      <!-- Packing -->
+      <Card>
+        <CardHeader icon="✅" iconBg="var(--color-leaf-200)" title="What to pack" />
+        {#if sharedPacking.length}
+          <p class="mb-1 font-body text-[11px] font-extrabold uppercase tracking-wide text-cocoa-500">Shared</p>
+          {#each sharedPacking as p, i}
+            <div class="flex items-center gap-3 py-2 {i !== 0 ? 'border-t border-sand-200' : ''}">
+              <span class="text-lg">{p.checked ? '✅' : '⬜️'}</span>
+              <span class="font-body font-bold text-cocoa-900" class:line-through={p.checked} class:text-cocoa-500={p.checked}>{p.label}</span>
+            </div>
+          {/each}
+        {/if}
+        {#if personalPacking.length}
+          <p class="mb-1 mt-3 font-body text-[11px] font-extrabold uppercase tracking-wide text-cocoa-500">Personal</p>
+          {#each personalPacking as p, i}
+            <div class="flex items-center gap-3 py-2 {i !== 0 ? 'border-t border-sand-200' : ''}">
+              <span class="text-lg">{p.checked ? '✅' : '⬜️'}</span>
+              <span class="flex-1 font-body font-bold text-cocoa-900" class:line-through={p.checked} class:text-cocoa-500={p.checked}>{p.label}</span>
+              {#if p.participantName}<Avatar name={p.participantName} size={22} />{/if}
+            </div>
+          {/each}
+        {/if}
+      </Card>
+    </div>
+
+    <p class="mt-5 px-4 text-center font-body text-xs font-bold text-cocoa-500">
+      Read-only preview · RSVP, claiming, and check-offs become interactive in the next steps.
+    </p>
+  </div>
+</div>

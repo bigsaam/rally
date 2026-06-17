@@ -2,6 +2,9 @@
   import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
+  import Avatar from '$lib/ui/Avatar.svelte';
+  import Button from '$lib/ui/Button.svelte';
+  import TextField from '$lib/ui/TextField.svelte';
   import {
     getClientId,
     getTripIdentity,
@@ -22,6 +25,7 @@
   let resolved = $state(false);
   let clientId = $state('');
   let mode = $state('new'); // 'new' | 'rejoin'
+  let name = $state('');
   let selectedExisting = $state('');
   let error = $state('');
   let submitting = $state(false);
@@ -44,29 +48,37 @@
     identity = null;
     mode = 'new';
     selectedExisting = '';
+    name = '';
   }
 </script>
 
 {#if resolved}
   {#if identity}
-    <div class="mb-4 flex items-center justify-between rounded-xl bg-rally-50 px-4 py-2.5 text-sm">
-      <span class="text-rally-900">
-        You're in as <span class="font-semibold">{identity.displayName}</span>
+    <div class="mb-3.5 flex items-center justify-between rounded-md bg-white px-4 py-2.5 shadow-card">
+      <span class="flex items-center gap-2.5">
+        <Avatar name={identity.displayName} size={28} />
+        <span class="font-body text-sm font-extrabold text-cocoa-900">
+          You're in as {identity.displayName}
+        </span>
       </span>
-      <button type="button" onclick={leave} class="font-medium text-rally-700 hover:underline">
+      <button type="button" onclick={leave} class="font-body text-[13px] font-extrabold text-coral-600 hover:underline">
         Not you?
       </button>
     </div>
   {:else}
-    <div class="mb-4 rounded-2xl bg-white p-5 shadow-sm">
-      <h2 class="text-lg font-bold text-rally-900">Join this trip</h2>
-      <p class="mt-0.5 text-sm text-stone-500">Pick a name so the group knows who's who. No account needed.</p>
+    <div class="mb-3.5 rounded-xl bg-white p-[22px] shadow-pop">
+      <div class="mb-4 flex items-center gap-3.5">
+        <Avatar name={name || '?'} size={54} />
+        <div>
+          <div class="font-display text-lg font-semibold text-cocoa-900">Hey! Who's this? 👋</div>
+          <div class="font-body text-[13px] font-bold text-cocoa-500">No account — just claim a name.</div>
+        </div>
+      </div>
 
       {#if mode === 'new'}
         <form
           method="POST"
           action="?/join"
-          class="mt-3 flex gap-2"
           use:enhance={() => {
             submitting = true;
             error = '';
@@ -86,53 +98,46 @@
           }}
         >
           <input type="hidden" name="client_id" value={clientId} />
-          <input
+          <TextField
+            prefix="👋"
             name="display_name"
-            required
+            placeholder="Your name"
             maxlength="80"
-            placeholder="What should we call you?"
             autocomplete="off"
-            class="flex-1 rounded-lg border border-stone-300 px-3 py-2 focus:border-rally-500 focus:outline-none focus:ring-1 focus:ring-rally-500"
+            bind:value={name}
           />
-          <button
-            type="submit"
-            disabled={submitting}
-            class="shrink-0 rounded-lg bg-rally-600 px-4 py-2 font-semibold text-white hover:bg-rally-700 disabled:opacity-60"
-          >
-            {submitting ? '…' : "I'm in"}
-          </button>
+          <div class="mt-4">
+            <Button variant="primary" size="lg" full type="submit" disabled={submitting || !name.trim()}>
+              {submitting ? 'Joining…' : "I'm in! 🙌"}
+            </Button>
+          </div>
         </form>
       {:else}
-        <div class="mt-3 flex gap-2">
+        <div class="flex flex-col gap-3">
           <select
             bind:value={selectedExisting}
-            class="flex-1 rounded-lg border border-stone-300 px-3 py-2 focus:border-rally-500 focus:outline-none focus:ring-1 focus:ring-rally-500"
+            class="w-full rounded-md border-2 border-sand-300 bg-white px-3.5 py-3 font-body text-base font-bold text-cocoa-900 outline-none focus:border-coral-400"
           >
             <option value="" disabled selected>Who are you?</option>
             {#each participants as p}
               <option value={p.id}>{p.display_name}</option>
             {/each}
           </select>
-          <button
-            type="button"
-            onclick={rejoin}
-            disabled={!selectedExisting}
-            class="shrink-0 rounded-lg bg-rally-600 px-4 py-2 font-semibold text-white hover:bg-rally-700 disabled:opacity-60"
-          >
-            That's me
-          </button>
+          <Button variant="primary" size="lg" full onclick={rejoin} disabled={!selectedExisting}>
+            That's me!
+          </Button>
         </div>
       {/if}
 
       {#if error || form?.joinError}
-        <p class="mt-2 text-sm text-red-600">{error || form?.joinError}</p>
+        <p class="mt-2 font-body text-sm font-bold text-berry-600">{error || form?.joinError}</p>
       {/if}
 
       {#if participants.length}
         <button
           type="button"
           onclick={() => (mode = mode === 'new' ? 'rejoin' : 'new')}
-          class="mt-3 text-sm font-medium text-rally-700 hover:underline"
+          class="mt-3 font-body text-[13px] font-extrabold text-coral-600 hover:underline"
         >
           {mode === 'new' ? 'Coming back? Rejoin as an existing name' : '← New name instead'}
         </button>

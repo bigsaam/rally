@@ -1,31 +1,25 @@
 <script>
-  // Landing placeholder. The create-trip flow is build-sequence step 2.
+  import Button from '$lib/ui/Button.svelte';
   const demoToken = 'demo-rally-weekend';
 </script>
 
 <svelte:head><title>Rally — one link, everyone's in</title></svelte:head>
 
-<main class="mx-auto flex min-h-full max-w-xl flex-col justify-center gap-8 px-6 py-16">
-  <div>
-    <h1 class="text-4xl font-bold tracking-tight text-rally-900">Rally</h1>
-    <p class="mt-3 text-lg text-stone-600">
-      One link where the group gathers. Plan a trip, share it, and everyone RSVPs,
-      claims gear, and signs up for meals — no accounts, no friction.
+<main
+  class="flex min-h-full flex-col justify-center gap-8 px-6 py-16"
+  style="margin-inline: auto; max-width: var(--screen-max); background: linear-gradient(180deg, var(--color-sand-100), var(--color-sand-200));"
+>
+  <div class="text-center">
+    <div class="text-[56px] leading-none">🏕️</div>
+    <h1 class="mt-3 font-display text-[44px] font-bold tracking-tight text-cocoa-900">Rally</h1>
+    <p class="mt-2 font-body text-lg font-bold text-cocoa-700">
+      One link where the group gathers. Plan a trip, drop it in the group chat, and
+      everyone's in — RSVP, grab gear, sign up for food. No accounts, no friction.
     </p>
   </div>
 
-  <div class="flex flex-col gap-3 sm:flex-row">
-    <a
-      href="/new"
-      class="inline-flex flex-1 items-center justify-center rounded-xl bg-rally-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-rally-700"
-    >
-      Plan a trip
-    </a>
-    <a
-      href="/{demoToken}"
-      class="inline-flex flex-1 items-center justify-center rounded-xl border border-stone-300 px-5 py-3 font-semibold text-stone-700 transition hover:bg-stone-100"
-    >
-      See the demo →
-    </a>
+  <div class="flex flex-col gap-3">
+    <Button href="/new" variant="primary" size="lg" full>Plan a trip 🎒</Button>
+    <Button href="/{demoToken}" variant="ghost" size="lg" full>See the demo →</Button>
   </div>
 </main>

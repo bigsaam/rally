@@ -14,7 +14,7 @@ the same live state.
 | -------- | --------------------------------------- |
 | Backend  | PocketBase 0.39.4 (single Go binary)    |
 | Frontend | SvelteKit 2 + Svelte 5 (adapter-node)   |
-| Styling  | Tailwind CSS v4                          |
+| Styling  | Tailwind CSS v4 + **Campfire** design system |
 | Proxy    | Caddy (single origin)                   |
 | Deploy   | Docker Compose                          |
 
@@ -35,6 +35,17 @@ rally/
             ├── +page.svelte           # landing
             └── [share_token]/         # the trip page (the product)
 ```
+
+## Design system — Campfire
+
+The UI implements the **Campfire** direction from the "Rally Design System"
+Claude Design project: warm sand/coral palette, Fredoka + Nunito, soft corners,
+coral-tinted shadows, and the signature pressable button "lip". Tokens live in
+`web/src/app.css` (`@theme` → Tailwind utilities like `bg-coral-500`,
+`rounded-lg`, `shadow-card`). Reusable primitives are in `web/src/lib/ui/`
+(`Button`, `Card`/`CardHeader`, `Chip`, `Avatar`, `SegmentedControl`,
+`ClaimRow`, `EmptyState`, `TextField`) — mirrors of the design-system
+components. Avatar color is derived from the person's name (`lib/avatar.js`).
 
 ## Run the whole stack (Docker)
 
