@@ -137,5 +137,9 @@ Recorded so we don't lose them; each needs a dedicated planning pass.
 - **Open core + paid cloud:** the app stays open-source and self-hostable; a
   hosted cloud plan (subscription) sells the convenience of not running it.
   Likely per-tenant instances first, multi-tenant later.
-- **Expenses:** native split/settle-up (design system has `ExpenseRow` /
-  `BalanceSummary`); evaluate reusing Spliit vs. porting its split math.
+- **Expenses:** Spliit has **no documented public API** (Next.js + internal
+  tRPC + Prisma/Postgres, MIT). So: keep deep-linking to Spliit now
+  (`expense_link`), and build expenses **natively** later using the design
+  system's `ExpenseRow` / `BalanceSummary` and a minimal settle-up algorithm
+  (optionally porting Spliit's MIT split logic) rather than coupling to its
+  internal API.
