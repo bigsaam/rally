@@ -1,6 +1,6 @@
 <script>
   import { invalidateAll } from '$app/navigation';
-  import { pb } from '$lib/pocketbase.js';
+  import { tripAction } from '$lib/tripClient.js';
   import Card from '$lib/ui/Card.svelte';
   import CardHeader from '$lib/ui/CardHeader.svelte';
   import Avatar from '$lib/ui/Avatar.svelte';
@@ -8,11 +8,12 @@
 
   /**
    * @type {{
+   *   shareToken: string,
    *   participants: Array<{ id: string, display_name: string, rsvp_status: string | null }>,
    *   currentParticipantId: string | null
    * }}
    */
-  let { participants, currentParticipantId } = $props();
+  let { shareToken, participants, currentParticipantId } = $props();
 
   /** @type {Record<string, string>} */
   const statusEmoji = { going: '🔥', maybe: '🤔', out: '💤' };
@@ -26,10 +27,10 @@
     if (!currentParticipantId || saving) return;
     saving = true;
     try {
-      await pb().collection('participants').update(currentParticipantId, { rsvp_status: status });
+      await tripAction(shareToken, { op: 'rsvp', participantId: currentParticipantId, status });
       await invalidateAll();
     } catch (_) {
-      // realtime / next load will reconcile
+      // next load / poll will reconcile
     } finally {
       saving = false;
     }

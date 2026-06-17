@@ -1,6 +1,6 @@
 <script>
   import { invalidateAll } from '$app/navigation';
-  import { pb } from '$lib/pocketbase.js';
+  import { tripAction } from '$lib/tripClient.js';
   import Card from '$lib/ui/Card.svelte';
   import CardHeader from '$lib/ui/CardHeader.svelte';
   import Button from '$lib/ui/Button.svelte';
@@ -8,11 +8,12 @@
 
   /**
    * @type {{
+   *   shareToken: string,
    *   meals: Array<any>,
    *   currentParticipantId: string | null
    * }}
    */
-  let { meals, currentParticipantId } = $props();
+  let { shareToken, meals, currentParticipantId } = $props();
 
   let busy = $state('');
 
@@ -25,9 +26,7 @@
     if (!currentParticipantId || busy) return;
     busy = m.id;
     try {
-      await pb()
-        .collection('meal_signups')
-        .create({ meal_slot: m.id, participant: currentParticipantId, dish_note: '' });
+      await tripAction(shareToken, { op: 'meal_signup', mealSlotId: m.id, participantId: currentParticipantId });
       await invalidateAll();
     } catch (_) {
       /* reconciled */
@@ -42,7 +41,7 @@
     if (!mine || busy) return;
     busy = m.id;
     try {
-      await pb().collection('meal_signups').delete(mine.id);
+      await tripAction(shareToken, { op: 'meal_cancel', mealSlotId: m.id, participantId: currentParticipantId });
       await invalidateAll();
     } catch (_) {
       /* reconciled */
@@ -54,7 +53,7 @@
   /** @param {string} signupId @param {string} note */
   async function saveNote(signupId, note) {
     try {
-      await pb().collection('meal_signups').update(signupId, { dish_note: note });
+      await tripAction(shareToken, { op: 'meal_note', signupId, note });
       await invalidateAll();
     } catch (_) {
       /* reconciled */

@@ -1,6 +1,6 @@
 <script>
   import { invalidateAll } from '$app/navigation';
-  import { pb } from '$lib/pocketbase.js';
+  import { tripAction } from '$lib/tripClient.js';
   import { gearEmoji } from '$lib/avatar.js';
   import Card from '$lib/ui/Card.svelte';
   import CardHeader from '$lib/ui/CardHeader.svelte';
@@ -10,12 +10,12 @@
 
   /**
    * @type {{
-   *   tripId: string,
+   *   shareToken: string,
    *   gear: Array<any>,
    *   currentParticipantId: string | null
    * }}
    */
-  let { tripId, gear, currentParticipantId } = $props();
+  let { shareToken, gear, currentParticipantId } = $props();
 
   const open = $derived(gear.filter((g) => g.remaining > 0).length);
 
@@ -33,13 +33,8 @@
     if (!currentParticipantId || busy) return;
     busy = g.id;
     try {
-      const client = pb();
-      await client
-        .collection('gear_claims')
-        .create({ gear_item: g.id, participant: currentParticipantId, qty_claimed: Math.max(1, g.remaining) });
-      // Also drop it on my personal packing list so I remember to pack it.
-      // Skip if one already exists (re-claim after release, double-submit).
-      await addToMyPacking(client, g);
+      // Server also auto-adds it to my packing list (dedupe-guarded).
+      await tripAction(shareToken, { op: 'claim', gearItemId: g.id, participantId: currentParticipantId });
       await invalidateAll();
     } catch (_) {
       /* reconciled on next load */
@@ -48,47 +43,13 @@
     }
   }
 
-  /** @param {ReturnType<typeof pb>} client @param {any} g */
-  async function addToMyPacking(client, g) {
-    try {
-      const existing = await client
-        .collection('packing_items')
-        .getFirstListItem(
-          client.filter('from_gear = {:gi} && participant = {:p}', { gi: g.id, p: currentParticipantId })
-        );
-      if (existing) return; // already on my list
-    } catch (_) {
-      // not found — create it
-    }
-    await client.collection('packing_items').create({
-      trip: tripId,
-      participant: currentParticipantId,
-      label: g.name,
-      is_shared: false,
-      checked: false,
-      from_gear: g.id
-    });
-  }
-
   /** @param {any} g */
   async function release(g) {
     const mine = myClaim(g);
     if (!mine || busy) return;
     busy = g.id;
     try {
-      const client = pb();
-      await client.collection('gear_claims').delete(mine.id);
-      // Remove the auto-added packing item (if it's still there & unchanged).
-      try {
-        const linked = await client
-          .collection('packing_items')
-          .getFirstListItem(
-            client.filter('from_gear = {:gi} && participant = {:p}', { gi: g.id, p: currentParticipantId })
-          );
-        if (linked) await client.collection('packing_items').delete(linked.id);
-      } catch (_) {
-        /* nothing linked */
-      }
+      await tripAction(shareToken, { op: 'release', gearItemId: g.id, participantId: currentParticipantId });
       await invalidateAll();
     } catch (_) {
       /* reconciled */
@@ -102,9 +63,7 @@
     if (!name) return;
     busy = 'add';
     try {
-      const data = { trip: tripId, name, qty_needed: 1 };
-      if (currentParticipantId) Object.assign(data, { created_by: currentParticipantId });
-      await pb().collection('gear_items').create(data);
+      await tripAction(shareToken, { op: 'gear_add', name, participantId: currentParticipantId });
       newName = '';
       adding = false;
       await invalidateAll();

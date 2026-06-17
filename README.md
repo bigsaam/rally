@@ -97,13 +97,22 @@ Migrations in `pb_migrations/` apply automatically on `serve` (or `./pocketbase 
 - Gear "remaining" = `qty_needed − sum(gear_claims.qty_claimed)`, computed in
   `web/src/lib/server/loadTrip.js`.
 
-## ⚠️ Security boundary (not yet done)
+## Security model
 
-Collection API rules are currently **open** so the scaffold renders end-to-end.
-The intended model: the `share_token` in the URL is the read capability, and a
-participant may only write to their own trip's rows. This is **build-sequence
-step 9** and must be hardened before any public deployment with write paths.
-Search the code for "security boundary" to find the spots that call this out.
+The browser **never talks to PocketBase directly.** Every collection's API rules
+are locked to superuser-only (`pb_migrations/*_lock_rules.js`). All access flows
+through the SvelteKit server, authenticated as a PocketBase superuser:
+
+- **Reads** — the page `load()` fetches the trip by `share_token`.
+- **Writes** — the client POSTs an op to `/[share_token]/actions`, which resolves
+  the trip from the URL token and verifies every target row belongs to that trip
+  before acting.
+
+This scopes all access to one trip and closes cross-trip read/write/enumeration —
+verified: direct PocketBase requests return `403`, a cross-trip write returns
+`403`. Within a trip, identity is claim-based and trusted (no passwords) — the
+product's intended no-account model, not a gap. The `share_token` is the
+capability; treat the link as the secret.
 
 ## Build status
 
@@ -115,8 +124,8 @@ Search the code for "security boundary" to find the spots that call this out.
 - [x] **Step 5** — gear list + claims (collision-safe: `remaining` gates claiming)
 - [x] **Step 6** — meal slots + signups (with dish note)
 - [x] **Step 7** — packing checklist (shared + personal)
-- [x] **Step 8** — realtime (PocketBase subscriptions → live refresh)
-- [ ] Step 9 — token / API-rule security hardening (rules still open)
+- [x] **Step 8** — live updates (visibility-aware short-poll)
+- [x] **Step 9** — API hardening (collection rules locked; server-mediated, trip-scoped writes)
 - [ ] Step 10 — polish (optimistic UI, presence, design-system extras)
 
 Demo trip share token: **`demo-rally-weekend`**

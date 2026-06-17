@@ -15,9 +15,17 @@ services:
     restart: unless-stopped
     volumes:
       - pb_data:/pb/pb_data
-    # Create the admin superuser once after first `up`:
-    #   docker compose exec pocketbase /pb/pocketbase superuser upsert <email> <password>
-    # (or open /_/ and use the first-run installer).
+    environment:
+      # The SvelteKit server authenticates as this superuser to operate while
+      # collection rules are locked. In prod these come from 1Password
+      # (op:// in .env, run via `op run -- docker compose up -d`).
+      - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@rally.local}"
+      - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-rallyadmin123}"
+    # Idempotently ensure the superuser exists, then serve. Makes `up` one-step.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - '/pb/pocketbase superuser upsert "$$PB_SUPERUSER_EMAIL" "$$PB_SUPERUSER_PASSWORD" || true; exec /pb/pocketbase serve --http=0.0.0.0:8090'
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8090/api/health']
       interval: 10s
@@ -31,6 +39,9 @@ services:
     environment:
       # Server-side PocketBase URL (container network).
       - PB_URL=http://pocketbase:8090
+      # Same superuser the SvelteKit server authenticates with.
+      - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@rally.local}"
+      - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-rallyadmin123}"
     depends_on:
       pocketbase:
         condition: service_healthy

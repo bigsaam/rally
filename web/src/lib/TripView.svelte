@@ -1,7 +1,6 @@
 <script>
   import { onMount } from 'svelte';
   import { invalidateAll } from '$app/navigation';
-  import { pb } from '$lib/pocketbase.js';
   import Chip from '$lib/ui/Chip.svelte';
   import PeopleSection from '$lib/sections/PeopleSection.svelte';
   import GearSection from '$lib/sections/GearSection.svelte';
@@ -28,39 +27,40 @@
   const maybe = $derived(participants.filter((/** @type {any} */ p) => p.rsvp_status === 'maybe').length);
   const openGear = $derived(gear.filter((/** @type {any} */ g) => g.remaining > 0).length);
 
-  // Realtime: when anyone changes the trip's data, refetch so the page feels
-  // live. Debounced so a burst of changes coalesces into one refresh. Realtime
-  // is an enhancement — writes still persist and a manual reload works if the
-  // subscription can't connect.
+  // Live updates via short-poll (the brief allows websocket OR short-poll). The
+  // browser can't subscribe to PocketBase directly now that collection rules are
+  // locked, so we re-run the server load every few seconds while the tab is
+  // visible — enough to feel live without hammering the server in the
+  // background. A write also refreshes immediately, so this mainly surfaces
+  // OTHER people's changes.
+  const POLL_MS = 4000;
   onMount(() => {
-    /** @type {ReturnType<typeof setTimeout> | undefined} */
+    /** @type {ReturnType<typeof setInterval> | undefined} */
     let timer;
-    const refresh = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => invalidateAll(), 120);
+    const tick = () => {
+      if (document.visibilityState === 'visible') invalidateAll();
     };
-    /** @type {Array<() => void>} */
-    const unsubs = [];
-    const cols = ['participants', 'gear_items', 'gear_claims', 'meal_signups', 'packing_items'];
-    (async () => {
-      try {
-        const client = pb();
-        for (const c of cols) {
-          unsubs.push(await client.collection(c).subscribe('*', refresh));
-        }
-      } catch (_) {
-        /* realtime unavailable — manual reload still works */
+    const start = () => {
+      stop();
+      timer = setInterval(tick, POLL_MS);
+    };
+    const stop = () => {
+      if (timer) clearInterval(timer);
+      timer = undefined;
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        invalidateAll(); // catch up immediately on refocus
+        start();
+      } else {
+        stop();
       }
-    })();
+    };
+    start();
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
-      unsubs.forEach((u) => {
-        try {
-          u();
-        } catch (_) {
-          /* noop */
-        }
-      });
-      clearTimeout(timer);
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   });
 </script>
@@ -99,10 +99,10 @@
     {#if top}{@render top()}{/if}
 
     <div class="flex flex-col gap-3.5 md:grid md:grid-cols-2 md:items-start">
-      <PeopleSection {participants} {currentParticipantId} />
-      <GearSection tripId={trip.id} {gear} {currentParticipantId} />
-      <MealsSection {meals} {currentParticipantId} />
-      <PackingSection tripId={trip.id} packing={data.packing} {currentParticipantId} />
+      <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} />
+      <GearSection shareToken={trip.share_token} {gear} {currentParticipantId} />
+      <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} />
+      <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} />
     </div>
 
     {#if !currentParticipantId}

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { createServerPb } from './pocketbase.js';
+import { superuserPb } from './pocketbase.js';
 
 /**
  * Load a trip and all of its related sections by share token.
@@ -14,7 +14,7 @@ import { createServerPb } from './pocketbase.js';
  * @param {string} shareToken
  */
 export async function loadTripByShareToken(shareToken) {
-  const pb = createServerPb();
+  const pb = await superuserPb();
 
   let trip;
   try {

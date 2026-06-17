@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { createServerPb } from '$lib/server/pocketbase.js';
+import { superuserPb } from '$lib/server/pocketbase.js';
 import { loadTripByShareToken } from '$lib/server/loadTrip.js';
 
 export async function load({ params, url }) {
@@ -7,8 +7,8 @@ export async function load({ params, url }) {
 
   // Verify the owner token before granting owner mode. The token is the
   // capability; a missing/wrong token is a 403, not a redirect, so it is clear
-  // the link is what's wrong. (Collection-rule hardening is step 9.)
-  const pb = createServerPb();
+  // the link is what's wrong.
+  const pb = await superuserPb();
   let trip;
   try {
     trip = await pb

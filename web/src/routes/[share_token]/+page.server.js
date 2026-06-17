@@ -1,6 +1,6 @@
 import { error, fail } from '@sveltejs/kit';
 import { randomUUID } from 'node:crypto';
-import { createServerPb } from '$lib/server/pocketbase.js';
+import { superuserPb } from '$lib/server/pocketbase.js';
 import { loadTripByShareToken } from '$lib/server/loadTrip.js';
 
 export async function load({ params }) {
@@ -20,7 +20,7 @@ export const actions = {
     if (!display_name) return fail(400, { joinError: 'Enter a name to join.' });
     if (display_name.length > 80) return fail(400, { joinError: 'That name is too long.' });
 
-    const pb = createServerPb();
+    const pb = await superuserPb();
 
     let trip;
     try {

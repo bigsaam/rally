@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { createServerPb } from '$lib/server/pocketbase.js';
+import { superuserPb } from '$lib/server/pocketbase.js';
 import { generateShareToken, generateOwnerToken } from '$lib/server/tokens.js';
 import { generateSlotsFromDates } from '$lib/server/mealSlots.js';
 
@@ -36,7 +36,7 @@ export const actions = {
 
     if (Object.keys(errors).length) return fail(400, { errors, values });
 
-    const pb = createServerPb();
+    const pb = await superuserPb();
     const share_token = generateShareToken();
     const owner_token = generateOwnerToken();
 

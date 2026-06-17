@@ -1,6 +1,6 @@
 <script>
   import { invalidateAll } from '$app/navigation';
-  import { pb } from '$lib/pocketbase.js';
+  import { tripAction } from '$lib/tripClient.js';
   import Card from '$lib/ui/Card.svelte';
   import CardHeader from '$lib/ui/CardHeader.svelte';
   import Checkbox from '$lib/ui/Checkbox.svelte';
@@ -8,12 +8,12 @@
 
   /**
    * @type {{
-   *   tripId: string,
+   *   shareToken: string,
    *   packing: Array<any>,
    *   currentParticipantId: string | null
    * }}
    */
-  let { tripId, packing, currentParticipantId } = $props();
+  let { shareToken, packing, currentParticipantId } = $props();
 
   const shared = $derived(packing.filter((p) => p.is_shared));
   const mine = $derived(
@@ -31,7 +31,7 @@
     if (busy) return;
     busy = item.id;
     try {
-      await pb().collection('packing_items').update(item.id, { checked: !item.checked });
+      await tripAction(shareToken, { op: 'pack_toggle', itemId: item.id });
       await invalidateAll();
     } catch (_) {
       /* reconciled */
@@ -46,15 +46,12 @@
     if (!label) return;
     busy = 'add';
     try {
-      await pb()
-        .collection('packing_items')
-        .create({
-          trip: tripId,
-          label,
-          is_shared: isShared,
-          checked: false,
-          participant: isShared ? null : currentParticipantId
-        });
+      await tripAction(shareToken, {
+        op: 'pack_add',
+        label,
+        isShared,
+        participantId: currentParticipantId
+      });
       if (isShared) {
         sharedLabel = '';
         addingShared = false;
