@@ -14,15 +14,18 @@
     </p>
   </div>
 
-  <a
-    href="/{demoToken}"
-    class="inline-flex items-center justify-center rounded-xl bg-rally-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-rally-700"
-  >
-    Open the demo trip →
-  </a>
-
-  <p class="text-sm text-stone-400">
-    Create-a-trip is next on the build list. The demo trip above is rendered live
-    from the PocketBase seed.
-  </p>
+  <div class="flex flex-col gap-3 sm:flex-row">
+    <a
+      href="/new"
+      class="inline-flex flex-1 items-center justify-center rounded-xl bg-rally-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-rally-700"
+    >
+      Plan a trip
+    </a>
+    <a
+      href="/{demoToken}"
+      class="inline-flex flex-1 items-center justify-center rounded-xl border border-stone-300 px-5 py-3 font-semibold text-stone-700 transition hover:bg-stone-100"
+    >
+      See the demo →
+    </a>
+  </div>
 </main>

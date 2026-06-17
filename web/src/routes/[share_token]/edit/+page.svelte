@@ -5,6 +5,6 @@
   let { data } = $props();
 </script>
 
-<svelte:head><title>{data.trip.name} — Rally</title></svelte:head>
+<svelte:head><title>{data.trip.name} (owner) — Rally</title></svelte:head>
 
-<TripView {data} />
+<TripView {data} ownerMode={true} />
