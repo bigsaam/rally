@@ -127,8 +127,10 @@ and trusted — the intended no-account model. **The share link is the secret.**
 
 Captured, not yet built — each needs its own pass:
 
-- **Multi-trip + calendar** — an organizer dashboard; attendees see every trip
-  they're invited to. (Implies optional cross-trip accounts — see
+- **Multi-trip + planner** — a planner/dashboard + calendar where you see every
+  trip you're hosting or invited to, with a smooth **"no trips planned yet"**
+  empty state. Today the app is single-trip-per-link; this is the cross-trip
+  view. (Implies optional cross-trip accounts — see
   [`docs/api-layer.md`](./docs/api-layer.md).)
 - **Carpooling / convoy** — sub-groups (cars) with their own plan until they meet.
 - **Native apps** — installable PWA → iOS/Android via Capacitor over the same API.
