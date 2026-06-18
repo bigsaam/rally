@@ -42,13 +42,16 @@
 
   /** @param {boolean} isShared */
   async function add(isShared) {
-    const label = (isShared ? sharedLabel : mineLabel).trim();
-    if (!label) return;
+    const labels = (isShared ? sharedLabel : mineLabel)
+      .split(/[\n,]+/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (!labels.length) return;
     busy = 'add';
     try {
       await tripAction(shareToken, {
         op: 'pack_add',
-        label,
+        labels,
         isShared,
         participantId: currentParticipantId
       });
@@ -86,20 +89,30 @@
 {/snippet}
 
 {#snippet addInput(/** @type {boolean} */ isShared)}
-  <div class="mt-2 flex gap-2">
-    <input
-      value={isShared ? sharedLabel : mineLabel}
+  {@const val = isShared ? sharedLabel : mineLabel}
+  {@const count = val.split(/[\n,]+/).filter((s) => s.trim()).length}
+  <div class="mt-2 flex flex-col gap-2">
+    <textarea
+      value={val}
       oninput={(e) => {
-        const v = /** @type {HTMLInputElement} */ (e.currentTarget).value;
+        const v = /** @type {HTMLTextAreaElement} */ (e.currentTarget).value;
         if (isShared) sharedLabel = v;
         else mineLabel = v;
       }}
-      placeholder="Add an item"
-      maxlength="200"
-      onkeydown={(e) => e.key === 'Enter' && add(isShared)}
-      class="flex-1 rounded-md border-2 border-sand-300 bg-white px-3 py-2 font-body text-[15px] font-bold text-cocoa-900 outline-none focus:border-coral-400"
-    />
-    <Button variant="primary" size="sm" disabled={busy === 'add'} onclick={() => add(isShared)}>Add</Button>
+      placeholder={'Add items — one per line or comma-separated'}
+      rows="3"
+      maxlength="2000"
+      onkeydown={(e) => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) add(isShared);
+      }}
+      class="w-full resize-y rounded-md border-2 border-sand-300 bg-white px-3 py-2 font-body text-[15px] font-bold text-cocoa-900 outline-none focus:border-coral-400"
+    ></textarea>
+    <div class="flex items-center justify-between gap-2">
+      <span class="font-body text-[11px] font-bold text-cocoa-400">One per line, or comma-separated</span>
+      <Button variant="primary" size="sm" disabled={busy === 'add' || !count} onclick={() => add(isShared)}>
+        Add{count > 1 ? ` ${count}` : ''}
+      </Button>
+    </div>
   </div>
 {/snippet}
 

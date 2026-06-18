@@ -59,11 +59,15 @@
   }
 
   async function addItem() {
-    const name = newName.trim();
-    if (!name) return;
+    // One per line, or comma-separated — batch-add the whole list at once.
+    const names = newName
+      .split(/[\n,]+/)
+      .map((n) => n.trim())
+      .filter(Boolean);
+    if (!names.length) return;
     busy = 'add';
     try {
-      await tripAction(shareToken, { op: 'gear_add', name, participantId: currentParticipantId });
+      await tripAction(shareToken, { op: 'gear_add', names, participantId: currentParticipantId });
       newName = '';
       adding = false;
       await invalidateAll();
@@ -132,15 +136,25 @@
   {/if}
 
   {#if adding}
-    <div class="mt-2 flex gap-2">
-      <input
+    <div class="mt-2 flex flex-col gap-2">
+      <textarea
         bind:value={newName}
-        placeholder="Add gear (e.g. Tent)"
-        maxlength="200"
-        onkeydown={(e) => e.key === 'Enter' && addItem()}
-        class="flex-1 rounded-md border-2 border-sand-300 bg-white px-3 py-2 font-body text-[15px] font-bold text-cocoa-900 outline-none focus:border-coral-400"
-      />
-      <Button variant="primary" size="sm" disabled={busy === 'add' || !newName.trim()} onclick={addItem}>Add</Button>
+        placeholder={'Add gear — one per line or comma-separated\ne.g.\nTent\nStove\nHeadlamp'}
+        rows="3"
+        maxlength="2000"
+        onkeydown={(e) => {
+          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addItem();
+        }}
+        class="w-full resize-y rounded-md border-2 border-sand-300 bg-white px-3 py-2 font-body text-[15px] font-bold text-cocoa-900 outline-none focus:border-coral-400"
+      ></textarea>
+      <div class="flex items-center justify-between gap-2">
+        <span class="font-body text-[11px] font-bold text-cocoa-400">One per line, or comma-separated</span>
+        <Button variant="primary" size="sm" disabled={busy === 'add' || !newName.trim()} onclick={addItem}>
+          Add{newName.split(/[\n,]+/).filter((s) => s.trim()).length > 1
+            ? ` ${newName.split(/[\n,]+/).filter((s) => s.trim()).length}`
+            : ''}
+        </Button>
+      </div>
     </div>
   {/if}
 

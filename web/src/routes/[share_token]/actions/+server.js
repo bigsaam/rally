@@ -49,15 +49,22 @@ export async function POST({ params, request }) {
       }
 
       case 'gear_add': {
-        const name = String(body.name ?? '').trim().slice(0, 200);
-        if (!name) throw error(400, 'Name required');
-        /** @type {Record<string, unknown>} */
-        const data = { trip: trip.id, name, qty_needed: 1 };
+        // Accept one (`name`) or many (`names`), e.g. a pasted list.
+        const raw = Array.isArray(body.names) ? body.names : [body.name];
+        const names = raw.map((/** @type {any} */ n) => String(n ?? '').trim().slice(0, 200)).filter(Boolean).slice(0, 50);
+        if (!names.length) throw error(400, 'Name required');
+        /** @type {string | undefined} */
+        let created_by;
         if (body.participantId) {
           await inTrip('participants', body.participantId);
-          data.created_by = body.participantId;
+          created_by = body.participantId;
         }
-        await pb.collection('gear_items').create(data);
+        for (const name of names) {
+          /** @type {Record<string, unknown>} */
+          const data = { trip: trip.id, name, qty_needed: 1 };
+          if (created_by) data.created_by = created_by;
+          await pb.collection('gear_items').create(data);
+        }
         break;
       }
 
@@ -187,17 +194,21 @@ export async function POST({ params, request }) {
       }
 
       case 'pack_add': {
-        const label = String(body.label ?? '').trim().slice(0, 200);
-        if (!label) throw error(400, 'Label required');
+        // Accept one (`label`) or many (`labels`), e.g. a pasted list.
+        const raw = Array.isArray(body.labels) ? body.labels : [body.label];
+        const labels = raw.map((/** @type {any} */ l) => String(l ?? '').trim().slice(0, 200)).filter(Boolean).slice(0, 50);
+        if (!labels.length) throw error(400, 'Label required');
         const isShared = !!body.isShared;
         if (!isShared && body.participantId) await inTrip('participants', body.participantId);
-        await pb.collection('packing_items').create({
-          trip: trip.id,
-          label,
-          is_shared: isShared,
-          checked: false,
-          participant: isShared ? null : (body.participantId ?? null)
-        });
+        for (const label of labels) {
+          await pb.collection('packing_items').create({
+            trip: trip.id,
+            label,
+            is_shared: isShared,
+            checked: false,
+            participant: isShared ? null : (body.participantId ?? null)
+          });
+        }
         break;
       }
 
