@@ -100,11 +100,13 @@ export async function loadTripByShareToken(shareToken) {
       expense_link: trip.expense_link,
       share_token: trip.share_token
     },
-    participants: participants.map((p) => ({
-      id: p.id,
-      display_name: p.display_name,
-      rsvp_status: p.rsvp_status
-    })),
+    participants: participants
+      .map((p) => ({
+        id: p.id,
+        display_name: p.display_name,
+        rsvp_status: p.rsvp_status
+      }))
+      .sort((a, b) => a.display_name.localeCompare(b.display_name, undefined, { sensitivity: 'base' })),
     gear,
     meals,
     packing: packingItems.map((p) => ({

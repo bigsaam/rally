@@ -13,11 +13,6 @@
 
 <TripView {data} currentParticipantId={identity?.participantId ?? null}>
   {#snippet top()}
-    <IdentityGate
-      shareToken={data.trip.share_token}
-      participants={data.participants}
-      {form}
-      bind:identity
-    />
+    <IdentityGate shareToken={data.trip.share_token} {form} bind:identity />
   {/snippet}
 </TripView>

@@ -9,13 +9,13 @@ export async function load({ params }) {
 }
 
 export const actions = {
-  // Claim a name on this trip. Idempotent per browser: if a participant already
-  // exists for (trip, client_id) we return it instead of creating a duplicate
-  // (handles cleared identity-mapping but persisted client_id, and double-submit).
+  // Claim a name on this trip. Name IS the identity: if someone with that name
+  // (case-insensitive) is already on the trip, you become them; otherwise you're
+  // added as a new participant. This makes the flow "just type your name" and
+  // prevents accidental duplicates (typing a pre-seeded name links to it).
   join: async ({ request, params }) => {
     const fd = await request.formData();
     const display_name = String(fd.get('display_name') ?? '').trim();
-    let client_id = String(fd.get('client_id') ?? '').trim();
 
     if (!display_name) return fail(400, { joinError: 'Enter a name to join.' });
     if (display_name.length > 80) return fail(400, { joinError: 'That name is too long.' });
@@ -32,23 +32,19 @@ export const actions = {
       throw error(502, 'Could not reach the trip backend');
     }
 
-    // localStorage holds the client_id; fall back to a server id for no-JS so
-    // the participant is still created (just won't be remembered on the device).
-    if (!client_id) client_id = randomUUID();
-
     try {
-      const existing = await pb
+      const all = await pb
         .collection('participants')
-        .getFirstListItem(pb.filter('trip = {:tr} && client_id = {:c}', { tr: trip.id, c: client_id }));
-      return { joined: { id: existing.id, display_name: existing.display_name } };
-    } catch (_) {
-      // none yet — create below
-    }
-
-    try {
+        .getFullList({ filter: pb.filter('trip = {:t}', { t: trip.id }) });
+      const existing = all.find(
+        (p) => p.display_name.trim().toLowerCase() === display_name.toLowerCase()
+      );
+      if (existing) {
+        return { joined: { id: existing.id, display_name: existing.display_name } };
+      }
       const p = await pb
         .collection('participants')
-        .create({ trip: trip.id, display_name, client_id });
+        .create({ trip: trip.id, display_name, client_id: randomUUID() });
       return { joined: { id: p.id, display_name: p.display_name } };
     } catch (/** @type {any} */ err) {
       return fail(502, { joinError: 'Could not join right now — please try again.' });
