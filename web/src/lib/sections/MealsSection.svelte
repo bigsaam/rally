@@ -146,7 +146,7 @@
                     {#if s.participant === currentParticipantId}
                       <input
                         value={s.dish_note ?? ''}
-                        placeholder="+ what are you bringing?"
+                        placeholder="+ add a dish"
                         maxlength="300"
                         onblur={(e) => saveNote(s.id, /** @type {HTMLInputElement} */ (e.currentTarget).value)}
                         class="min-w-0 flex-1 rounded-md bg-sand-100 px-2 py-0.5 font-body text-[13px] font-bold text-cocoa-700 outline-none placeholder:font-bold placeholder:text-cocoa-400 focus:bg-white focus:ring-2 focus:ring-coral-200"
