@@ -81,7 +81,7 @@
             </button>
           {:else}
             <Button variant="secondary" size="sm" disabled={busy === m.id} onclick={() => signUp(m)}>
-              {busy === m.id ? '…' : "I've got it"}
+              {busy === m.id ? '…' : m.signups.length ? 'Help too' : "I'll help"}
             </Button>
           {/if}
         {/if}
@@ -93,7 +93,7 @@
           </span>
         {/each}
       {:else}
-        <span class="font-body text-[13px] font-bold text-cocoa-500">nobody yet</span>
+        <span class="font-body text-[13px] font-bold text-cocoa-500">Nobody's on it yet — pitch in!</span>
       {/if}
       {#if mine}
         <input
