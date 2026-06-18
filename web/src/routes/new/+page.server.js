@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
-import { generateShareToken, generateOwnerToken } from '$lib/server/tokens.js';
+import { generateOwnerToken } from '$lib/server/tokens.js';
+import { generateSlug } from '$lib/server/slug.js';
 import { generateSlotsFromDates } from '$lib/server/mealSlots.js';
 
 const MAX = { name: 200, location: 300, description: 5000 };
@@ -37,29 +38,40 @@ export const actions = {
     if (Object.keys(errors).length) return fail(400, { errors, values });
 
     const pb = await superuserPb();
-    const share_token = generateShareToken();
     const owner_token = generateOwnerToken();
 
     /** @param {string} d */
     const toPb = (d) => (d ? `${d} 00:00:00.000Z` : '');
 
+    const base = {
+      name,
+      location,
+      start_date: toPb(start_date),
+      end_date: toPb(end_date),
+      description: description ? `<p>${escapeHtml(description)}</p>` : '',
+      expense_link,
+      owner_token
+    };
+
+    // Friendly slug (<trip-word>-<word>-<word>). The share token must be unique;
+    // on the rare collision, retry with progressively more random words.
     let trip;
-    try {
-      trip = await pb.collection('trips').create({
-        name,
-        location,
-        start_date: toPb(start_date),
-        end_date: toPb(end_date),
-        description: description ? `<p>${escapeHtml(description)}</p>` : '',
-        expense_link,
-        share_token,
-        owner_token
-      });
-    } catch (/** @type {any} */ err) {
-      return fail(502, {
-        errors: { _form: 'Could not create the trip — the backend was unreachable.' },
-        values
-      });
+    let share_token = '';
+    for (let attempt = 0; attempt < 6 && !trip; attempt++) {
+      share_token = generateSlug(name, attempt);
+      try {
+        trip = await pb.collection('trips').create({ ...base, share_token });
+      } catch (/** @type {any} */ err) {
+        const isCollision = err?.status === 400 || err?.response?.data?.share_token;
+        if (isCollision && attempt < 5) continue;
+        return fail(502, {
+          errors: { _form: 'Could not create the trip — please try again.' },
+          values
+        });
+      }
+    }
+    if (!trip) {
+      return fail(502, { errors: { _form: 'Could not create the trip — please try again.' }, values });
     }
 
     // Best-effort: auto-generate meal slots from the date range. A failure here
