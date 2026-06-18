@@ -44,7 +44,23 @@ export async function POST({ params, request }) {
     switch (op) {
       case 'rsvp': {
         const p = await inTrip('participants', body.participantId);
-        await pb.collection('participants').update(p.id, { rsvp_status: body.status });
+        /** @type {Record<string, unknown>} */
+        const data = { rsvp_status: body.status };
+        // Lean only applies to "maybe": default to 50/50 on first maybe, clear otherwise.
+        if (body.status === 'maybe') {
+          if (!p.lean) data.lean = 2;
+        } else {
+          data.lean = null;
+        }
+        await pb.collection('participants').update(p.id, data);
+        break;
+      }
+
+      // Set how flaky a "maybe" is (1 long shot · 2 fifty-fifty · 3 leaning yes).
+      case 'lean': {
+        const p = await inTrip('participants', body.participantId);
+        const lean = Math.max(1, Math.min(3, Number(body.lean) || 2));
+        await pb.collection('participants').update(p.id, { lean, rsvp_status: 'maybe' });
         break;
       }
 

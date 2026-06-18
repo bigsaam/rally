@@ -110,7 +110,8 @@ export async function loadTripByShareToken(shareToken) {
       .map((p) => ({
         id: p.id,
         display_name: p.display_name,
-        rsvp_status: p.rsvp_status
+        rsvp_status: p.rsvp_status,
+        lean: p.lean || 0
       }))
       .sort((a, b) => a.display_name.localeCompare(b.display_name, undefined, { sensitivity: 'base' })),
     gear,

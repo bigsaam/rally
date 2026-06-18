@@ -5,11 +5,12 @@
   import CardHeader from '$lib/ui/CardHeader.svelte';
   import Avatar from '$lib/ui/Avatar.svelte';
   import SegmentedControl from '$lib/ui/SegmentedControl.svelte';
+  import LeanMeter from '$lib/ui/LeanMeter.svelte';
 
   /**
    * @type {{
    *   shareToken: string,
-   *   participants: Array<{ id: string, display_name: string, rsvp_status: string | null }>,
+   *   participants: Array<{ id: string, display_name: string, rsvp_status: string | null, lean: number }>,
    *   currentParticipantId: string | null,
    *   ownerMode?: boolean
    * }}
@@ -22,6 +23,11 @@
     { value: 'going', emoji: '🔥' },
     { value: 'maybe', emoji: '🤔' },
     { value: 'out', emoji: '💤' }
+  ];
+  const LEAN_OPTS = [
+    { v: 1, label: 'Long shot' },
+    { v: 2, label: '50 / 50' },
+    { v: 3, label: 'Leaning yes' }
   ];
   const going = $derived(participants.filter((p) => p.rsvp_status === 'going').length);
   const me = $derived(participants.find((p) => p.id === currentParticipantId) ?? null);
@@ -46,6 +52,20 @@
       savingId = '';
     }
   }
+
+  /** @param {number} lean */
+  async function setLean(lean) {
+    if (!currentParticipantId || saving) return;
+    saving = true;
+    try {
+      await tripAction(shareToken, { op: 'lean', participantId: currentParticipantId, lean });
+      await invalidateAll();
+    } catch (_) {
+      /* reconciled */
+    } finally {
+      saving = false;
+    }
+  }
 </script>
 
 <Card>
@@ -63,21 +83,26 @@
           {p.display_name}{#if p.id === currentParticipantId}<span class="font-bold text-cocoa-500"> (you)</span>{/if}
         </span>
         {#if ownerMode}
-          <!-- Owner can set anyone's status -->
-          <span class="ml-auto flex gap-1">
-            {#each RSVP_OPTS as opt}
-              <button
-                type="button"
-                disabled={savingId === p.id}
-                aria-label="Set {p.display_name} {opt.value}"
-                onclick={() => setRsvp(opt.value, p.id)}
-                class="grid h-7 w-7 place-items-center rounded-full text-[13px] transition
-                  {p.rsvp_status === opt.value ? 'bg-white shadow-soft' : 'opacity-35 hover:opacity-70'}"
-              >
-                {opt.emoji}
-              </button>
-            {/each}
+          <!-- Owner can set anyone's status; lean (self-set) shown for maybes -->
+          <span class="ml-auto flex items-center gap-2">
+            {#if p.rsvp_status === 'maybe'}<LeanMeter lean={p.lean || 2} showLabel={false} />{/if}
+            <span class="flex gap-1">
+              {#each RSVP_OPTS as opt}
+                <button
+                  type="button"
+                  disabled={savingId === p.id}
+                  aria-label="Set {p.display_name} {opt.value}"
+                  onclick={() => setRsvp(opt.value, p.id)}
+                  class="grid h-7 w-7 place-items-center rounded-full text-[13px] transition
+                    {p.rsvp_status === opt.value ? 'bg-white shadow-soft' : 'opacity-35 hover:opacity-70'}"
+                >
+                  {opt.emoji}
+                </button>
+              {/each}
+            </span>
           </span>
+        {:else if p.rsvp_status === 'maybe'}
+          <span class="ml-auto"><LeanMeter lean={p.lean || 2} /></span>
         {:else}
           <span class="ml-auto text-[15px]">{p.rsvp_status ? statusEmoji[p.rsvp_status] : '·'}</span>
         {/if}
@@ -97,4 +122,23 @@
     value={me?.rsvp_status ?? null}
     onChange={setRsvp}
   />
+
+  {#if me?.rsvp_status === 'maybe'}
+    <div class="mt-2.5 rounded-md bg-sun-200 px-3 py-2.5">
+      <div class="mb-2 font-body text-[12px] font-extrabold text-sun-600">How likely, really? 🤔</div>
+      <div class="flex gap-1.5">
+        {#each LEAN_OPTS as o}
+          <button
+            type="button"
+            disabled={saving}
+            onclick={() => setLean(o.v)}
+            class="flex-1 rounded-full px-1 py-1.5 font-display text-[12px] font-semibold transition
+              {(me.lean || 2) === o.v ? 'bg-white text-cocoa-900 shadow-soft' : 'bg-white/50 text-cocoa-700 hover:bg-white/80'}"
+          >
+            {o.label}
+          </button>
+        {/each}
+      </div>
+    </div>
+  {/if}
 </Card>
