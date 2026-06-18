@@ -10,29 +10,40 @@
    * @type {{
    *   shareToken: string,
    *   participants: Array<{ id: string, display_name: string, rsvp_status: string | null }>,
-   *   currentParticipantId: string | null
+   *   currentParticipantId: string | null,
+   *   ownerMode?: boolean
    * }}
    */
-  let { shareToken, participants, currentParticipantId } = $props();
+  let { shareToken, participants, currentParticipantId, ownerMode = false } = $props();
 
   /** @type {Record<string, string>} */
   const statusEmoji = { going: '🔥', maybe: '🤔', out: '💤' };
+  const RSVP_OPTS = [
+    { value: 'going', emoji: '🔥' },
+    { value: 'maybe', emoji: '🤔' },
+    { value: 'out', emoji: '💤' }
+  ];
   const going = $derived(participants.filter((p) => p.rsvp_status === 'going').length);
   const me = $derived(participants.find((p) => p.id === currentParticipantId) ?? null);
 
   let saving = $state(false);
+  /** participant id currently being saved (owner edits) */
+  let savingId = $state('');
 
-  /** @param {string} status */
-  async function setRsvp(status) {
-    if (!currentParticipantId || saving) return;
-    saving = true;
+  /** @param {string} status @param {string} [participantId] */
+  async function setRsvp(status, participantId) {
+    const id = participantId ?? currentParticipantId;
+    if (!id || saving || savingId) return;
+    if (participantId) savingId = participantId;
+    else saving = true;
     try {
-      await tripAction(shareToken, { op: 'rsvp', participantId: currentParticipantId, status });
+      await tripAction(shareToken, { op: 'rsvp', participantId: id, status });
       await invalidateAll();
     } catch (_) {
       // next load / poll will reconcile
     } finally {
       saving = false;
+      savingId = '';
     }
   }
 </script>
@@ -51,7 +62,25 @@
         <span class="font-body text-sm font-extrabold text-cocoa-900">
           {p.display_name}{#if p.id === currentParticipantId}<span class="font-bold text-cocoa-500"> (you)</span>{/if}
         </span>
-        <span class="ml-auto text-[15px]">{p.rsvp_status ? statusEmoji[p.rsvp_status] : '·'}</span>
+        {#if ownerMode}
+          <!-- Owner can set anyone's status -->
+          <span class="ml-auto flex gap-1">
+            {#each RSVP_OPTS as opt}
+              <button
+                type="button"
+                disabled={savingId === p.id}
+                aria-label="Set {p.display_name} {opt.value}"
+                onclick={() => setRsvp(opt.value, p.id)}
+                class="grid h-7 w-7 place-items-center rounded-full text-[13px] transition
+                  {p.rsvp_status === opt.value ? 'bg-white shadow-soft' : 'opacity-35 hover:opacity-70'}"
+              >
+                {opt.emoji}
+              </button>
+            {/each}
+          </span>
+        {:else}
+          <span class="ml-auto text-[15px]">{p.rsvp_status ? statusEmoji[p.rsvp_status] : '·'}</span>
+        {/if}
       </div>
     {/each}
   </div>

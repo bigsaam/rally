@@ -108,7 +108,7 @@
     {#if top}{@render top()}{/if}
 
     <div class="flex flex-col gap-3.5 md:grid md:grid-cols-2 md:items-start">
-      <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} />
+      <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} {ownerMode} />
       <GearSection shareToken={trip.share_token} {gear} {currentParticipantId} />
       <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} />
       <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} />
