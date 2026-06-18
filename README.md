@@ -12,6 +12,7 @@ signs up for food, and checks off packing — all on the same live page.
 [![Built with SvelteKit](https://img.shields.io/badge/SvelteKit-5-ff3e00.svg)](https://kit.svelte.dev)
 [![PocketBase](https://img.shields.io/badge/PocketBase-0.39-b8dbe4.svg)](https://pocketbase.io)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+[![AI-developed](https://img.shields.io/badge/built_with-AI_%2B_human_review-7c3aed.svg)](./AI_POLICY.md)
 
 </div>
 
@@ -139,10 +140,19 @@ Captured, not yet built — each needs its own pass:
   [`docs/ai-features.md`](./docs/ai-features.md).
 - **Programmatic / MCP API** — see [`docs/api-layer.md`](./docs/api-layer.md).
 
+## Built with AI
+
+Rally is a **heavily AI-developed codebase** — most of the code, docs, and
+migrations were written by an LLM coding agent (Claude) under human direction
+and review. We disclose this openly; see [AI_POLICY.md](./AI_POLICY.md) for what
+that means for users and contributors.
+
 ## Contributing
 
 PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) and the
 [Code of Conduct](./CODE_OF_CONDUCT.md). Keep it no-account and mobile-first.
+AI-assisted contributions are welcome ([AI policy](./AI_POLICY.md)) — you're
+responsible for testing and understanding what you submit.
 
 ## License
 

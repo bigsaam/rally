@@ -6,6 +6,9 @@ your contributions — bug fixes, features, docs, or just ideas.
 ## Ground rules
 
 - **Be kind.** See the [Code of Conduct](./CODE_OF_CONDUCT.md).
+- **AI-assisted work is welcome.** Rally is itself heavily AI-developed (see the
+  [AI policy](./AI_POLICY.md)). Use whatever tools you like — but *you* own your
+  PR: understand it, test it, and review it before submitting.
 - **Keep the no-account principle.** Rally's whole point is *one link, no
   mandatory logins*. Features should preserve that — don't add required signups.
 - **Mobile-first.** Most people open trip links on a phone. Design for that, let
