@@ -10,7 +10,7 @@
   style="margin-inline: auto; max-width: var(--screen-max); background: linear-gradient(180deg, var(--color-sand-100), var(--color-sand-200));"
 >
   <div class="text-center">
-    <div class="text-[56px] leading-none">🏕️</div>
+    <div class="text-[56px] leading-none">🧭</div>
     <h1 class="mt-3 font-display text-[44px] font-bold tracking-tight text-cocoa-900">Rally</h1>
     <p class="mt-2 font-body text-lg font-bold text-cocoa-700">
       One link where the group gathers. Plan a trip, drop it in the group chat, and

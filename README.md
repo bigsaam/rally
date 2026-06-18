@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏕️ Rally
+# 🧭 Rally
 
 **One link where the group gathers.**
 
