@@ -46,6 +46,13 @@
   const MEAL_EMOJI = { breakfast: '🥞', lunch: '🥪', dinner: '🍲', snack: '🍿', snacks: '🍿', dessert: '🍪' };
   const mealEmoji = (/** @type {any} */ m) => MEAL_EMOJI[mealName(m).toLowerCase()] ?? '🍴';
 
+  /** What's being made for this meal — the helpers' dish notes, combined. */
+  const dishSummary = (/** @type {any} */ m) =>
+    m.signups
+      .map((/** @type {any} */ s) => (s.dish_note || '').trim())
+      .filter(Boolean)
+      .join(' · ');
+
   function mySignup(/** @type {any} */ m) {
     return m.signups.find((/** @type {any} */ s) => s.participant === currentParticipantId) ?? null;
   }
@@ -110,7 +117,10 @@
             <span class="grid h-8 w-8 flex-none place-items-center rounded-md bg-sand-200 text-base">
               {mealEmoji(m)}
             </span>
-            <span class="font-display text-[15px] font-semibold text-cocoa-900">{mealName(m)}</span>
+            <span class="shrink-0 font-display text-[15px] font-semibold text-cocoa-900">{mealName(m)}</span>
+            {#if dishSummary(m)}
+              <span class="min-w-0 truncate font-body text-[13px] font-bold text-cocoa-500">— {dishSummary(m)}</span>
+            {/if}
             {#if currentParticipantId && !mine}
               <button
                 type="button"
@@ -136,7 +146,7 @@
                     {#if s.participant === currentParticipantId}
                       <input
                         value={s.dish_note ?? ''}
-                        placeholder="+ add a dish"
+                        placeholder="+ what are you bringing?"
                         maxlength="300"
                         onblur={(e) => saveNote(s.id, /** @type {HTMLInputElement} */ (e.currentTarget).value)}
                         class="min-w-0 flex-1 rounded-md bg-sand-100 px-2 py-0.5 font-body text-[13px] font-bold text-cocoa-700 outline-none placeholder:font-bold placeholder:text-cocoa-400 focus:bg-white focus:ring-2 focus:ring-coral-200"
@@ -149,8 +159,6 @@
                       >
                         Drop
                       </button>
-                    {:else if s.dish_note}
-                      <span class="min-w-0 truncate font-body text-[13px] font-bold text-cocoa-500">· {s.dish_note}</span>
                     {/if}
                   </li>
                 {/each}
