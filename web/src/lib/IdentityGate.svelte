@@ -50,6 +50,21 @@
     selectedExisting = '';
     name = '';
   }
+
+  // If the typed name already exists, offer to adopt it instead of creating a
+  // duplicate (the classic pre-seeded-name / "I typed my name and hit join" trap).
+  const nameMatch = $derived(
+    name.trim()
+      ? (participants.find((p) => p.display_name.toLowerCase() === name.trim().toLowerCase()) ?? null)
+      : null
+  );
+
+  /** @param {{ id: string, display_name: string } | null} p */
+  function adopt(p) {
+    if (!p) return;
+    setTripIdentity(shareToken, { participantId: p.id, displayName: p.display_name });
+    identity = { participantId: p.id, displayName: p.display_name };
+  }
 </script>
 
 {#if resolved}
@@ -106,11 +121,27 @@
             autocomplete="off"
             bind:value={name}
           />
-          <div class="mt-4">
-            <Button variant="primary" size="lg" full type="submit" disabled={submitting || !name.trim()}>
-              {submitting ? 'Joining…' : "I'm in! 🙌"}
-            </Button>
-          </div>
+          {#if nameMatch}
+            <div class="mt-3 rounded-md bg-sun-200 px-3.5 py-3">
+              <p class="font-body text-[13px] font-bold text-sun-600">
+                There's already a <b>{nameMatch.display_name}</b> on the list — is that you?
+              </p>
+              <div class="mt-2 flex flex-col gap-2">
+                <Button variant="primary" size="md" full onclick={() => adopt(nameMatch)}>
+                  Yes, that's me 🙌
+                </Button>
+                <Button variant="soft" size="sm" full type="submit" disabled={submitting}>
+                  {submitting ? 'Joining…' : `No — I'm a different ${name.trim()}`}
+                </Button>
+              </div>
+            </div>
+          {:else}
+            <div class="mt-4">
+              <Button variant="primary" size="lg" full type="submit" disabled={submitting || !name.trim()}>
+                {submitting ? 'Joining…' : "I'm in! 🙌"}
+              </Button>
+            </div>
+          {/if}
         </form>
       {:else}
         <div class="flex flex-col gap-3">
