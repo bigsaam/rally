@@ -53,12 +53,13 @@ export const actions = {
       owner_token
     };
 
-    // Friendly slug (<trip-word>-<word>-<word>). The share token must be unique;
-    // on the rare collision, retry with progressively more random words.
+    // Friendly slug (<trip-word>-<word>-<word>-<word>). Three random words
+    // (~19 bits) so an invite link isn't trivially guessable. The token must be
+    // unique — on the rare collision, retry with progressively more words.
     let trip;
     let share_token = '';
     for (let attempt = 0; attempt < 6 && !trip; attempt++) {
-      share_token = generateSlug(name, attempt);
+      share_token = generateSlug(name, attempt + 1);
       try {
         trip = await pb.collection('trips').create({ ...base, share_token });
       } catch (/** @type {any} */ err) {
