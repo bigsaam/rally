@@ -56,3 +56,56 @@ export async function joinTrip(pb, trip, user) {
     client_id: randomUUID()
   });
 }
+
+/**
+ * Unclaimed (no-account) participants on a trip — candidates someone signing in
+ * can claim as "that's me" to avoid a duplicate.
+ *
+ * @param {import('pocketbase').default} pb superuser client
+ * @param {string} tripId
+ * @returns {Promise<Array<{ id: string, display_name: string }>>}
+ */
+export async function listOrphans(pb, tripId) {
+  const all = await pb
+    .collection('participants')
+    .getFullList({ filter: pb.filter('trip = {:t}', { t: tripId }), sort: 'display_name' });
+  return all.filter((p) => !p.user).map((p) => ({ id: p.id, display_name: p.display_name }));
+}
+
+/**
+ * Claim an existing name-only participant as the signed-in user. If the user
+ * already has a (freshly auto-created) membership, merge it in: move their
+ * gear/meal/packing rows onto the claimed participant, then delete the dup.
+ * Throws if the target isn't an unclaimed participant of this trip.
+ *
+ * @param {import('pocketbase').default} pb superuser client
+ * @param {{ id: string, created_by?: string }} trip
+ * @param {{ id: string }} user
+ * @param {string} orphanId
+ */
+export async function claimParticipant(pb, trip, user, orphanId) {
+  const orphan = await pb.collection('participants').getOne(orphanId);
+  if (orphan.trip !== trip.id) throw new Error('Not part of this trip');
+  if (orphan.user) throw new Error('That person is already claimed');
+
+  const me = await getMembership(pb, trip.id, user.id);
+  const role =
+    trip.created_by === user.id || (me && me.role === 'organizer')
+      ? 'organizer'
+      : orphan.role || 'guest';
+
+  if (me && me.id !== orphan.id) {
+    // Move the dup's contributions onto the claimed participant, then remove it.
+    for (const coll of ['gear_claims', 'meal_signups', 'packing_items']) {
+      const rows = await pb
+        .collection(coll)
+        .getFullList({ filter: pb.filter('participant = {:p}', { p: me.id }) });
+      for (const r of rows) await pb.collection(coll).update(r.id, { participant: orphan.id });
+    }
+    await pb.collection('participants').update(orphan.id, { user: user.id, role });
+    await pb.collection('participants').delete(me.id);
+  } else {
+    await pb.collection('participants').update(orphan.id, { user: user.id, role });
+  }
+  return orphan.id;
+}

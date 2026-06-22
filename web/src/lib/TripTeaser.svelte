@@ -8,13 +8,15 @@
    * @type {{
    *   trip: { name: string, location?: string, start_date?: string, end_date?: string, descriptionPreview?: string, share_token: string },
    *   mode: 'signin' | 'join',
+   *   orphans?: Array<{ id: string, display_name: string }>,
    *   form?: any
    * }}
    */
-  let { trip, mode, form = null } = $props();
+  let { trip, mode, orphans = [], form = null } = $props();
 
   const loginHref = $derived(`/login?next=${encodeURIComponent('/' + trip.share_token)}`);
   let joining = $state(false);
+  let claiming = $state('');
 </script>
 
 <main class="min-h-full bg-sand-100">
@@ -62,6 +64,41 @@
           </form>
           {#if form?.joinError}
             <p class="mt-2 font-body text-sm font-bold text-berry-600">{form.joinError}</p>
+          {/if}
+
+          {#if orphans.length}
+            <div class="mt-5 border-t border-sand-300 pt-4 text-left">
+              <p class="font-body text-[13px] font-extrabold text-cocoa-700">
+                Already on this trip under your name? Tap it to claim it:
+              </p>
+              <div class="mt-2 flex flex-wrap gap-2">
+                {#each orphans as o (o.id)}
+                  <form
+                    method="POST"
+                    action="?/claim"
+                    use:enhance={() => {
+                      claiming = o.id;
+                      return async ({ result }) => {
+                        claiming = '';
+                        if (result.type === 'success') await invalidateAll();
+                      };
+                    }}
+                  >
+                    <input type="hidden" name="participantId" value={o.id} />
+                    <button
+                      type="submit"
+                      disabled={claiming !== ''}
+                      class="rounded-full border-2 border-sand-300 bg-white px-3 py-1.5 font-body text-[13px] font-extrabold text-cocoa-700 transition hover:border-coral-400 disabled:opacity-50"
+                    >
+                      {claiming === o.id ? 'Claiming…' : `I'm ${o.display_name}`}
+                    </button>
+                  </form>
+                {/each}
+              </div>
+              {#if form?.claimError}
+                <p class="mt-2 font-body text-sm font-bold text-berry-600">{form.claimError}</p>
+              {/if}
+            </div>
           {/if}
         {/if}
       </div>
