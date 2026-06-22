@@ -69,7 +69,7 @@
   <div class="mx-auto w-full max-w-3xl px-4 sm:px-6">
     {#if ownerMode}
       <div class="mt-4 rounded-md bg-sun-200 px-4 py-2.5 text-sm font-bold text-sun-600">
-        ✨ Owner mode — you can edit everything here. Keep this link private.
+        ✨ You're an organizer — you can edit everything here.
       </div>
     {/if}
 

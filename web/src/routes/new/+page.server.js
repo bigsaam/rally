@@ -1,16 +1,23 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
 import { generateOwnerToken } from '$lib/server/tokens.js';
 import { generateSlug } from '$lib/server/slug.js';
 import { generateSlotsFromDates } from '$lib/server/mealSlots.js';
+import { joinTrip } from '$lib/server/membership.js';
 
 const MAX = { name: 200, location: 300, description: 5000 };
 
 /** @param {string} v */
 const clean = (v) => v.trim();
 
+export function load({ locals }) {
+  // Must be signed in to plan a trip.
+  if (!locals.user) throw redirect(303, '/login?next=/new');
+}
+
 export const actions = {
-  default: async ({ request }) => {
+  default: async ({ request, locals }) => {
+    if (!locals.user) throw redirect(303, '/login?next=/new');
     const form = await request.formData();
     const name = clean(String(form.get('name') ?? ''));
     const location = clean(String(form.get('location') ?? ''));
@@ -50,7 +57,8 @@ export const actions = {
       end_date: toPb(end_date),
       description: description ? `<p>${escapeHtml(description)}</p>` : '',
       expense_link,
-      owner_token
+      owner_token,
+      created_by: locals.user.id
     };
 
     // Friendly slug (<trip-word>-<word>-<word>-<word>). Three random words
@@ -73,6 +81,13 @@ export const actions = {
     }
     if (!trip) {
       return fail(502, { errors: { _form: 'Could not create the trip — please try again.' }, values });
+    }
+
+    // The creator is automatically an organizer member.
+    try {
+      await joinTrip(pb, trip, locals.user);
+    } catch (_) {
+      // non-fatal; they can claim via the owner link if this hiccups
     }
 
     // Best-effort: auto-generate meal slots from the date range. A failure here

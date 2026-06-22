@@ -14,7 +14,8 @@
     <h1 class="mt-3 font-display text-[44px] font-bold tracking-tight text-cocoa-900">Rally</h1>
     <p class="mt-2 font-body text-lg font-bold text-cocoa-700">
       One link where the group gathers. Plan a trip, drop it in the group chat, and
-      everyone's in — RSVP, grab gear, sign up for food. No accounts, no friction.
+      everyone signs in to join — RSVP, grab gear, sign up for food. Private to the
+      people you invite.
     </p>
   </div>
 

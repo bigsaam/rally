@@ -5,8 +5,9 @@
 **One link where the group gathers.**
 
 A self-hosted web app for coordinating group trips — camping, backpacking, road
-trips, cabin weekends. Share one link, no accounts. Everyone RSVPs, claims gear,
-signs up for food, and checks off packing — all on the same live page.
+trips, cabin weekends. Share one invite link; everyone signs in to join, then
+RSVPs, claims gear, signs up for food, and checks off packing — all on the same
+live page, private to the people you invite.
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](./LICENSE)
 [![Built with SvelteKit](https://img.shields.io/badge/SvelteKit-5-ff3e00.svg)](https://kit.svelte.dev)
@@ -22,16 +23,17 @@ signs up for food, and checks off packing — all on the same live page.
 
 Every group trip starts as a Notion page or a group-chat scroll — read-only, dead,
 and nobody updates it. Rally is the opposite: **shared, live state behind one
-link, with zero login friction.** Open the link on your phone, claim a name, and
-you're in.
+invite link.** Open the link on your phone, sign in (Google or email), and
+you're in — and only invited guests can see the details.
 
 The killer feature: **gear claims without collisions.** No more three tents and
 zero stoves — claim "I'll bring it" and everyone sees it's covered, instantly.
 
 ## Features
 
-- 🔗 **One shareable link, no accounts.** A per-trip token in the URL + a
-  "claim your name" identity (stored locally). Optional accounts can come later.
+- 🔗 **One invite link, real accounts.** Share a per-trip link; guests sign in
+  with Google or email to join. Only invited, signed-in members see the trip —
+  non-members get just a teaser (name + a blurb).
 - 🙌 **RSVP** — Going / Maybe / Can't, at a glance.
 - 🎒 **Gear claims, collision-safe.** Claim items so nobody doubles up; claiming
   drops it onto your personal packing list automatically.
@@ -103,36 +105,39 @@ back it up.
 
 ## How it works
 
-A trip is one page reached at `/{share_token}`. The creator also gets a private
-`/{share_token}/edit?owner={owner_token}` link.
+A trip is one page reached at `/{share_token}`. Opening it signed-out shows a
+teaser; signing in lets you join. Holders of the legacy
+`/{share_token}/edit?owner={owner_token}` link can **claim** the trip to their
+account (becoming an organizer) — also how you add co-organizers.
 
-**Data model** (`pocketbase/pb_migrations/`): `trips`, `participants`,
+**Data model** (`pocketbase/pb_migrations/`): `users`, `trips`, `participants`,
 `gear_items`, `gear_claims`, `meal_slots`, `meal_signups`, `packing_items`.
 
-- `participants.client_id` — a random UUID in localStorage maps a browser to a
-  participant with no password (the no-account trick).
+- Auth is PocketBase-native (`users` collection): **Google OAuth2 + email/password**.
+- `participants` is the membership table — a participant links to a `user` and a
+  `role` (`organizer` | `guest`). `trips.created_by` is the creator.
 - Gear "remaining" = `qty_needed − Σ claims`; claiming auto-adds a personal
   packing item linked via `from_gear`.
 
 ### Security model
 
 The browser **never talks to PocketBase directly.** Every collection rule is
-locked to superuser-only; all access goes through the SvelteKit server
-(authenticated as a superuser): reads via the page `load()`, writes via
-`POST /[share_token]/actions`, which resolves the trip from the URL token and
-verifies every target row belongs to it. This scopes everything to one trip and
-closes cross-trip read/write/enumeration. Within a trip, identity is claim-based
-and trusted — the intended no-account model. **The share link is the secret.**
+locked to superuser-only; all access goes through the SvelteKit server: the
+signed-in user is hydrated from a `pb_auth` cookie, reads happen in the page
+`load()`, and writes go through `POST /[share_token]/actions`. Both require the
+user to be a **member** of the trip; the acting participant is derived from the
+authenticated user (not trusted from the client), and only organizers may act on
+others. This scopes everything to one trip and gates private content to invited,
+signed-in guests. **The invite link lets you join; your account is your identity.**
 
 ## Roadmap
 
 Captured, not yet built — each needs its own pass:
 
-- **Multi-trip + planner** — a planner/dashboard + calendar where you see every
-  trip you're hosting or invited to, with a smooth **"no trips planned yet"**
-  empty state. Today the app is single-trip-per-link; this is the cross-trip
-  view. (Implies optional cross-trip accounts — see
-  [`docs/api-layer.md`](./docs/api-layer.md).)
+- **Multi-trip + planner** — now unblocked by accounts: a dashboard + calendar
+  where you see every trip you're hosting or invited to, with a smooth **"no
+  trips planned yet"** empty state. See the
+  [roadmap](https://github.com/bigsaam/rally/blob/main/ROADMAP.md).
 - **Carpooling / convoy** — sub-groups (cars) with their own plan until they meet.
 - **Native apps** — installable PWA → iOS/Android via Capacitor over the same API.
 - **Expenses** — native split & settle-up (Spliit has no public API to reuse).
@@ -150,7 +155,7 @@ for users and contributors.
 ## Contributing
 
 PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) and the
-[Code of Conduct](./CODE_OF_CONDUCT.md). Keep it no-account and mobile-first.
+[Code of Conduct](./CODE_OF_CONDUCT.md). Keep it invite-first and mobile-first.
 AI-assisted contributions are welcome ([AI policy](./AI_POLICY.md)) — you're
 responsible for testing and understanding what you submit.
 

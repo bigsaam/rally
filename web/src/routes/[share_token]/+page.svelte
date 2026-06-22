@@ -1,18 +1,21 @@
 <script>
   import TripView from '$lib/TripView.svelte';
-  import IdentityGate from '$lib/IdentityGate.svelte';
+  import TripTeaser from '$lib/TripTeaser.svelte';
 
   /** @type {{ data: import('./$types').PageData, form: import('./$types').ActionData }} */
   let { data, form } = $props();
-
-  /** @type {{ participantId: string, displayName: string } | null} */
-  let identity = $state(null);
 </script>
 
-<svelte:head><title>{data.trip.name} — Rally</title></svelte:head>
+<svelte:head><title>{data.trip?.name ?? 'Rally'} — Rally</title></svelte:head>
 
-<TripView {data} currentParticipantId={identity?.participantId ?? null}>
-  {#snippet top()}
-    <IdentityGate shareToken={data.trip.share_token} {form} bind:identity />
-  {/snippet}
-</TripView>
+{#if data.teaser}
+  <TripTeaser trip={data.trip} mode="signin" />
+{:else if data.invite}
+  <TripTeaser trip={data.trip} mode="join" {form} />
+{:else}
+  <TripView
+    {data}
+    currentParticipantId={data.membership?.participantId ?? null}
+    ownerMode={data.isOrganizer ?? false}
+  />
+{/if}

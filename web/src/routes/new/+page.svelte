@@ -46,7 +46,7 @@
         <div class="text-center text-[44px] leading-none">🎉</div>
         <h1 class="mt-2 text-center font-display text-2xl font-bold text-cocoa-900">"{created.name}" is live!</h1>
         <p class="mt-1 text-center font-body font-bold text-cocoa-500">
-          Drop this link in the group chat — anyone with it is in.
+          Drop this link in the group chat — anyone you invite signs in to join.
           {#if created.mealSlots}<br />We set up {created.mealSlots} meal slots from your dates.{/if}
         </p>
 
@@ -58,9 +58,9 @@
           </Button>
         </div>
 
-        <p class="mb-1.5 mt-4 font-display text-sm font-semibold text-cocoa-900">Your private owner link</p>
+        <p class="mb-1.5 mt-4 font-display text-sm font-semibold text-cocoa-900">Co-organizer link</p>
         <p class="-mt-1 mb-1.5 font-body text-xs font-bold text-cocoa-500">
-          Keep this — it's how you edit the trip later. Don't share it.
+          Optional — send this to someone you want to co-run the trip. They sign in and become an organizer. Keep it private otherwise.
         </p>
         <div class="flex gap-2">
           <input
@@ -79,7 +79,7 @@
       </Card>
     {:else}
       <h1 class="mt-4 font-display text-[27px] font-bold tracking-tight text-cocoa-900">Plan a trip 🎒</h1>
-      <p class="mt-1 font-body font-bold text-cocoa-500">One link, everyone's in. No accounts needed.</p>
+      <p class="mt-1 font-body font-bold text-cocoa-500">One link to invite the group. Everyone signs in to join.</p>
 
       {#if errors._form}
         <p class="mt-4 rounded-md bg-berry-200 px-3 py-2 font-body text-sm font-bold text-berry-600">{errors._form}</p>

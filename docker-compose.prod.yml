@@ -18,6 +18,9 @@ services:
     environment:
       - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:?set in .env}"
       - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:?set in .env}"
+      # Google OAuth2 sign-in (op:// URIs in prod). Empty = Google disabled.
+      - "GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}"
+      - "GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}"
     entrypoint:
       - /bin/sh
       - -c

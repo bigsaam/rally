@@ -1,13 +1,15 @@
-import { error } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
-import { loadTripByShareToken } from '$lib/server/loadTrip.js';
+import { joinTrip } from '$lib/server/membership.js';
 
-export async function load({ params, url }) {
+// Legacy owner link → account claim. Pre-auth trips were edited via
+// `/<slug>/edit?owner=<token>`. Now that link lets whoever holds it *claim the
+// trip to their account* (becoming an organizer) — a migration path and a way
+// to add co-organizers. After claiming, everything happens on the normal trip
+// page, where organizer powers are unlocked by role.
+export async function load({ params, url, locals }) {
   const ownerToken = url.searchParams.get('owner') ?? '';
 
-  // Verify the owner token before granting owner mode. The token is the
-  // capability; a missing/wrong token is a 403, not a redirect, so it is clear
-  // the link is what's wrong.
   const pb = await superuserPb();
   let trip;
   try {
@@ -23,6 +25,22 @@ export async function load({ params, url }) {
     throw error(403, 'That owner link is invalid for this trip.');
   }
 
-  const data = await loadTripByShareToken(params.share_token);
-  return { ...data, ownerMode: true };
+  // Need an account to claim — bounce through login, then return here.
+  if (!locals.user) {
+    const back = `/${params.share_token}/edit?owner=${encodeURIComponent(ownerToken)}`;
+    throw redirect(303, `/login?next=${encodeURIComponent(back)}`);
+  }
+
+  // First claimer becomes the creator; anyone with the owner link becomes an
+  // organizer (supports co-organizers).
+  if (!trip.created_by) {
+    await pb.collection('trips').update(trip.id, { created_by: locals.user.id });
+    trip.created_by = locals.user.id;
+  }
+  const m = await joinTrip(pb, trip, locals.user);
+  if (m.role !== 'organizer') {
+    await pb.collection('participants').update(m.id, { role: 'organizer' });
+  }
+
+  throw redirect(303, `/${params.share_token}`);
 }

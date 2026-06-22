@@ -1,0 +1,25 @@
+import type PocketBase from 'pocketbase';
+
+/** A signed-in user, as surfaced on the server and to pages. */
+export interface SessionUser {
+  id: string;
+  email: string;
+  name: string;
+  avatar: string;
+}
+
+declare global {
+  namespace App {
+    interface Locals {
+      /** Per-request PocketBase client carrying the user's auth (or empty). */
+      pb: PocketBase;
+      /** The signed-in user, or null when not authenticated. */
+      user: SessionUser | null;
+    }
+    interface PageData {
+      user?: SessionUser | null;
+    }
+  }
+}
+
+export {};

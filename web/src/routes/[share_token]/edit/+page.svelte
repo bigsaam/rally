@@ -1,10 +1,5 @@
 <script>
-  import TripView from '$lib/TripView.svelte';
-
-  /** @type {{ data: import('./$types').PageData }} */
-  let { data } = $props();
+  // This route always redirects in load() (claim → trip page). Nothing renders.
 </script>
 
-<svelte:head><title>{data.trip.name} (owner) — Rally</title></svelte:head>
-
-<TripView {data} ownerMode={true} />
+<p class="p-8 text-center font-body text-cocoa-500">Taking you to the trip…</p>

@@ -21,6 +21,10 @@ services:
       # (op:// in .env, run via `op run -- docker compose up -d`).
       - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@rally.local}"
       - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-rallyadmin123}"
+      # Google OAuth2 sign-in. The auth migration reads these to configure the
+      # provider; empty = Google sign-in disabled (email/password still works).
+      - "GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}"
+      - "GOOGLE_OAUTH_CLIENT_SECRET=${GOOGLE_OAUTH_CLIENT_SECRET:-}"
     # Idempotently ensure the superuser exists, then serve. Makes `up` one-step.
     entrypoint:
       - /bin/sh

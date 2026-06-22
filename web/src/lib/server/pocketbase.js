@@ -16,6 +16,18 @@ const PB_URL = env.PB_URL || 'http://127.0.0.1:8090';
 const EMAIL = env.PB_SUPERUSER_EMAIL || 'admin@rally.local';
 const PASSWORD = env.PB_SUPERUSER_PASSWORD || 'rallyadmin123';
 
+/**
+ * A fresh, unauthenticated PocketBase client pointed at the same instance.
+ * Used per-request to carry a signed-in user's auth (loaded from the pb_auth
+ * cookie) and to run auth operations (login / OAuth / logout). Distinct from
+ * the cached superuser client, which performs all data reads/writes.
+ */
+export function newClient() {
+  const pb = new PocketBase(PB_URL);
+  pb.autoCancellation(false);
+  return pb;
+}
+
 /** @type {import('pocketbase').default | null} */
 let _pb = null;
 

@@ -1,19 +1,20 @@
+import { sequence } from '@sveltejs/kit/hooks';
+import { dev } from '$app/environment';
 import { rateLimit, clientIp } from '$lib/server/rateLimit.js';
+import { newClient } from '$lib/server/pocketbase.js';
+
+const AUTH_COOKIE = 'pb_auth';
 
 // Coarse global rate limit per client IP — a backstop against someone scraping
-// trip URLs or hammering the actions endpoint. Generous enough that normal use
-// (including the ~4s live-poll while a tab is open) never trips it. Sensitive
-// POSTs (create trip, join, unlock a secret) add their own stricter, narrower
-// limits at the point of use.
+// trip URLs or hammering endpoints. Generous enough that normal use (incl. the
+// ~4s live-poll) never trips it. Sensitive POSTs add stricter limits at the
+// point of use.
 const GLOBAL = { limit: 300, windowMs: 60_000 };
 
 /** @type {import('@sveltejs/kit').Handle} */
-export async function handle({ event, resolve }) {
-  // Only meter dynamic app traffic; let static assets and the prerendered
-  // landing page through untouched.
+const handleRateLimit = async ({ event, resolve }) => {
   const p = event.url.pathname;
   const metered = !p.startsWith('/_app/') && !p.startsWith('/favicon');
-
   if (metered) {
     const { ok, retryAfter } = rateLimit(`g:${clientIp(event)}`, GLOBAL);
     if (!ok) {
@@ -23,6 +24,35 @@ export async function handle({ event, resolve }) {
       });
     }
   }
-
   return resolve(event);
-}
+};
+
+// Hydrate the signed-in user from the pb_auth cookie. Validation is local
+// (token expiry) — no network round-trip per request, so the live-poll stays
+// cheap. Auth operations (login/OAuth/logout) mutate event.locals.pb; the
+// updated cookie is serialized back here after the response is produced.
+/** @type {import('@sveltejs/kit').Handle} */
+const handleAuth = async ({ event, resolve }) => {
+  const pb = newClient();
+  pb.authStore.loadFromCookie(event.request.headers.get('cookie') || '', AUTH_COOKIE);
+  if (!pb.authStore.isValid) pb.authStore.clear();
+
+  event.locals.pb = pb;
+  const rec = pb.authStore.record;
+  event.locals.user = rec
+    ? { id: rec.id, email: rec.email, name: rec.name ?? '', avatar: rec.avatar ?? '' }
+    : null;
+
+  const response = await resolve(event);
+
+  response.headers.append(
+    'set-cookie',
+    pb.authStore.exportToCookie(
+      { httpOnly: true, secure: !dev, sameSite: 'Lax', path: '/' },
+      AUTH_COOKIE
+    )
+  );
+  return response;
+};
+
+export const handle = sequence(handleRateLimit, handleAuth);
