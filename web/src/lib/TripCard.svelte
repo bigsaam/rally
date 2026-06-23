@@ -7,11 +7,13 @@
    *   trip: {
    *     name: string, slug: string, location?: string,
    *     start_date?: string, end_date?: string,
-   *     role?: string, going?: number, maybe?: number, members?: number
+   *     role?: string, status?: string, going?: number, maybe?: number, members?: number
    *   }
    * }}
    */
   let { trip } = $props();
+
+  const planning = $derived(trip.status === 'planning');
 </script>
 
 <a
@@ -34,8 +36,13 @@
   {/if}
 
   <div class="mt-2.5 flex flex-wrap gap-1.5">
-    <Chip tone="coral">🎉 {trip.going ?? 0} going</Chip>
-    {#if (trip.maybe ?? 0) > 0}<Chip tone="sun">🤔 {trip.maybe} maybe</Chip>{/if}
-    <Chip tone="berry">👥 {trip.members ?? 0} in</Chip>
+    {#if planning}
+      <Chip tone="sun">🌱 Planning</Chip>
+      <Chip tone="berry">👥 {trip.members ?? 0} interested</Chip>
+    {:else}
+      <Chip tone="coral">🎉 {trip.going ?? 0} going</Chip>
+      {#if (trip.maybe ?? 0) > 0}<Chip tone="sun">🤔 {trip.maybe} maybe</Chip>{/if}
+      <Chip tone="berry">👥 {trip.members ?? 0} in</Chip>
+    {/if}
   </div>
 </a>

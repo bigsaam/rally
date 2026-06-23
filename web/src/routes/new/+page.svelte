@@ -12,6 +12,18 @@
   const errors = $derived(form?.errors ?? {});
   const values = $derived(form?.values ?? {});
 
+  const STAGES = [
+    ['planning', '🌱 Planning', "Gather dates & a place with the group first"],
+    ['confirmed', '✅ Confirmed', "It's happening — I have the details"],
+    ['completed', '🗓️ Already happened', 'Just documenting a past trip']
+  ];
+  const TYPES = [
+    ['camping', '🏕️ Camping'], ['backpacking', '🎒 Backpacking'], ['road_trip', '🚗 Road trip'],
+    ['cabin', '🛖 Cabin'], ['ski', '⛷️ Ski'], ['beach', '🏖️ Beach'], ['city', '🏙️ City'],
+    ['festival', '🎪 Festival'], ['other', '🧭 Other']
+  ];
+  let stage = $state('planning');
+
   const origin = $derived(page.url.origin);
   const shareUrl = $derived(created ? `${origin}/${created.share_token}` : '');
   const ownerUrl = $derived(
@@ -93,6 +105,36 @@
             placeholder="Mendocino Coast Camping"
           />
           {#if errors.name}<p class="mt-1 font-body text-sm font-bold text-berry-600">{errors.name}</p>{/if}
+        </div>
+
+        <div>
+          <span class={labelClass}>What stage is it at?</span>
+          <input type="hidden" name="status" value={stage} />
+          <div class="flex flex-col gap-2">
+            {#each STAGES as [val, label, hint]}
+              <button
+                type="button"
+                onclick={() => (stage = val)}
+                class="flex items-center justify-between rounded-md border-2 px-3.5 py-2.5 text-left transition {stage === val ? 'border-coral-400 bg-coral-200' : 'border-sand-300 bg-white hover:border-coral-300'}"
+              >
+                <span class="font-display text-sm font-semibold text-cocoa-900">{label}</span>
+                <span class="font-body text-xs font-bold text-cocoa-500">{hint}</span>
+              </button>
+            {/each}
+          </div>
+          {#if stage === 'planning'}
+            <p class="mt-1.5 font-body text-xs font-bold text-cocoa-500">
+              Dates & location are optional — you'll gather them with the group.
+            </p>
+          {/if}
+        </div>
+
+        <div>
+          <label class={labelClass} for="trip_type">Trip type <span class="font-body font-bold text-cocoa-500">(optional)</span></label>
+          <select id="trip_type" name="trip_type" value={values.trip_type ?? ''} class={inputClass}>
+            <option value="">Pick one…</option>
+            {#each TYPES as [v, l]}<option value={v}>{l}</option>{/each}
+          </select>
         </div>
 
         <div>

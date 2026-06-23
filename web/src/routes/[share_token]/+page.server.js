@@ -3,6 +3,7 @@ import { superuserPb } from '$lib/server/pocketbase.js';
 import { loadTripByShareToken } from '$lib/server/loadTrip.js';
 import { getMembership, joinTrip, listOrphans, claimParticipant } from '$lib/server/membership.js';
 import { tripTeaser } from '$lib/server/teaser.js';
+import { loadPlanning } from '$lib/server/planning.js';
 
 /**
  * Resolve a trip row by share token, or throw the right HTTP error.
@@ -36,14 +37,40 @@ export async function load({ params, locals }) {
     return { invite: true, trip: tripTeaser(trip), orphans: await listOrphans(pb, trip.id) };
   }
 
-  // Member → full trip. Surface any unclaimed entries so a member who came in
-  // under a fresh account can still merge into their pre-auth name.
+  const isOrganizer = membership.role === 'organizer';
+  const membershipOut = { participantId: membership.id, role: membership.role || 'guest' };
+  const orphans = await listOrphans(pb, trip.id);
+
+  // Planning stage → idea-gathering view (dates + locations), not the full trip.
+  if ((trip.status || 'confirmed') === 'planning') {
+    const planning = await loadPlanning(pb, trip, membership.id);
+    return {
+      planning: true,
+      trip: {
+        id: trip.id,
+        name: trip.name,
+        share_token: trip.share_token,
+        location: trip.location || '',
+        description: trip.description || '',
+        trip_type: trip.trip_type || '',
+        status: 'planning'
+      },
+      membership: membershipOut,
+      isOrganizer,
+      ...planning,
+      orphans
+    };
+  }
+
+  // Confirmed / completed → full trip. Surface any unclaimed entries so a member
+  // who came in under a fresh account can still merge into their pre-auth name.
   const data = await loadTripByShareToken(params.share_token);
   return {
     ...data,
-    membership: { participantId: membership.id, role: membership.role || 'guest' },
-    isOrganizer: membership.role === 'organizer',
-    orphans: await listOrphans(pb, trip.id)
+    status: trip.status || 'confirmed',
+    membership: membershipOut,
+    isOrganizer,
+    orphans
   };
 }
 

@@ -2,6 +2,7 @@
   import TripView from '$lib/TripView.svelte';
   import TripTeaser from '$lib/TripTeaser.svelte';
   import ClaimBanner from '$lib/ClaimBanner.svelte';
+  import PlanningView from '$lib/PlanningView.svelte';
 
   /** @type {{ data: import('./$types').PageData, form: import('./$types').ActionData }} */
   let { data, form } = $props();
@@ -13,6 +14,8 @@
   <TripTeaser trip={data.trip} mode="signin" />
 {:else if data.invite}
   <TripTeaser trip={data.trip} mode="join" orphans={data.orphans ?? []} {form} />
+{:else if data.planning}
+  <PlanningView {data} />
 {:else}
   <TripView
     {data}

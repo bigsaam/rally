@@ -25,11 +25,14 @@ export const actions = {
     const end_date = clean(String(form.get('end_date') ?? ''));
     const description = clean(String(form.get('description') ?? ''));
     const expense_link = clean(String(form.get('expense_link') ?? ''));
+    let status = clean(String(form.get('status') ?? 'confirmed'));
+    if (!['planning', 'confirmed', 'completed'].includes(status)) status = 'confirmed';
+    const trip_type = clean(String(form.get('trip_type') ?? ''));
 
     // Boundary validation — fail fast with field-level messages.
     /** @type {Record<string, string>} */
     const errors = {};
-    const values = { name, location, start_date, end_date, description, expense_link };
+    const values = { name, location, start_date, end_date, description, expense_link, status, trip_type };
 
     if (!name) errors.name = 'Give your trip a name.';
     else if (name.length > MAX.name) errors.name = `Keep it under ${MAX.name} characters.`;
@@ -58,7 +61,9 @@ export const actions = {
       description: description ? `<p>${escapeHtml(description)}</p>` : '',
       expense_link,
       owner_token,
-      created_by: locals.user.id
+      created_by: locals.user.id,
+      status,
+      trip_type
     };
 
     // Friendly slug (<trip-word>-<word>-<word>-<word>). Three random words

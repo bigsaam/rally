@@ -11,6 +11,7 @@
  * @property {string} start_date
  * @property {string} end_date
  * @property {string} role
+ * @property {string} status
  * @property {number} members
  * @property {number} going
  * @property {number} maybe
@@ -94,6 +95,7 @@ export async function loadUserTrips(pb, userId) {
       start_date: t.start_date ?? '',
       end_date: t.end_date ?? '',
       role: roleByTrip[t.id] ?? 'guest',
+      status: t.status || 'confirmed',
       ...(stats[t.id] ?? { members: 0, going: 0, maybe: 0 }),
       _start: start,
       _bucket: bucketOf({ start, end }, today)
