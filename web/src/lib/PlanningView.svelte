@@ -75,6 +75,12 @@
       <div class="flex flex-wrap items-center gap-2">
         <Chip tone="sun">🌱 In planning</Chip>
         {#if !isOrganizer && typeLabel}<Chip tone="neutral">{typeLabel}</Chip>{/if}
+        {#if isOrganizer}
+          <a
+            href="/{trip.share_token}/settings"
+            class="ml-auto inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-body text-[13px] font-bold text-cocoa-500 hover:bg-white hover:text-cocoa-900"
+          >⚙️ Settings</a>
+        {/if}
       </div>
 
       <h1 class="mt-2 font-display text-2xl font-bold leading-tight text-cocoa-900">{trip.name}</h1>

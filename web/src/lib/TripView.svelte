@@ -7,6 +7,7 @@
   import MealsSection from '$lib/sections/MealsSection.svelte';
   import PackingSection from '$lib/sections/PackingSection.svelte';
   import { fmtDateRange } from '$lib/format.js';
+  import { page } from '$app/state';
 
   /**
    * @type {{
@@ -19,6 +20,7 @@
   let { data, ownerMode = false, currentParticipantId = null, top } = $props();
 
   const trip = $derived(data.trip);
+  const settingsHref = $derived(`${page.url.pathname.replace(/\/$/, '')}/settings`);
   const participants = $derived(data.participants);
   const gear = $derived(data.gear);
   const meals = $derived(data.meals);
@@ -68,8 +70,12 @@
 <div class="min-h-full bg-sand-100 pb-10">
   <div class="mx-auto w-full max-w-3xl px-4 sm:px-6">
     {#if ownerMode}
-      <div class="mt-4 rounded-md bg-sun-200 px-4 py-2.5 text-sm font-bold text-sun-600">
-        ✨ You're an organizer — you can edit everything here.
+      <div class="mt-4 flex items-center justify-between gap-3 rounded-md bg-sun-200 px-4 py-2.5">
+        <span class="text-sm font-bold text-cocoa-900">✨ You're an organizer — you can edit everything here.</span>
+        <a
+          href={settingsHref}
+          class="shrink-0 font-body text-[13px] font-extrabold text-cocoa-900 underline underline-offset-2 hover:text-coral-700"
+        >⚙️ Settings</a>
       </div>
     {/if}
 
