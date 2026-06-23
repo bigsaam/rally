@@ -48,24 +48,25 @@
     {/if}
   </main>
 {:else}
-  <!-- Marketing landing -->
+  <!-- Marketing landing — full-bleed, responsive -->
   <main
-    class="flex min-h-full flex-col justify-center gap-8 px-6 py-16"
-    style="margin-inline: auto; max-width: var(--screen-max); background: linear-gradient(180deg, var(--color-sand-100), var(--color-sand-200));"
+    class="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-sand-100 to-sand-200 px-6 py-20 text-center sm:py-28"
   >
-    <div class="text-center">
-      <div class="text-[56px] leading-none">🧭</div>
-      <h1 class="mt-3 font-display text-[44px] font-bold tracking-tight text-cocoa-900">Rally</h1>
-      <p class="mt-2 font-body text-lg font-bold text-cocoa-700">
+    <div class="mx-auto w-full max-w-2xl">
+      <div class="text-[64px] leading-none sm:text-[88px]">🧭</div>
+      <h1 class="mt-3 font-display text-5xl font-bold tracking-tight text-cocoa-900 sm:text-6xl">Rally</h1>
+      <p class="mx-auto mt-4 max-w-xl font-body text-lg font-bold text-cocoa-700 sm:text-xl">
         One link where the group gathers. Plan a trip, drop it in the group chat, and
         everyone signs in to join — RSVP, grab gear, sign up for food. Private to the
         people you invite.
       </p>
-    </div>
 
-    <div class="flex flex-col gap-3">
-      <Button href="/new" variant="primary" size="lg" full>Plan a trip 🎒</Button>
-      <Button href="/login" variant="ghost" size="lg" full>Sign in →</Button>
+      <div
+        class="mx-auto mt-8 flex max-w-sm flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center"
+      >
+        <Button href="/new" variant="primary" size="lg">Plan a trip 🎒</Button>
+        <Button href="/login" variant="ghost" size="lg">Sign in →</Button>
+      </div>
     </div>
   </main>
 {/if}

@@ -21,9 +21,7 @@
 
 <main class="min-h-full bg-sand-100">
   <div class="mx-auto max-w-md px-4 py-12 sm:px-6">
-    <a href="/" class="font-body text-[13px] font-extrabold text-coral-600 hover:underline">← Rally</a>
-
-    <div class="mt-6 rounded-xl bg-white p-[22px] text-center shadow-pop">
+    <div class="rounded-xl bg-white p-[22px] text-center shadow-pop">
       <div class="text-[40px] leading-none">🧭</div>
       <p class="mt-2 font-body text-[13px] font-extrabold uppercase tracking-wide text-coral-600">
         You're invited

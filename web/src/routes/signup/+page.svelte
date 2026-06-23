@@ -2,6 +2,7 @@
   import { enhance } from '$app/forms';
   import Button from '$lib/ui/Button.svelte';
   import TextField from '$lib/ui/TextField.svelte';
+  import GoogleIcon from '$lib/ui/GoogleIcon.svelte';
 
   /** @type {{ data: import('./$types').PageData, form: import('./$types').ActionData }} */
   let { data, form } = $props();
@@ -18,9 +19,7 @@
 
 <main class="min-h-full bg-sand-100">
   <div class="mx-auto max-w-md px-4 py-12 sm:px-6">
-    <a href="/" class="font-body text-[13px] font-extrabold text-coral-600 hover:underline">← Rally</a>
-
-    <div class="mt-6 rounded-xl bg-white p-[22px] shadow-pop">
+    <div class="rounded-xl bg-white p-[22px] shadow-pop">
       <div class="text-center text-[40px] leading-none">🧭</div>
       <h1 class="mt-2 text-center font-display text-xl font-bold text-cocoa-900">Create your account</h1>
       <p class="mt-1 text-center font-body text-[13px] font-bold text-cocoa-500">
@@ -35,7 +34,7 @@
         href={googleHref}
         class="mt-5 flex w-full items-center justify-center gap-2.5 rounded-md border-2 border-sand-300 bg-white py-3 font-display text-sm font-semibold text-cocoa-900 transition hover:border-coral-400"
       >
-        <span class="text-lg">🟢</span> Continue with Google
+        <GoogleIcon /> Continue with Google
       </a>
 
       <div class="my-4 flex items-center gap-3">
