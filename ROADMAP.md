@@ -6,7 +6,7 @@ grouped into [milestones](https://github.com/walaware/tripwala/milestones). Idea
 discussion live in
 [Discussions](https://github.com/walaware/tripwala/discussions).
 
-> tripwala is a [heavily AI-developed](./AI_POLICY.md) codebase built under human
+> tripwala is a [heavily AI-developed](https://github.com/walaware/.github/blob/main/AI_POLICY.md) codebase built under human
 > direction. The roadmap is human-owned — these are the things we *want* to
 > build, roughly in order. Order and scope will shift (e.g. accounts landed
 > ahead of the v1–v3 polish once we decided privacy needed real identity).

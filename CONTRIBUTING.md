@@ -5,12 +5,13 @@ your contributions — bug fixes, features, docs, or just ideas.
 
 ## Ground rules
 
-- **Be kind.** See the [Code of Conduct](./CODE_OF_CONDUCT.md).
+- **Be kind.** See the [Code of Conduct](https://github.com/walaware/.github/blob/main/CODE_OF_CONDUCT.md).
 - **AI-assisted work is welcome.** tripwala is itself heavily AI-developed (see the
-  [AI policy](./AI_POLICY.md)). Use whatever tools you like — but *you* own your
+  [AI policy](https://github.com/walaware/.github/blob/main/AI_POLICY.md)). Use whatever tools you like — but *you* own your
   PR: understand it, test it, and review it before submitting.
-- **Keep the no-account principle.** tripwala's whole point is *one link, no
-  mandatory logins*. Features should preserve that — don't add required signups.
+- **Keep it invite-first.** tripwala's whole point is *one link, private to the
+  people you invite*. Guests sign in (Google or email) to join, and only members
+  see the trip — features should preserve that shared-link, members-only model.
 - **Mobile-first.** Most people open trip links on a phone. Design for that, let
   it scale up.
 - **Small, focused PRs.** One concern per PR. A clear title and a short "why".

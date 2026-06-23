@@ -13,7 +13,7 @@ live page, private to the people you invite.
 [![Built with SvelteKit](https://img.shields.io/badge/SvelteKit-5-ff3e00.svg)](https://kit.svelte.dev)
 [![PocketBase](https://img.shields.io/badge/PocketBase-0.39-b8dbe4.svg)](https://pocketbase.io)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
-[![AI-developed](https://img.shields.io/badge/built_with-AI_%2B_human_review-7c3aed.svg)](./AI_POLICY.md)
+[![AI-developed](https://img.shields.io/badge/built_with-AI_%2B_human_review-7c3aed.svg)](https://github.com/walaware/.github/blob/main/AI_POLICY.md)
 
 </div>
 
@@ -166,14 +166,14 @@ Captured, not yet built — each needs its own pass:
 
 tripwala is a **heavily AI-developed codebase** — most of the code, docs, and
 migrations were written by LLM coding agents under human direction and review.
-We disclose this openly; see [AI_POLICY.md](./AI_POLICY.md) for what that means
+We disclose this openly; see [AI_POLICY.md](https://github.com/walaware/.github/blob/main/AI_POLICY.md) for what that means
 for users and contributors.
 
 ## Contributing
 
 PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) and the
-[Code of Conduct](./CODE_OF_CONDUCT.md). Keep it invite-first and mobile-first.
-AI-assisted contributions are welcome ([AI policy](./AI_POLICY.md)) — you're
+[Code of Conduct](https://github.com/walaware/.github/blob/main/CODE_OF_CONDUCT.md). Keep it invite-first and mobile-first.
+AI-assisted contributions are welcome ([AI policy](https://github.com/walaware/.github/blob/main/AI_POLICY.md)) — you're
 responsible for testing and understanding what you submit.
 
 ## License
