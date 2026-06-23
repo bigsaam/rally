@@ -1,7 +1,7 @@
 <script>
   import { enhance } from '$app/forms';
-  import Button from '$lib/ui/Button.svelte';
-  import TextField from '$lib/ui/TextField.svelte';
+  import { Button } from '@walaware/design';
+  import { TextField } from '@walaware/design';
   import GoogleIcon from '$lib/ui/GoogleIcon.svelte';
 
   /** @type {{ data: import('./$types').PageData, form: import('./$types').ActionData }} */

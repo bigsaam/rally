@@ -1,8 +1,8 @@
 <script>
   import { invalidateAll } from '$app/navigation';
-  import Card from '$lib/ui/Card.svelte';
-  import CardHeader from '$lib/ui/CardHeader.svelte';
-  import Button from '$lib/ui/Button.svelte';
+  import { Card } from '@walaware/design';
+  import { CardHeader } from '@walaware/design';
+  import { Button } from '@walaware/design';
   import { planAction } from '$lib/planClient.js';
   import { fmtDateRange } from '$lib/format.js';
 

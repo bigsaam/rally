@@ -1,9 +1,9 @@
 <script>
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
-  import Card from '$lib/ui/Card.svelte';
-  import CardHeader from '$lib/ui/CardHeader.svelte';
-  import Avatar from '$lib/ui/Avatar.svelte';
+  import { Card } from '@walaware/design';
+  import { CardHeader } from '@walaware/design';
+  import { Avatar } from '@walaware/design';
   import { fmtWeekday, fmtMonthDay } from '$lib/format.js';
 
   /**

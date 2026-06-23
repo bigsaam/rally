@@ -1,10 +1,10 @@
 <script>
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
-  import Card from '$lib/ui/Card.svelte';
-  import CardHeader from '$lib/ui/CardHeader.svelte';
+  import { Card } from '@walaware/design';
+  import { CardHeader } from '@walaware/design';
   import Checkbox from '$lib/ui/Checkbox.svelte';
-  import Button from '$lib/ui/Button.svelte';
+  import { Button } from '@walaware/design';
 
   /**
    * @type {{

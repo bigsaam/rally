@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { invalidateAll } from '$app/navigation';
-  import Chip from '$lib/ui/Chip.svelte';
+  import { Chip } from '@walaware/design';
   import PeopleSection from '$lib/sections/PeopleSection.svelte';
   import GearSection from '$lib/sections/GearSection.svelte';
   import MealsSection from '$lib/sections/MealsSection.svelte';

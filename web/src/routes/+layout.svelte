@@ -1,43 +1,47 @@
 <script>
   import '../app.css';
+  import { AppShell } from '@walaware/design';
   import { page } from '$app/state';
-  import Avatar from '$lib/ui/Avatar.svelte';
+  import { goto } from '$app/navigation';
 
   /** @type {{ children: import('svelte').Snippet, data: import('./$types').LayoutData }} */
   let { children, data } = $props();
 
   const user = $derived(data.user);
-  // Preserve where you are so signing in returns you to the same page.
-  const loginHref = $derived(`/login?next=${encodeURIComponent(page.url.pathname + page.url.search)}`);
-  // Don't show a "Sign in" link when we're already on an auth page.
-  const onAuthPage = $derived(page.url.pathname === '/login' || page.url.pathname === '/signup');
+  const path = $derived(page.url.pathname);
+  // The trip currently in view, if any — settings is a per-trip surface.
+  const tripToken = $derived(page.params.share_token ?? null);
+
+  // Top-level destinations. Trips is the home list; a trip opens as a pushed
+  // detail view, so it stays the active destination while inside one.
+  const nav = $derived([
+    {
+      key: 'trips',
+      label: 'Trips',
+      icon: '🧭',
+      active: path === '/' || path === '/new' || tripToken != null,
+      href: '/'
+    }
+  ]);
+
+  // Sign-out is a POST action; the account button submits the hidden form below.
+  /** @type {HTMLFormElement | undefined} */
+  let logoutForm = $state();
+  const account = $derived(
+    user ? { name: user.name || user.email, onSignOut: () => logoutForm?.requestSubmit() } : null
+  );
+
+  // Settings affordance only inside a trip (where settings actually lives).
+  const onSettings = $derived(tripToken ? () => goto(`/${tripToken}/settings`) : null);
+  const settingsActive = $derived(path.endsWith('/settings'));
 </script>
 
-<div class="flex min-h-screen flex-col bg-sand-100">
-  <header class="border-b border-sand-300 bg-sand-100/80 backdrop-blur">
-    <div class="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-2.5 sm:px-6">
-      <a href="/" class="flex items-center gap-1.5 font-display text-base font-bold text-cocoa-900">
-        <span aria-hidden="true">🧭</span> <span class="text-coral-600">tripwala</span>
-      </a>
-      {#if user}
-        <div class="flex items-center gap-2.5">
-          <Avatar name={user.name || user.email} size={26} />
-          <span class="hidden font-body text-[13px] font-extrabold text-cocoa-700 sm:inline">
-            {user.name || user.email}
-          </span>
-          <form method="POST" action="/logout">
-            <button type="submit" class="font-body text-[13px] font-extrabold text-coral-600 hover:underline">
-              Sign out
-            </button>
-          </form>
-        </div>
-      {:else if !onAuthPage}
-        <a href={loginHref} class="font-body text-[13px] font-extrabold text-coral-600 hover:underline">Sign in</a>
-      {/if}
-    </div>
-  </header>
-
-  <div class="flex flex-1 flex-col">
+{#if user}
+  <AppShell app="tripwala" {nav} {account} {onSettings} {settingsActive}>
     {@render children()}
-  </div>
-</div>
+  </AppShell>
+  <form bind:this={logoutForm} method="POST" action="/logout" class="hidden"></form>
+{:else}
+  <!-- Logged-out / auth pages bring their own full-bleed chrome. -->
+  {@render children()}
+{/if}

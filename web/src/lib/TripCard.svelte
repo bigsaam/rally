@@ -1,5 +1,5 @@
 <script>
-  import Chip from '$lib/ui/Chip.svelte';
+  import { Chip } from '@walaware/design';
   import { fmtDateRange } from '$lib/format.js';
 
   /**

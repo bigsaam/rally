@@ -1,9 +1,9 @@
 <script>
   import { invalidateAll } from '$app/navigation';
-  import Avatar from '$lib/ui/Avatar.svelte';
-  import Chip from '$lib/ui/Chip.svelte';
-  import Card from '$lib/ui/Card.svelte';
-  import Button from '$lib/ui/Button.svelte';
+  import { Avatar } from '@walaware/design';
+  import { Chip } from '@walaware/design';
+  import { Card } from '@walaware/design';
+  import { Button } from '@walaware/design';
   import PlanDateSection from '$lib/sections/PlanDateSection.svelte';
   import PlanLocationSection from '$lib/sections/PlanLocationSection.svelte';
   import { planAction } from '$lib/planClient.js';

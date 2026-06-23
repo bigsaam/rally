@@ -1,5 +1,5 @@
 <script>
-  import Button from '$lib/ui/Button.svelte';
+  import { Button, Wordmark, AppIcon } from '@walaware/design';
   import TripCard from '$lib/TripCard.svelte';
 
   /** @type {{ data: import('./$types').PageData }} */
@@ -14,18 +14,18 @@
 <svelte:head><title>tripwala — one link, everyone's in</title></svelte:head>
 
 {#if data.user}
-  <!-- Dashboard -->
-  <main class="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
+  <!-- Dashboard — AppShell owns the padding + centered content column. -->
+  <div>
     <div class="flex items-center justify-between">
-      <h1 class="font-display text-[27px] font-bold tracking-tight text-cocoa-900">Your trips</h1>
+      <h1 class="font-display text-[27px] font-bold tracking-tight text-text-strong">Your trips</h1>
       <Button href="/new" variant="primary" size="md">Plan a trip 🎒</Button>
     </div>
 
     {#if total === 0}
-      <div class="mt-8 rounded-2xl bg-white p-8 text-center shadow-card">
+      <div class="mt-8 rounded-2xl bg-surface-card p-8 text-center shadow-card">
         <div class="text-[44px] leading-none">🧭</div>
-        <h2 class="mt-2 font-display text-xl font-bold text-cocoa-900">No trips planned yet</h2>
-        <p class="mx-auto mt-1 max-w-sm font-body font-bold text-cocoa-500">
+        <h2 class="mt-2 font-display text-xl font-bold text-text-strong">No trips planned yet</h2>
+        <p class="mx-auto mt-1 max-w-sm font-body font-bold text-text-muted">
           Plan one and share the link, or open an invite someone sent you — it'll show up here.
         </p>
         <div class="mt-5"><Button href="/new" variant="primary" size="lg">Plan your first trip 🎒</Button></div>
@@ -34,7 +34,7 @@
       {#each [{ items: trips.current, label: 'Happening now' }, { items: trips.upcoming, label: 'Upcoming' }, { items: trips.past, label: 'Past' }] as section}
         {#if section.items.length}
           <section class="mt-7">
-            <h2 class="mb-2.5 font-display text-sm font-extrabold uppercase tracking-wide text-cocoa-500">
+            <h2 class="mb-2.5 font-display text-sm font-extrabold uppercase tracking-wide text-text-muted">
               {section.label}
             </h2>
             <div class="flex flex-col gap-3 sm:grid sm:grid-cols-2">
@@ -46,17 +46,18 @@
         {/if}
       {/each}
     {/if}
-  </main>
+  </div>
 {:else}
-  <!-- Marketing landing — full-bleed, responsive -->
+  <!-- Marketing landing — full-bleed, responsive (rendered outside the app shell). -->
   <main
     class="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-sand-100 to-sand-200 px-6 py-20 text-center sm:py-28"
   >
     <div class="mx-auto w-full max-w-2xl">
-      <div class="text-[64px] leading-none sm:text-[88px]">🧭</div>
-      <!-- TODO: adopt @walaware/design Wordmark when the package is published -->
-      <h1 class="mt-3 font-display text-5xl font-bold tracking-tight text-coral-600 sm:text-6xl">tripwala</h1>
-      <p class="mx-auto mt-4 max-w-xl font-body text-lg font-bold text-cocoa-700 sm:text-xl">
+      <div class="flex flex-col items-center gap-4">
+        <AppIcon app="tripwala" size={76} />
+        <Wordmark root="trip" size={56} />
+      </div>
+      <p class="mx-auto mt-5 max-w-xl font-body text-lg font-bold text-text-body sm:text-xl">
         One link where the group gathers. Plan a trip, drop it in the group chat, and
         everyone signs in to join — RSVP, grab gear, sign up for food. Private to the
         people you invite.

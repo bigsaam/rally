@@ -1,6 +1,5 @@
 <script>
-  import Avatar from './Avatar.svelte';
-  import Button from './Button.svelte';
+  import { Avatar, Button } from '@walaware/design';
 
   /**
    * The signature gear/task row: emoji tile, item, and either a "claimed by"

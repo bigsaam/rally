@@ -1,10 +1,10 @@
 <script>
   import { invalidateAll } from '$app/navigation';
-  import Card from '$lib/ui/Card.svelte';
-  import CardHeader from '$lib/ui/CardHeader.svelte';
-  import Button from '$lib/ui/Button.svelte';
-  import TextField from '$lib/ui/TextField.svelte';
-  import EmptyState from '$lib/ui/EmptyState.svelte';
+  import { Card } from '@walaware/design';
+  import { CardHeader } from '@walaware/design';
+  import { Button } from '@walaware/design';
+  import { TextField } from '@walaware/design';
+  import { EmptyState } from '@walaware/design';
   import { planAction } from '$lib/planClient.js';
 
   /**
@@ -98,7 +98,7 @@
   {/if}
 
   <div class="mt-3 flex flex-col gap-2">
-    <TextField prefix="📍" placeholder="Add a place" maxlength="200" bind:value={label} />
+    <TextField prefix="📍" placeholder="Add a place" maxlength={200} bind:value={label} />
     <div class="flex gap-2">
       <div class="flex-1"><TextField prefix="🔗" placeholder="Link (optional)" bind:value={url} /></div>
       <Button variant="soft" size="md" onclick={add} disabled={!label.trim() || busy}>Add</Button>

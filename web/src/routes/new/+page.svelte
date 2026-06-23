@@ -1,9 +1,7 @@
 <script>
   import { enhance } from '$app/forms';
   import { page } from '$app/state';
-  import Card from '$lib/ui/Card.svelte';
-  import Button from '$lib/ui/Button.svelte';
-  import TextField from '$lib/ui/TextField.svelte';
+  import { Card, Button, TextField } from '@walaware/design';
 
   /** @type {{ form: any }} */
   let { form } = $props();
@@ -49,8 +47,8 @@
 
 <svelte:head><title>{created ? 'Trip created' : 'New trip'} — tripwala</title></svelte:head>
 
-<main class="min-h-full bg-sand-100">
-  <div class="mx-auto max-w-xl px-4 py-8 sm:px-6">
+<div class="min-h-full">
+  <div class="mx-auto max-w-xl">
     {#if created}
       <Card hero class="mt-4">
         <div class="text-center text-[44px] leading-none">🎉</div>
@@ -84,7 +82,7 @@
         </div>
 
         <div class="mt-6">
-          <Button href="/{created.share_token}" variant="primary" size="lg" full>Open the trip →</Button>
+          <Button href={`/${created.share_token}`} variant="primary" size="lg" full>Open the trip →</Button>
         </div>
       </Card>
     {:else}
@@ -189,4 +187,4 @@
       </form>
     {/if}
   </div>
-</main>
+</div>

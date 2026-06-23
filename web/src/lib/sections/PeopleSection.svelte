@@ -1,11 +1,11 @@
 <script>
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
-  import Card from '$lib/ui/Card.svelte';
-  import CardHeader from '$lib/ui/CardHeader.svelte';
-  import Avatar from '$lib/ui/Avatar.svelte';
-  import SegmentedControl from '$lib/ui/SegmentedControl.svelte';
-  import LeanMeter from '$lib/ui/LeanMeter.svelte';
+  import { Card, CardHeader, Avatar, SegmentedControl, LeanMeter } from '@walaware/design';
+
+  // LeanMeter's `lean` prop is a 1|2|3 union; narrow the raw number to it.
+  /** @param {number} n @returns {1 | 2 | 3} */
+  const leanOf = (n) => (n >= 3 ? 3 : n <= 1 ? 1 : 2);
 
   /**
    * @type {{
@@ -85,7 +85,7 @@
         {#if ownerMode}
           <!-- Owner can set anyone's status; lean (self-set) shown for maybes -->
           <span class="ml-auto flex items-center gap-2">
-            {#if p.rsvp_status === 'maybe'}<LeanMeter lean={p.lean || 2} showLabel={false} />{/if}
+            {#if p.rsvp_status === 'maybe'}<LeanMeter lean={leanOf(p.lean || 2)} showLabel={false} />{/if}
             <span class="flex gap-1">
               {#each RSVP_OPTS as opt}
                 <button
@@ -102,7 +102,7 @@
             </span>
           </span>
         {:else if p.rsvp_status === 'maybe'}
-          <span class="ml-auto"><LeanMeter lean={p.lean || 2} /></span>
+          <span class="ml-auto"><LeanMeter lean={leanOf(p.lean || 2)} /></span>
         {:else}
           <span class="ml-auto text-[15px]">{p.rsvp_status ? statusEmoji[p.rsvp_status] : '·'}</span>
         {/if}

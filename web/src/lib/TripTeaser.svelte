@@ -1,7 +1,7 @@
 <script>
   import { enhance } from '$app/forms';
   import { invalidateAll } from '$app/navigation';
-  import Button from '$lib/ui/Button.svelte';
+  import { Button } from '@walaware/design';
   import { fmtDateRange } from '$lib/format.js';
 
   /**
@@ -19,7 +19,7 @@
   let claiming = $state('');
 </script>
 
-<main class="min-h-full bg-sand-100">
+<div class="min-h-full">
   <div class="mx-auto max-w-md px-4 py-12 sm:px-6">
     <div class="rounded-xl bg-white p-[22px] text-center shadow-pop">
       <div class="text-[40px] leading-none">🧭</div>
@@ -102,4 +102,4 @@
       </div>
     </div>
   </div>
-</main>
+</div>

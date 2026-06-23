@@ -2,11 +2,7 @@
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
   import { gearEmoji } from '$lib/avatar.js';
-  import Card from '$lib/ui/Card.svelte';
-  import CardHeader from '$lib/ui/CardHeader.svelte';
-  import Avatar from '$lib/ui/Avatar.svelte';
-  import Button from '$lib/ui/Button.svelte';
-  import EmptyState from '$lib/ui/EmptyState.svelte';
+  import { Card, CardHeader, Avatar, Button, EmptyState, Tooltip } from '@walaware/design';
 
   /**
    * @type {{
@@ -82,14 +78,16 @@
 <Card>
   <CardHeader icon="🎒" iconBg="var(--color-sun-200)" title="Who's bringing what?">
     {#snippet action()}
-      <button
-        type="button"
-        aria-label="Add gear"
-        onclick={() => (adding = !adding)}
-        class="grid h-8 w-8 place-items-center rounded-full bg-sun-200 text-lg text-sun-600 transition active:scale-90"
-      >
-        ＋
-      </button>
+      <Tooltip label="Add gear" placement="left">
+        <button
+          type="button"
+          aria-label="Add gear"
+          onclick={() => (adding = !adding)}
+          class="grid h-8 w-8 place-items-center rounded-full bg-sun-200 text-lg text-sun-600 transition active:scale-90"
+        >
+          ＋
+        </button>
+      </Tooltip>
     {/snippet}
   </CardHeader>
 

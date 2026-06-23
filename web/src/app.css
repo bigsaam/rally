@@ -1,115 +1,13 @@
+/* tripwala global styles.
+ *
+ * The whole Campfire house style — palette, type, radii, shadows, motion, the
+ * per-app accent contract, and base element defaults — comes from
+ * @walaware/design. Import order matters: Tailwind first, then the design theme
+ * so its @theme tokens contribute Tailwind utilities (bg-coral-500,
+ * text-cocoa-900, rounded-lg, shadow-card, font-display, …) AND emit the :root
+ * variables the shipped components read at runtime. The coral accent flows from
+ * data-app="tripwala" (set in app.html); fonts are loaded there too (a CSS
+ * @import can't follow Tailwind's output).
+ */
 @import 'tailwindcss';
-
-/* ============================================================
-   tripwala — Campfire design system (imported from Claude Design,
-   project "tripwala Design System"). Warm sunset palette, Fredoka +
-   Nunito, soft corners, coral-tinted shadows, pressable buttons.
-   Tokens are exposed to Tailwind via @theme; component-only tokens
-   (lips, motion) live in :root.
-   TODO: adopt @walaware/design theme tokens + Wordmark once published.
-   ============================================================ */
-
-@theme {
-  /* fonts */
-  --font-display: 'Fredoka', system-ui, sans-serif;
-  --font-body: 'Nunito', system-ui, sans-serif;
-
-  /* sand — warm neutrals / backgrounds */
-  --color-sand-50: #fff9f3;
-  --color-sand-100: #fff4ea;
-  --color-sand-200: #ffead9;
-  --color-sand-300: #ffe0c2;
-  --color-sand-400: #f2d2b6;
-
-  /* coral — primary */
-  --color-coral-200: #ffd4c6;
-  --color-coral-300: #ffa98f;
-  --color-coral-400: #ff8e6d;
-  --color-coral-500: #ff7a59;
-  --color-coral-600: #e15b38;
-  --color-coral-700: #c24a2c;
-
-  /* sunshine — secondary */
-  --color-sun-200: #ffe9c2;
-  --color-sun-300: #ffd37a;
-  --color-sun-400: #ffb23e;
-  --color-sun-500: #f59e14;
-  --color-sun-600: #e89a2a;
-
-  /* berry — playful accent */
-  --color-berry-200: #ffd9e4;
-  --color-berry-300: #fba8c2;
-  --color-berry-500: #e84f7c;
-  --color-berry-600: #d13a68;
-
-  /* leaf — going / success */
-  --color-leaf-200: #d6efd8;
-  --color-leaf-400: #6fb07a;
-  --color-leaf-500: #3fa66a;
-  --color-leaf-600: #2f8a55;
-
-  /* sky — info */
-  --color-sky-200: #cfe6f2;
-  --color-sky-500: #4f9ed1;
-
-  /* cocoa — ink */
-  --color-cocoa-900: #3a2d28;
-  --color-cocoa-700: #6b5247;
-  --color-cocoa-500: #9a8a80;
-  --color-cocoa-300: #c9b8ae;
-
-  /* avatar accent ramp (assigned by name hash) */
-  --color-av-1: #ff7a59;
-  --color-av-2: #ffb23e;
-  --color-av-3: #e84f7c;
-  --color-av-4: #6fb07a;
-  --color-av-5: #6ba8d8;
-  --color-av-6: #b57edc;
-  --color-av-7: #f2935c;
-  --color-av-8: #4fb6a8;
-
-  /* radius — soft everywhere; pills via rounded-full */
-  --radius-sm: 11px;
-  --radius-md: 16px;
-  --radius-lg: 24px;
-  --radius-xl: 28px;
-
-  /* coral-tinted soft shadows — never harsh gray */
-  --shadow-card: 0 8px 22px -10px rgba(255, 122, 89, 0.32);
-  --shadow-soft: 0 4px 14px -6px rgba(58, 45, 40, 0.18);
-  --shadow-pop: 0 14px 30px -12px rgba(255, 122, 89, 0.42);
-}
-
-:root {
-  /* component-only tokens (not Tailwind utilities) */
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --dur-fast: 120ms;
-  --dur-base: 200ms;
-  --dur-pop: 320ms;
-  /* mobile-first content cap */
-  --screen-max: 460px;
-}
-
-@layer base {
-  body {
-    font-family: var(--font-body);
-    font-weight: 600;
-    line-height: 1.45;
-    color: var(--color-cocoa-900);
-    background: var(--color-sand-100);
-    -webkit-text-size-adjust: 100%;
-    text-rendering: optimizeLegibility;
-  }
-  h1, h2, h3, h4 {
-    font-family: var(--font-display);
-    font-weight: 700;
-    line-height: 1.25;
-    letter-spacing: -0.01em;
-    color: var(--color-cocoa-900);
-  }
-  ::selection {
-    background: var(--color-coral-200);
-    color: var(--color-cocoa-900);
-  }
-}
+@import '@walaware/design/theme.css';

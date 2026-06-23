@@ -1,10 +1,10 @@
 <script>
   import { enhance } from '$app/forms';
   import { page } from '$app/state';
-  import Card from '$lib/ui/Card.svelte';
-  import Button from '$lib/ui/Button.svelte';
-  import TextField from '$lib/ui/TextField.svelte';
-  import Avatar from '$lib/ui/Avatar.svelte';
+  import { Card } from '@walaware/design';
+  import { Button } from '@walaware/design';
+  import { TextField } from '@walaware/design';
+  import { Avatar } from '@walaware/design';
 
   /** @type {{ data: any, form: any }} */
   let { data, form } = $props();
@@ -43,8 +43,8 @@
 
 <svelte:head><title>Trip settings — tripwala</title></svelte:head>
 
-<main class="min-h-full bg-sand-100">
-  <div class="mx-auto max-w-xl px-4 py-8 sm:px-6">
+<div class="min-h-full">
+  <div class="mx-auto max-w-xl">
     <a href="/{data.shareToken}" class="font-body text-sm font-extrabold text-coral-600 hover:underline">← Back to trip</a>
     <h1 class="mt-2 font-display text-[27px] font-bold tracking-tight text-cocoa-900">Trip settings</h1>
 
@@ -165,4 +165,4 @@
       </p>
     </Card>
   </div>
-</main>
+</div>
