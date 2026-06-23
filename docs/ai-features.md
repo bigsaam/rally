@@ -1,4 +1,4 @@
-# Rally AI Features — Design
+# tripwala AI Features — Design
 
 > Status: **design** (not yet built). Builds on `docs/api-layer.md` — AI helpers
 > live in the service core, server-side only.
@@ -35,12 +35,12 @@ browser calls our endpoints, never the LLM directly.
 
 ## Where it lives
 
-A `ai/` module in `@rally/core` (see `docs/api-layer.md`), wrapping an
+A `ai/` module in `@walaware/tripwala-core` (see `docs/api-layer.md`), wrapping an
 OpenAI-compatible chat-completions client. Web app and MCP both reach it through
 the service core, so there's one place for prompts, caching, and limits.
 
 ```
-@rally/core/ai/
+@walaware/tripwala-core/ai/
   client.ts      # OpenAI-compatible fetch wrapper, timeout, JSON-mode
   emoji.ts       # pickEmoji(name) → string   (fallback: gearEmoji map)
   suggest.ts     # suggestItems(section, trip) → string[]
@@ -103,5 +103,5 @@ Both are opt-in micro-affordances, same invisibility rules.
 2. `emoji` field migration + `pickEmoji` with cache; wire into add-item flows
    (replaces the static map call site, keeps it as fallback).
 3. Empty-section suggestions.
-4. Expose the same helpers as MCP tools (`rally_suggest_items`, etc.) for the
+4. Expose the same helpers as MCP tools (`tripwala_suggest_items`, etc.) for the
    AI-management surface.

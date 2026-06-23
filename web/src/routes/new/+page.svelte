@@ -47,7 +47,7 @@
   const labelClass = 'mb-[7px] block font-display text-sm font-semibold text-cocoa-900';
 </script>
 
-<svelte:head><title>{created ? 'Trip created' : 'New trip'} — Rally</title></svelte:head>
+<svelte:head><title>{created ? 'Trip created' : 'New trip'} — tripwala</title></svelte:head>
 
 <main class="min-h-full bg-sand-100">
   <div class="mx-auto max-w-xl px-4 py-8 sm:px-6">

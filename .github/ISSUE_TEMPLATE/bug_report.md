@@ -19,7 +19,7 @@ A clear description of the bug.
 **Environment**
 - Device / browser:
 - Self-hosted or cloud:
-- Rally version / image tag:
+- tripwala version / image tag:
 
 **Screenshots or logs**
 If applicable.

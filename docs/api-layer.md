@@ -1,23 +1,23 @@
-# Rally API Layer — Design
+# tripwala API Layer — Design
 
 > Status: **design** (not yet built). Build begins after the MVP build sequence
 > has features worth exposing. See `README.md` build status.
 
 ## Goal
 
-Let Rally be driven **programmatically and by AI tools** (any MCP client) without
+Let tripwala be driven **programmatically and by AI tools** (any MCP client) without
 duplicating business logic. One typed **service core** is the single source of
 truth for all reads/mutations; both the web app and an **MCP server** consume it.
 
 ```
                  +-----------------------------+
-                 |     @rally/core (TS)        |  business logic + zod validation
+                 |     @walaware/tripwala-core (TS)        |  business logic + zod validation
                  | trips / gear / meals / ...  |  + gear-remaining, token gen
                  +--------------+--------------+
                                 |
           +---------------------+----------------------+
           |                                            |
-   SvelteKit server                              @rally/mcp
+   SvelteKit server                              @walaware/tripwala-mcp
    (load + form actions)                         (MCP server)
    participant / owner-token context             superuser context
           |                                            |
@@ -34,22 +34,22 @@ revealing, validated surface (`createTrip`, `claimGear`, …) plus the AI bridge
 ## Proposed repo shape (pnpm workspace)
 
 ```
-rally/
+tripwala/
 ├── pnpm-workspace.yaml          # packages: web, mcp, packages/*
 ├── packages/
-│   └── core/                    # @rally/core
+│   └── core/                    # @walaware/tripwala-core
 │       ├── pocketbase.ts        # client factory w/ auth contexts
 │       ├── schemas.ts           # zod input schemas (boundary validation)
 │       ├── tokens.ts            # secure share_token / owner_token generation
 │       └── services/            # trips.ts, gear.ts, meals.ts, packing.ts, ...
-├── web/                         # imports @rally/core
-├── mcp/                         # @rally/mcp — imports @rally/core
+├── web/                         # imports @walaware/tripwala-core
+├── mcp/                         # @walaware/tripwala-mcp — imports @walaware/tripwala-core
 └── pocketbase/
 ```
 
 Migration note: the existing `web/src/lib/server/loadTrip.js` already contains
 the trip-loading + gear-remaining logic. Step 1 of the build below is to lift
-that into `@rally/core` and have the web app import it back — no behavior change.
+that into `@walaware/tripwala-core` and have the web app import it back — no behavior change.
 
 ## Auth contexts (the core exposes three)
 
@@ -78,15 +78,15 @@ plain typed return. Examples:
 - Meals: `generateSlotsFromDates`, `addMealSlot`, `signupMeal`.
 - Packing: `addPackingItem`, `togglePacking`.
 
-## MCP server (`@rally/mcp`)
+## MCP server (`@walaware/tripwala-mcp`)
 
 - Node MCP server (stdio for local AI tools; optional Streamable HTTP for remote).
-- Tools mirror the service core under a `rally_*` namespace, each with a zod
+- Tools mirror the service core under a `tripwala_*` namespace, each with a zod
   input schema and structured JSON output:
-  `rally_create_trip`, `rally_list_trips`, `rally_get_trip`, `rally_add_gear`,
-  `rally_generate_meals`, `rally_add_participant`, …
+  `tripwala_create_trip`, `tripwala_list_trips`, `tripwala_get_trip`, `tripwala_add_gear`,
+  `tripwala_generate_meals`, `tripwala_add_participant`, …
 - All tools run in `superuser()` context (management surface).
-- Optionally expose trips as MCP **resources** (`rally://trips/{id}`) for read.
+- Optionally expose trips as MCP **resources** (`tripwala://trips/{id}`) for read.
 
 ### MCP security
 
@@ -98,9 +98,9 @@ plain typed return. Examples:
 
 ## Build order (after MVP)
 
-1. Extract `@rally/core` from `web/src/lib/server/loadTrip.js`; refactor web to import it (no behavior change).
+1. Extract `@walaware/tripwala-core` from `web/src/lib/server/loadTrip.js`; refactor web to import it (no behavior change).
 2. Add zod schemas + service functions incrementally as MVP features land.
-3. Build `@rally/mcp` wrapping the core in superuser context.
+3. Build `@walaware/tripwala-mcp` wrapping the core in superuser context.
 4. Document the tool catalog + an example AI session.
 
 ## Related: participant accounts & OAuth linking (future, separate concern)

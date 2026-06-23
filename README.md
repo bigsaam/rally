@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧭 Rally
+# 🧭 tripwala
 
 **One link where the group gathers.**
 
@@ -19,10 +19,10 @@ live page, private to the people you invite.
 
 ---
 
-## Why Rally?
+## Why tripwala?
 
 Every group trip starts as a Notion page or a group-chat scroll — read-only, dead,
-and nobody updates it. Rally is the opposite: **shared, live state behind one
+and nobody updates it. tripwala is the opposite: **shared, live state behind one
 invite link.** Open the link on your phone, sign in (Google or email), and
 you're in — and only invited guests can see the details.
 
@@ -48,13 +48,13 @@ zero stoves — claim "I'll bring it" and everyone sees it's covered, instantly.
 ## Quick start (Docker)
 
 ```bash
-git clone https://github.com/bigsaam/rally.git
-cd rally
+git clone https://github.com/walaware/tripwala.git
+cd tripwala
 cp .env.example .env          # set PB_SUPERUSER_PASSWORD
 docker compose up --build
 ```
 
-Open **http://localhost:8080/demo-rally-weekend** to see a seeded demo trip. The
+Open **http://localhost:8080/demo-tripwala-weekend** to see a seeded demo trip. The
 PocketBase admin UI is at `/_/` (superuser is auto-created from your `.env`).
 
 ## Tech stack
@@ -77,11 +77,11 @@ cd pocketbase
 curl -sL -o pb.zip "https://github.com/pocketbase/pocketbase/releases/download/v0.39.4/pocketbase_0.39.4_$(uname -s | tr A-Z a-z)_$([ "$(uname -m)" = arm64 ] && echo arm64 || echo amd64).zip"
 unzip -o pb.zip pocketbase && rm pb.zip
 ./pocketbase serve --http=127.0.0.1:8090
-./pocketbase superuser upsert admin@rally.local rallyadmin123   # in another shell
+./pocketbase superuser upsert admin@tripwala.local tripwalaadmin123   # in another shell
 
 # 2) Web
 cd ../web && pnpm install && pnpm dev
-# http://localhost:5173/demo-rally-weekend
+# http://localhost:5173/demo-tripwala-weekend
 ```
 
 Vite proxies `/api` and `/_` to PocketBase; the SvelteKit server talks to it
@@ -90,7 +90,7 @@ directly. Before a PR: `pnpm check` and `pnpm build`. See
 
 ## Deploying (homelab / GHCR)
 
-Pushes to `main` build `rally-web` and `rally-pocketbase` images and publish them
+Pushes to `main` build `tripwala-web` and `tripwala-pocketbase` images and publish them
 to GHCR (`.github/workflows/docker.yml`). On your server, pull and run:
 
 ```bash
@@ -99,7 +99,7 @@ op run -- docker compose -f docker-compose.prod.yml up -d
 ```
 
 Front the published Caddy port (`:8080`) with your reverse proxy or a Cloudflare
-Tunnel pointing `rally.<your-domain>` at it. Secrets come from your `.env`
+Tunnel pointing `tripwala.<your-domain>` at it. Secrets come from your `.env`
 (use `op://` URIs + `op run`). The PocketBase `pb_data` volume holds all state —
 back it up.
 
@@ -137,7 +137,7 @@ Captured, not yet built — each needs its own pass:
 - **Multi-trip + planner** — now unblocked by accounts: a dashboard + calendar
   where you see every trip you're hosting or invited to, with a smooth **"no
   trips planned yet"** empty state. See the
-  [roadmap](https://github.com/bigsaam/rally/blob/main/ROADMAP.md).
+  [roadmap](https://github.com/walaware/tripwala/blob/main/ROADMAP.md).
 - **Carpooling / convoy** — sub-groups (cars) with their own plan until they meet.
 - **Native apps** — installable PWA → iOS/Android via Capacitor over the same API.
 - **Expenses** — native split & settle-up (Spliit has no public API to reuse).
@@ -147,7 +147,7 @@ Captured, not yet built — each needs its own pass:
 
 ## Built with AI
 
-Rally is a **heavily AI-developed codebase** — most of the code, docs, and
+tripwala is a **heavily AI-developed codebase** — most of the code, docs, and
 migrations were written by LLM coding agents under human direction and review.
 We disclose this openly; see [AI_POLICY.md](./AI_POLICY.md) for what that means
 for users and contributors.

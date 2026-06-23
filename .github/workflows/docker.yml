@@ -24,9 +24,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: rally-web
+          - image: tripwala-web
             context: ./web
-          - image: rally-pocketbase
+          - image: tripwala-pocketbase
             context: ./pocketbase
     steps:
       - uses: actions/checkout@v4

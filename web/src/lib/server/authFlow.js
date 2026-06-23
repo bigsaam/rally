@@ -2,9 +2,9 @@
 // safe post-login redirect target.
 
 export const OAUTH = {
-  state: 'rally_oauth_state',
-  verifier: 'rally_oauth_verifier',
-  next: 'rally_oauth_next'
+  state: 'tripwala_oauth_state',
+  verifier: 'tripwala_oauth_verifier',
+  next: 'tripwala_oauth_next'
 };
 
 /**

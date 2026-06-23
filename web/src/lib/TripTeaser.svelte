@@ -42,7 +42,7 @@
         {#if mode === 'signin'}
           <Button href={loginHref} variant="primary" size="lg" full>Sign in to join →</Button>
           <p class="mt-3 font-body text-xs font-bold text-cocoa-500">
-            Rally uses accounts so only invited guests see the details — photos, who's coming, and more.
+            tripwala uses accounts so only invited guests see the details — photos, who's coming, and more.
           </p>
         {:else}
           <form

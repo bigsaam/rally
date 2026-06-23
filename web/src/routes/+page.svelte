@@ -11,7 +11,7 @@
   );
 </script>
 
-<svelte:head><title>Rally — one link, everyone's in</title></svelte:head>
+<svelte:head><title>tripwala — one link, everyone's in</title></svelte:head>
 
 {#if data.user}
   <!-- Dashboard -->
@@ -54,7 +54,8 @@
   >
     <div class="mx-auto w-full max-w-2xl">
       <div class="text-[64px] leading-none sm:text-[88px]">🧭</div>
-      <h1 class="mt-3 font-display text-5xl font-bold tracking-tight text-cocoa-900 sm:text-6xl">Rally</h1>
+      <!-- TODO: adopt @walaware/design Wordmark when the package is published -->
+      <h1 class="mt-3 font-display text-5xl font-bold tracking-tight text-coral-600 sm:text-6xl">tripwala</h1>
       <p class="mx-auto mt-4 max-w-xl font-body text-lg font-bold text-cocoa-700 sm:text-xl">
         One link where the group gathers. Plan a trip, drop it in the group chat, and
         everyone signs in to join — RSVP, grab gear, sign up for food. Private to the

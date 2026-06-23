@@ -3,7 +3,7 @@
 // enough to blunt enumeration/brute-force on the public URL. Counters reset on
 // restart, which is fine for a friends-and-family app.
 //
-// NOTE: in-memory means limits are per-process. If Rally is ever scaled to
+// NOTE: in-memory means limits are per-process. If tripwala is ever scaled to
 // multiple replicas, move this to a shared store.
 
 /** @type {Map<string, number[]>} timestamps (ms) of recent hits per key */

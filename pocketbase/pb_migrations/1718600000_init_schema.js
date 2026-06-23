@@ -1,6 +1,6 @@
 /// <reference path="../pb_data/types.d.ts" />
 
-// Rally MVP schema.
+// tripwala MVP schema.
 //
 // Sharing model (see handoff doc): a trip is reached via a random `share_token`
 // in the URL; the creator additionally holds an `owner_token`. There are no

@@ -17,7 +17,7 @@
   <header class="border-b border-sand-300 bg-sand-100/80 backdrop-blur">
     <div class="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-2.5 sm:px-6">
       <a href="/" class="flex items-center gap-1.5 font-display text-base font-bold text-cocoa-900">
-        <span aria-hidden="true">🧭</span> Rally
+        <span aria-hidden="true">🧭</span> <span class="text-coral-600">tripwala</span>
       </a>
       {#if user}
         <div class="flex items-center gap-2.5">

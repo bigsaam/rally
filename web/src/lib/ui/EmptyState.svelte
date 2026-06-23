@@ -2,7 +2,7 @@
   import Button from './Button.svelte';
 
   /**
-   * Friendly empty state — Rally never leaves a blank card. Big emoji, a warm
+   * Friendly empty state — tripwala never leaves a blank card. Big emoji, a warm
    * line, and a single optional action.
    * @type {{
    *   emoji?: string,

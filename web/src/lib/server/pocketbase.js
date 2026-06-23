@@ -13,8 +13,8 @@ import { env } from '$env/dynamic/private';
 // matches the local dev superuser and is NOT a production secret.
 
 const PB_URL = env.PB_URL || 'http://127.0.0.1:8090';
-const EMAIL = env.PB_SUPERUSER_EMAIL || 'admin@rally.local';
-const PASSWORD = env.PB_SUPERUSER_PASSWORD || 'rallyadmin123';
+const EMAIL = env.PB_SUPERUSER_EMAIL || 'admin@tripwala.local';
+const PASSWORD = env.PB_SUPERUSER_PASSWORD || 'tripwalaadmin123';
 
 /**
  * A fresh, unauthenticated PocketBase client pointed at the same instance.

@@ -1,9 +1,9 @@
 # AI / LLM disclosure
 
-Rally is a **heavily AI-developed codebase.** The large majority of its code,
+tripwala is a **heavily AI-developed codebase.** The large majority of its code,
 documentation, migrations, and configuration was written by **LLM coding agents**
 (various tools) working **under human direction, with a human reviewing,
-testing, and steering** every step. It was built this way intentionally — Rally
+testing, and steering** every step. It was built this way intentionally — tripwala
 is partly an experiment in how far agent-driven development can go on a real,
 shipped product.
 

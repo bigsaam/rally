@@ -15,7 +15,7 @@
   let submitting = $state(false);
 </script>
 
-<svelte:head><title>Create account — Rally</title></svelte:head>
+<svelte:head><title>Create account — tripwala</title></svelte:head>
 
 <main class="min-h-full bg-sand-100">
   <div class="mx-auto max-w-md px-4 py-12 sm:px-6">

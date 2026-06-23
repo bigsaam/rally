@@ -8,7 +8,7 @@
   let { data, form } = $props();
 </script>
 
-<svelte:head><title>{data.trip?.name ?? 'Rally'} — Rally</title></svelte:head>
+<svelte:head><title>{data.trip?.name ?? 'tripwala'} — tripwala</title></svelte:head>
 
 {#if data.teaser}
   <TripTeaser trip={data.trip} mode="signin" />

@@ -1,13 +1,13 @@
 ---
 name: Feature request
-about: Suggest an idea for Rally
+about: Suggest an idea for tripwala
 title: ''
 labels: enhancement
 assignees: ''
 ---
 
 **What's the use case?**
-Tell us about the trip / situation. Rally grows from real-world needs.
+Tell us about the trip / situation. tripwala grows from real-world needs.
 
 **What would you like?**
 A clear description of what you want to happen.

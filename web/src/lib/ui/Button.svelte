@@ -28,17 +28,17 @@
 </script>
 
 {#if href && !disabled}
-  <a {href} class="rally-btn {variant} {size}" class:full {onclick} {...rest}>
+  <a {href} class="tripwala-btn {variant} {size}" class:full {onclick} {...rest}>
     {@render children?.()}
   </a>
 {:else}
-  <button {type} {disabled} class="rally-btn {variant} {size}" class:full {onclick} {...rest}>
+  <button {type} {disabled} class="tripwala-btn {variant} {size}" class:full {onclick} {...rest}>
     {@render children?.()}
   </button>
 {/if}
 
 <style>
-  .rally-btn {
+  .tripwala-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -57,11 +57,11 @@
       box-shadow var(--dur-fast) var(--ease-out),
       filter var(--dur-fast);
   }
-  .rally-btn:active:not(:disabled) {
+  .tripwala-btn:active:not(:disabled) {
     transform: translateY(var(--lip));
     box-shadow: 0 0 0 var(--lip-color);
   }
-  .rally-btn:disabled {
+  .tripwala-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }

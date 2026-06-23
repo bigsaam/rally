@@ -1,6 +1,6 @@
 <script>
   /**
-   * Soft rounded surface — the building block of every Rally section.
+   * Soft rounded surface — the building block of every tripwala section.
    * @type {{ hero?: boolean, pad?: boolean, class?: string, children?: import('svelte').Snippet, [key: string]: any }}
    */
   let { hero = false, pad = true, class: klass = '', children, ...rest } = $props();

@@ -1,11 +1,12 @@
 @import 'tailwindcss';
 
 /* ============================================================
-   Rally — Campfire design system (imported from Claude Design,
-   project "Rally Design System"). Warm sunset palette, Fredoka +
+   tripwala — Campfire design system (imported from Claude Design,
+   project "tripwala Design System"). Warm sunset palette, Fredoka +
    Nunito, soft corners, coral-tinted shadows, pressable buttons.
    Tokens are exposed to Tailwind via @theme; component-only tokens
    (lips, motion) live in :root.
+   TODO: adopt @walaware/design theme tokens + Wordmark once published.
    ============================================================ */
 
 @theme {

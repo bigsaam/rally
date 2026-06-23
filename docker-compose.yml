@@ -1,4 +1,4 @@
-# Rally — single self-hosted stack.
+# tripwala — single self-hosted stack.
 #
 #   docker compose up --build
 #
@@ -7,6 +7,8 @@
 #
 # Reverse-proxy friendly: in production put your own TLS proxy in front, or edit
 # the Caddyfile. The web and pocketbase services are not published directly.
+
+name: tripwala
 
 services:
   pocketbase:
@@ -19,8 +21,8 @@ services:
       # The SvelteKit server authenticates as this superuser to operate while
       # collection rules are locked. In prod these come from 1Password
       # (op:// in .env, run via `op run -- docker compose up -d`).
-      - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@rally.local}"
-      - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-rallyadmin123}"
+      - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@tripwala.local}"
+      - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-tripwalaadmin123}"
       # Google OAuth2 sign-in. The auth migration reads these to configure the
       # provider; empty = Google sign-in disabled (email/password still works).
       - "GOOGLE_OAUTH_CLIENT_ID=${GOOGLE_OAUTH_CLIENT_ID:-}"
@@ -44,8 +46,8 @@ services:
       # Server-side PocketBase URL (container network).
       - PB_URL=http://pocketbase:8090
       # Same superuser the SvelteKit server authenticates with.
-      - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@rally.local}"
-      - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-rallyadmin123}"
+      - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@tripwala.local}"
+      - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-tripwalaadmin123}"
     depends_on:
       pocketbase:
         condition: service_healthy

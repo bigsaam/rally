@@ -4,8 +4,8 @@
 // during the scaffold. Fixed share_token keeps the link stable across resets.
 // Idempotent: skips if the demo trip already exists.
 
-const DEMO_SHARE_TOKEN = "demo-rally-weekend";
-const DEMO_OWNER_TOKEN = "owner-demo-rally-1234";
+const DEMO_SHARE_TOKEN = "demo-tripwala-weekend";
+const DEMO_OWNER_TOKEN = "owner-demo-tripwala-1234";
 
 migrate(
   (app) => {
