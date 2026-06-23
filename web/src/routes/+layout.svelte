@@ -37,7 +37,11 @@
 </script>
 
 {#if user}
-  <AppShell app="tripwala" {nav} {account} {onSettings} {settingsActive}>
+  <!-- Single destination for now, so skip the persistent desktop sidebar: a very
+       high breakpoint forces the compact top-bar + hamburger-drawer layout at all
+       widths. Lower this to a normal value (e.g. 920) once there are more nav
+       destinations worth a sidebar. -->
+  <AppShell app="tripwala" {nav} {account} {onSettings} {settingsActive} breakpoint={100000}>
     {@render children()}
   </AppShell>
   <form bind:this={logoutForm} method="POST" action="/logout" class="hidden"></form>
