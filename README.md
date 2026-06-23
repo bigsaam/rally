@@ -88,6 +88,11 @@ Vite proxies `/api` and `/_` to PocketBase; the SvelteKit server talks to it
 directly. Before a PR: `pnpm check` and `pnpm build`. See
 [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+Want more sample data? `cd web && pnpm seed:dev` adds a few varied trips
+(confirmed / planning / past) to your signed-in account — or to a
+`demo@tripwala.local` / `demotripwala123` login if no one's signed in yet.
+It's idempotent, so it's safe to re-run.
+
 ## Secrets & configuration
 
 tripwala is configured entirely through environment variables — there's **no hard
