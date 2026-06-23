@@ -88,6 +88,23 @@ Vite proxies `/api` and `/_` to PocketBase; the SvelteKit server talks to it
 directly. Before a PR: `pnpm check` and `pnpm build`. See
 [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+## Secrets & configuration
+
+tripwala is configured entirely through environment variables — there's **no hard
+dependency on any particular secret manager.** Copy `.env.example` to `.env` and
+fill it in however you like:
+
+- **Required:** `PB_SUPERUSER_PASSWORD` — the SvelteKit server authenticates to
+  PocketBase as this superuser.
+- **Optional:** `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` enable
+  Google sign-in; leave them empty to offer email/password only.
+
+Manage those values with whatever you prefer — a plain `.env`, a cloud secret
+store, or **1Password**. This project happens to use the 1Password CLI (`op`):
+`.env.example` ships with `op://…` references, so `op inject -i .env.example -o
+.env` (or `op run -- docker compose up`) renders the real values at deploy time.
+That's a convenience, not a requirement — `op` is never needed at runtime.
+
 ## Deploying (homelab / GHCR)
 
 Pushes to `main` build `tripwala-web` and `tripwala-pocketbase` images and publish them
