@@ -22,17 +22,6 @@
   ];
   const typeLabel = $derived(TYPES.find(([v]) => v === trip.trip_type)?.[1] ?? '');
 
-  /** @param {Event} e */
-  async function setType(e) {
-    const v = /** @type {HTMLSelectElement} */ (e.target).value;
-    try {
-      await planAction(trip.share_token, { op: 'set_type', tripType: v });
-      await invalidateAll();
-    } catch (_) {
-      await invalidateAll();
-    }
-  }
-
   // Suggest the most-popular proposed range to prefill the confirm form.
   const suggested = $derived(
     [...(data.dateOptions ?? [])].sort((a, b) => b.yes - a.yes || a.start_date.localeCompare(b.start_date))[0]
@@ -74,7 +63,7 @@
     <header class="px-2 pb-3 pt-5">
       <div class="flex flex-wrap items-center gap-2">
         <Chip tone="sun">🌱 In planning</Chip>
-        {#if !isOrganizer && typeLabel}<Chip tone="neutral">{typeLabel}</Chip>{/if}
+        {#if typeLabel}<Chip tone="neutral">{typeLabel}</Chip>{/if}
         {#if isOrganizer}
           <a
             href="/{trip.share_token}/settings"
@@ -85,28 +74,16 @@
 
       <h1 class="mt-2 font-display text-2xl font-bold leading-tight text-cocoa-900">{trip.name}</h1>
 
-      <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-        {#if isOrganizer}
-          <label class="inline-flex items-center gap-1.5">
-            <span class="font-body text-[13px] font-bold text-cocoa-500">Type</span>
-            <select onchange={setType} value={trip.trip_type} class="rounded-md border-2 border-sand-300 bg-white px-2 py-1 font-body text-[13px] font-bold text-cocoa-900 outline-none focus:border-coral-400">
-              <option value="">Pick one…</option>
-              {#each TYPES as [v, l]}<option value={v}>{l}</option>{/each}
-            </select>
-          </label>
-        {/if}
-
-        {#if participants.length}
-          <div class="flex items-center gap-2">
-            <div class="flex -space-x-1.5">
-              {#each participants.slice(0, 6) as p (p.id)}
-                <span class="inline-block rounded-full ring-2 ring-sand-100" title={p.display_name}><Avatar name={p.display_name} size={24} /></span>
-              {/each}
-            </div>
-            <span class="font-body text-xs font-bold text-cocoa-500">{participants.length} interested</span>
+      {#if participants.length}
+        <div class="mt-2 flex items-center gap-2">
+          <div class="flex -space-x-1.5">
+            {#each participants.slice(0, 6) as p (p.id)}
+              <span class="inline-block rounded-full ring-2 ring-sand-100" title={p.display_name}><Avatar name={p.display_name} size={24} /></span>
+            {/each}
           </div>
-        {/if}
-      </div>
+          <span class="font-body text-xs font-bold text-cocoa-500">{participants.length} interested</span>
+        </div>
+      {/if}
 
       {#if trip.description}
         <div class="mt-3 rounded-2xl bg-white p-3.5 font-body text-[13.5px] leading-relaxed text-cocoa-700 shadow-card [&_a]:font-extrabold [&_a]:text-coral-700 [&_a]:underline">
