@@ -50,7 +50,7 @@
 {:else}
   <!-- Marketing landing — full-bleed, responsive (rendered outside the app shell). -->
   <main
-    class="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-sand-100 to-sand-200 px-6 py-20 text-center sm:py-28"
+    class="flex min-h-dvh flex-col items-center justify-center bg-gradient-to-b from-sand-100 to-sand-200 px-6 py-20 text-center sm:py-28"
   >
     <div class="mx-auto w-full max-w-2xl">
       <div class="flex flex-col items-center gap-4">
@@ -63,11 +63,9 @@
         people you invite.
       </p>
 
-      <div
-        class="mx-auto mt-8 flex max-w-sm flex-col items-stretch gap-3 sm:max-w-none sm:flex-row sm:items-center sm:justify-center"
-      >
-        <Button href="/new" variant="primary" size="lg">Plan a trip 🎒</Button>
-        <Button href="/login" variant="ghost" size="lg">Sign in →</Button>
+      <div class="mx-auto mt-8 flex max-w-xs flex-col items-center gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+        <Button href="/new" variant="primary" size="lg" full class="sm:w-auto">Plan a trip 🎒</Button>
+        <Button href="/login" variant="ghost" size="lg" full class="sm:w-auto">Sign in →</Button>
       </div>
     </div>
   </main>
