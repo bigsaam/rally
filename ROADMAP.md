@@ -13,6 +13,9 @@ discussion live in
 
 ## Shipped
 
+- **Planning phase** — start a trip as an idea: gather availability (proposed
+  ranges + a free-pick calendar heatmap) and location ideas (suggest + upvote),
+  then the owner confirms it into a real trip
 - One invite link per trip; **accounts** (Google OAuth2 + email/password) — sign
   in to join, and only invited members see the details (non-members get a teaser)
 - **Membership + roles** — organizer / guest; creator is auto-organizer;
@@ -30,6 +33,7 @@ discussion live in
 
 ## v1 · Quick Wins & Polish
 
+- [x] [#31 Planning phase — gather dates & location before a trip is real](https://github.com/bigsaam/rally/issues/31) ✅
 - [x] ~~#1 Trip secret / passphrase invite~~ — dropped; superseded by accounts
 - [ ] [#2 Weather forecast + countdown](https://github.com/bigsaam/rally/issues/2)
 - [ ] [#3 Dietary restrictions (feeds Meals)](https://github.com/bigsaam/rally/issues/3)
