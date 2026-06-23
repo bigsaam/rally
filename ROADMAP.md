@@ -8,39 +8,39 @@ discussion live in
 
 > Rally is a [heavily AI-developed](./AI_POLICY.md) codebase built under human
 > direction. The roadmap is human-owned — these are the things we *want* to
-> build, roughly in order. Order and scope will shift.
+> build, roughly in order. Order and scope will shift (e.g. accounts landed
+> ahead of the v1–v3 polish once we decided privacy needed real identity).
 
 ## Shipped
 
-- One-link, no-account trips at a share URL
-- Adopt-by-name identity (claim a name, become existing or new — no dupes)
-- RSVP with a "maybe" lean (long shot / 50-50 / leaning yes)
-- Gear claims (collision-safe), per-day Meals (owner + helpers), Packing
-- Batch-add for gear & packing
-- Friendly slugs, trip details/links in header
-- Locked-down API — the browser never touches PocketBase; all writes are
-  server-mediated and trip-scoped
-- "Campfire" design system
+- One invite link per trip; **accounts** (Google OAuth2 + email/password) — sign
+  in to join, and only invited members see the details (non-members get a teaser)
+- **Membership + roles** — organizer / guest; creator is auto-organizer;
+  membership-gated, server-mediated writes
+- **Participant claim/merge** — sign in and claim your pre-auth name (no dupes)
+- **Multi-trip dashboard** — your trips bucketed Happening now / Upcoming / Past
+  with counts, organizer badges, and a "no trips yet" empty state
+- Adopt-by-name identity, RSVP with a "maybe" lean, collision-safe gear claims,
+  per-day Meals (owner + helpers), Packing, batch-add
+- 3-word invite slugs (~19 bits) + in-memory rate limiting
+- Locked-down API (browser never touches PocketBase), "Campfire" design system,
+  responsive desktop/mobile
 
 ---
 
 ## v1 · Quick Wins & Polish
 
-Small, no-auth improvements shippable now.
-
-- [ ] [#1 Trip secret / passphrase invite](https://github.com/bigsaam/rally/issues/1) — privacy beyond link-obfuscation
+- [x] ~~#1 Trip secret / passphrase invite~~ — dropped; superseded by accounts
 - [ ] [#2 Weather forecast + countdown](https://github.com/bigsaam/rally/issues/2)
 - [ ] [#3 Dietary restrictions (feeds Meals)](https://github.com/bigsaam/rally/issues/3)
 - [ ] [#4 Emergency info card](https://github.com/bigsaam/rally/issues/4)
 - [ ] [#5 Clone / template trips](https://github.com/bigsaam/rally/issues/5)
 - [ ] [#6 Add / remove meal slot control](https://github.com/bigsaam/rally/issues/6)
-- [ ] [#7 Bump slug entropy + rate limiting](https://github.com/bigsaam/rally/issues/7)
+- [x] [#7 3-word slugs + rate limiting](https://github.com/bigsaam/rally/issues/7) ✅
 
 ## v2 · Organizer & Post-Trip
 
-Visible organizer role, co-organizing, and the post-trip experience.
-
-- [ ] [#8 Visible organizer role + co-organizers](https://github.com/bigsaam/rally/issues/8) *(epic)*
+- [x] [#8 Visible organizer role + co-organizers](https://github.com/bigsaam/rally/issues/8) ✅
 - [ ] [#9 Post-trip view (auto-switch after end date)](https://github.com/bigsaam/rally/issues/9)
 - [ ] [#10 Trip "Wrapped" recap](https://github.com/bigsaam/rally/issues/10)
 - [ ] [#11 Check-in / "I've arrived" status](https://github.com/bigsaam/rally/issues/11)
@@ -52,12 +52,9 @@ Visible organizer role, co-organizing, and the post-trip experience.
 
 ## v4 · Identity & Multi-Trip
 
-The keystone — unlocks the dashboard, real co-organizing, and multi-trip.
-Casual attendees keep the no-account "just open the link" path.
-
-- [ ] [#14 Auth / identity / friends system](https://github.com/bigsaam/rally/issues/14) *(epic · keystone)*
-- [ ] [#15 Trip dashboard (past / current / upcoming + stats)](https://github.com/bigsaam/rally/issues/15)
-- [ ] [#16 Full cross-account co-organizing](https://github.com/bigsaam/rally/issues/16)
+- [x] [#14 Auth / identity system](https://github.com/bigsaam/rally/issues/14) ✅ *(keystone)*
+- [x] [#15 Trip dashboard (past / current / upcoming + stats)](https://github.com/bigsaam/rally/issues/15) ✅
+- [ ] [#16 Invite a co-organizer by account](https://github.com/bigsaam/rally/issues/16)
 
 ## v5 · Collaboration
 
@@ -74,29 +71,26 @@ Casual attendees keep the no-account "just open the link" path.
 
 ## Future · Backlog
 
-Larger bets and longer-horizon ideas.
-
 - [ ] [#24 Expenses — native split / settle-up](https://github.com/bigsaam/rally/issues/24) *(epic)*
 - [ ] [#25 Carpooling / convoy sub-groups](https://github.com/bigsaam/rally/issues/25)
 - [ ] [#26 Native app — PWA → iOS/Android (Capacitor)](https://github.com/bigsaam/rally/issues/26) *(epic · needs native)*
 - [ ] [#27 AI features — invisible, BYO-token](https://github.com/bigsaam/rally/issues/27)
 - [ ] [#28 MCP / API layer](https://github.com/bigsaam/rally/issues/28) *(epic)*
 - [ ] [#29 Activities section vs gear](https://github.com/bigsaam/rally/issues/29)
+- [ ] [#30 Friend graph — invite-by-friend](https://github.com/bigsaam/rally/issues/30) *(optional)*
 
 ---
 
-## Dependency notes
+## Notes
 
-- **Identity is the hinge.** [#14](https://github.com/bigsaam/rally/issues/14)
-  gates the dashboard ([#15](https://github.com/bigsaam/rally/issues/15)) and
-  full co-organizing ([#16](https://github.com/bigsaam/rally/issues/16)).
+- **Accounts are the foundation** ([#14](https://github.com/bigsaam/rally/issues/14),
+  shipped) — they unlocked the dashboard ([#15](https://github.com/bigsaam/rally/issues/15)),
+  co-organizing, and gating private content to invited members. Casual attendees
+  still just open the link and sign in.
 - **Native unlocks location.** Live friend location
   ([#13](https://github.com/bigsaam/rally/issues/13)) needs the native/PWA app
   ([#26](https://github.com/bigsaam/rally/issues/26)) for reliable background
   location.
-- **Privacy pairs up.** The trip secret
-  ([#1](https://github.com/bigsaam/rally/issues/1)) and slug entropy
-  ([#7](https://github.com/bigsaam/rally/issues/7)) are best done together.
 
 Want to suggest or upvote something? Open a
 [Discussion](https://github.com/bigsaam/rally/discussions) or an
