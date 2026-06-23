@@ -151,7 +151,13 @@
         <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">To</span>
         <input type="date" bind:value={propEnd} min={propStart || todayStr} class={inputClass} />
       </label>
-      <Button variant="soft" size="sm" onclick={proposeRange} disabled={!propStart || busy}>Propose dates</Button>
+      <!-- Match the labeled-input columns: an invisible label spacer keeps the
+           button on the control row, and self-stretch + flex-1 size it to the
+           inputs' height so tops and bottoms line up. -->
+      <div class="flex flex-col gap-1 self-stretch">
+        <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500 invisible" aria-hidden="true">·</span>
+        <Button variant="soft" size="sm" class="flex-1" onclick={proposeRange} disabled={!propStart || busy}>Propose dates</Button>
+      </div>
     </div>
   {/if}
 
@@ -161,7 +167,7 @@
       <p class="font-body text-[13px] font-extrabold text-cocoa-700">Or tap the days you're free</p>
       <div class="flex items-center gap-1">
         <button type="button" onclick={() => (monthOffset = Math.max(0, monthOffset - 3))} disabled={monthOffset === 0} class="rounded-md px-2 py-0.5 font-body text-sm font-extrabold text-cocoa-500 hover:bg-sand-100 disabled:opacity-30" aria-label="earlier months">◀</button>
-        <button type="button" onclick={() => (monthOffset = monthOffset + 3)} class="rounded-md px-2 py-0.5 font-body text-sm font-extrabold text-cocoa-500 hover:bg-sand-100" aria-label="later months">▶</button>
+        <button type="button" onclick={() => (monthOffset = Math.min(3, monthOffset + 3))} disabled={monthOffset >= 3} class="rounded-md px-2 py-0.5 font-body text-sm font-extrabold text-cocoa-500 hover:bg-sand-100 disabled:opacity-30" aria-label="later months">▶</button>
       </div>
     </div>
     <p class="font-body text-xs font-bold text-cocoa-400">Darker = more people free. Your picks are outlined.</p>
