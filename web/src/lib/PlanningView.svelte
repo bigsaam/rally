@@ -71,39 +71,41 @@
 <div class="min-h-full bg-sand-100 pb-10">
   <div class="mx-auto w-full max-w-3xl px-4 sm:px-6">
     <!-- Header -->
-    <header class="px-2 pb-4 pt-6 text-center">
-      <div class="flex justify-center"><Chip tone="sun">🌱 In planning</Chip></div>
-      <h1 class="mt-2 font-display text-[27px] font-bold leading-[1.05] text-cocoa-900">{trip.name}</h1>
+    <header class="px-2 pb-3 pt-5">
+      <div class="flex flex-wrap items-center gap-2">
+        <Chip tone="sun">🌱 In planning</Chip>
+        {#if !isOrganizer && typeLabel}<Chip tone="neutral">{typeLabel}</Chip>{/if}
+      </div>
 
-      {#if isOrganizer}
-        <div class="mt-2 flex items-center justify-center gap-2">
-          <span class="font-body text-[13px] font-bold text-cocoa-500">Trip type</span>
-          <select onchange={setType} value={trip.trip_type} class="rounded-md border-2 border-sand-300 bg-white px-2 py-1 font-body text-[13px] font-bold text-cocoa-900 outline-none focus:border-coral-400">
-            <option value="">Pick one…</option>
-            {#each TYPES as [v, l]}<option value={v}>{l}</option>{/each}
-          </select>
-        </div>
-      {:else if typeLabel}
-        <div class="mt-1 font-body text-sm font-extrabold text-coral-600">{typeLabel}</div>
-      {/if}
+      <h1 class="mt-2 font-display text-2xl font-bold leading-tight text-cocoa-900">{trip.name}</h1>
+
+      <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {#if isOrganizer}
+          <label class="inline-flex items-center gap-1.5">
+            <span class="font-body text-[13px] font-bold text-cocoa-500">Type</span>
+            <select onchange={setType} value={trip.trip_type} class="rounded-md border-2 border-sand-300 bg-white px-2 py-1 font-body text-[13px] font-bold text-cocoa-900 outline-none focus:border-coral-400">
+              <option value="">Pick one…</option>
+              {#each TYPES as [v, l]}<option value={v}>{l}</option>{/each}
+            </select>
+          </label>
+        {/if}
+
+        {#if participants.length}
+          <div class="flex items-center gap-2">
+            <div class="flex -space-x-1.5">
+              {#each participants.slice(0, 6) as p (p.id)}
+                <span class="inline-block rounded-full ring-2 ring-sand-100" title={p.display_name}><Avatar name={p.display_name} size={24} /></span>
+              {/each}
+            </div>
+            <span class="font-body text-xs font-bold text-cocoa-500">{participants.length} interested</span>
+          </div>
+        {/if}
+      </div>
 
       {#if trip.description}
-        <div class="mt-3 rounded-2xl bg-white p-4 text-left font-body text-[13.5px] leading-relaxed text-cocoa-700 shadow-card [&_a]:font-extrabold [&_a]:text-coral-700 [&_a]:underline">
+        <div class="mt-3 rounded-2xl bg-white p-3.5 font-body text-[13.5px] leading-relaxed text-cocoa-700 shadow-card [&_a]:font-extrabold [&_a]:text-coral-700 [&_a]:underline">
           {@html trip.description}
         </div>
-      {/if}
-
-      <!-- Interested crew -->
-      {#if participants.length}
-        <div class="mt-4 flex flex-wrap items-center justify-center gap-1.5">
-          {#each participants as p (p.id)}
-            <span class="flex items-center gap-1.5 rounded-full bg-white px-2 py-1 shadow-card">
-              <Avatar name={p.display_name} size={20} />
-              <span class="font-body text-xs font-extrabold text-cocoa-700">{p.display_name}</span>
-            </span>
-          {/each}
-        </div>
-        <p class="mt-1.5 font-body text-xs font-bold text-cocoa-400">{participants.length} interested so far</p>
       {/if}
     </header>
 

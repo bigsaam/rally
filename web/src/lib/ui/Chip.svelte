@@ -8,7 +8,7 @@
   const tones = {
     neutral: 'bg-white text-cocoa-700 border-sand-300',
     coral: 'bg-coral-200 text-coral-700 border-coral-200',
-    sun: 'bg-sun-200 text-sun-600 border-sun-200',
+    sun: 'bg-sun-200 text-cocoa-900 border-sun-300',
     berry: 'bg-berry-200 text-berry-600 border-berry-200',
     leaf: 'bg-leaf-200 text-leaf-600 border-leaf-200'
   };
