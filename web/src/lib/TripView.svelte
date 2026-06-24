@@ -68,16 +68,23 @@
     { key: 'photos', label: 'Photos', icon: '📷', soon: true }
   ];
 
+  // Sections an organizer has hidden for the whole trip (Overview + Trip settings
+  // are never hideable). Drives both the nav and which `<section>`s render.
+  const hidden = $derived(new Set(trip.hidden_sections ?? []));
+  const isHidden = (/** @type {string} */ key) => hidden.has(key);
+  const visibleNav = $derived(SECTION_NAV.filter((n) => !hidden.has(n.key)));
+
   // Publish the section nav + trip name up to the layout's AppShell, flipping it
-  // into contextual mode. Only reassign when the title actually changes — the 4s
-  // live-update poll re-derives `trip` each tick, and churning `shell.trip`
-  // identity makes the shell's scrollSpy reset scroll to the top every poll.
+  // into contextual mode. Reassign only when the title or the visible-section set
+  // changes — the 4s live-poll re-derives `trip` each tick, and churning
+  // `shell.trip` identity makes the shell's scrollSpy reset scroll every poll.
   const shell = useShell();
-  // Update only when the title changes (keeps shell.trip identity stable across polls).
+  let publishedKey = '';
   $effect(() => {
-    const title = trip.name;
-    if (!shell.trip || shell.trip.title !== title) {
-      shell.trip = { title, nav: SECTION_NAV };
+    const key = trip.name + '|' + visibleNav.map((n) => n.key).join(',');
+    if (key !== publishedKey) {
+      publishedKey = key;
+      shell.trip = { title: trip.name, nav: visibleNav };
     }
   });
   // Clear on unmount only — a separate effect so the poll's re-runs don't null it.
@@ -146,32 +153,51 @@
   <section id="overview" class="trip-section">
     <OverviewSection {trip} {participants} {gear} {meals} {ownerMode} {settingsHref} />
   </section>
-  <section id="dates" class="trip-section">
-    <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} />
-  </section>
-  <section id="crew" class="trip-section">
-    <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} {ownerMode} />
-  </section>
-  <section id="gear" class="trip-section">
-    <GearSection shareToken={trip.share_token} {gear} {currentParticipantId} />
-  </section>
-  <section id="food" class="trip-section">
-    <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} />
-  </section>
-  <section id="packing" class="trip-section">
-    <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} />
-  </section>
-  <section id="expenses" class="trip-section">
-    <ExpensesSection
-      shareToken={trip.share_token}
-      expenses={data.expenses}
-      settlement={data.settlement}
-      {currentParticipantId}
-      {ownerMode}
-    />
-  </section>
+  {#if !isHidden('dates')}
+    <section id="dates" class="trip-section">
+      <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} />
+    </section>
+  {/if}
+  {#if !isHidden('crew')}
+    <section id="crew" class="trip-section">
+      <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} {ownerMode} />
+    </section>
+  {/if}
+  {#if !isHidden('gear')}
+    <section id="gear" class="trip-section">
+      <GearSection shareToken={trip.share_token} {gear} {currentParticipantId} />
+    </section>
+  {/if}
+  {#if !isHidden('food')}
+    <section id="food" class="trip-section">
+      <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} />
+    </section>
+  {/if}
+  {#if !isHidden('packing')}
+    <section id="packing" class="trip-section">
+      <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} />
+    </section>
+  {/if}
+  {#if !isHidden('expenses')}
+    <section id="expenses" class="trip-section">
+      <ExpensesSection
+        shareToken={trip.share_token}
+        expenses={data.expenses}
+        settlement={data.settlement}
+        {currentParticipantId}
+        {ownerMode}
+      />
+    </section>
+  {/if}
   <section id="tripsettings" class="trip-section">
-    <TripSettingsSection shareToken={trip.share_token} {ownerMode} {settingsHref} {me} />
+    <TripSettingsSection
+      shareToken={trip.share_token}
+      {ownerMode}
+      {me}
+      {trip}
+      members={data.members ?? []}
+      {currentParticipantId}
+    />
   </section>
 
   {#if !currentParticipantId}
@@ -188,7 +214,7 @@
     position: sticky;
     top: 0;
     z-index: 5;
-    padding: 2px 0 12px;
+    padding: 16px 0 14px;
     margin-bottom: var(--stack-gap, 14px);
     border-bottom: 1px solid var(--color-sand-300);
   }

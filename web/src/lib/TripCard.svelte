@@ -36,7 +36,7 @@
       <div class="flex items-center gap-2">
         <h3 class="truncate font-display text-[18px] font-semibold leading-tight text-text-strong">{trip.name}</h3>
         {#if trip.role === 'organizer'}
-          <span class="shrink-0 rounded-full bg-sun-200 px-2 py-0.5 font-body text-[11px] font-extrabold text-sun-600">
+          <span class="shrink-0 rounded-full bg-sun-200 px-2 py-0.5 font-body text-[11px] font-extrabold text-cocoa-700">
             ✨ organizer
           </span>
         {/if}

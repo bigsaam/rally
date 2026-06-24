@@ -129,9 +129,16 @@ export async function loadTripByShareToken(shareToken) {
       description: trip.description,
       expense_link: trip.expense_link,
       share_token: trip.share_token,
+      owner_token: trip.owner_token || '',
       trip_type: trip.trip_type || '',
-      status: trip.status || 'confirmed'
+      status: trip.status || 'confirmed',
+      hidden_sections: Array.isArray(trip.hidden_sections) ? trip.hidden_sections : []
     },
+    // Account-linked members (for the inline Trip-settings members list).
+    members: participants
+      .filter((p) => p.user)
+      .map((p) => ({ id: p.id, display_name: p.display_name, role: p.role || 'guest' }))
+      .sort((a, b) => (a.role === b.role ? 0 : a.role === 'organizer' ? -1 : 1)),
     participants: participants
       .map((p) => ({
         id: p.id,

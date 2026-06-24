@@ -25,3 +25,10 @@
 .wala-appshell .content {
   min-height: 0;
 }
+
+/* The kit's `sun` Chip is amber-on-amber (sun-200 bg / sun-600 fg) — too low
+ * contrast for labels like "In planning" / "N maybe". Darken the foreground.
+ * (Upstream candidate for @walaware/design's Chip sun tone.) */
+.wala-chip.t-sun {
+  --chip-fg: var(--color-cocoa-700) !important;
+}

@@ -57,9 +57,17 @@
       : null
   );
 
-  // Settings affordance only inside a trip (where settings actually lives).
-  const onSettings = $derived(tripToken ? () => goto(`/${tripToken}/settings`) : null);
+  // Settings live INLINE as the trip page's "Trip settings" section (a nav row in
+  // contextual mode), so the shell's separate Settings affordance is only for the
+  // standalone /settings route (e.g. planning trips not yet on the contextual shell).
+  const onSettings = $derived(!inTrip && tripToken ? () => goto(`/${tripToken}/settings`) : null);
   const settingsActive = $derived(path.endsWith('/settings'));
+
+  // Inside a trip the page owns a sticky header (data-appshell-sticky). The
+  // shell's default content padding-top would leave a gap the header pins below,
+  // letting section content scroll through it — so drop the top padding in
+  // contextual mode (the sticky header supplies its own breathing room).
+  const contentPadding = $derived(inTrip ? '0 clamp(16px,3.4vw,40px) 64px' : undefined);
 </script>
 
 {#if user}
@@ -73,6 +81,7 @@
     {title}
     scrollSpy={inTrip}
     {breakpoint}
+    {contentPadding}
   >
     {@render children()}
   </AppShell>

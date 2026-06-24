@@ -294,6 +294,82 @@ export async function POST({ params, request, locals }) {
         break;
       }
 
+      // Edit the trip's core details (organizer only).
+      case 'trip_update': {
+        if (!isOrganizer) throw error(403, 'Only organizers can edit the trip');
+        const t = (/** @type {string} */ s) => String(s ?? '').trim();
+        const name = t(body.name).slice(0, 200);
+        const start = t(body.start_date).slice(0, 10);
+        const end = t(body.end_date).slice(0, 10);
+        const expense_link = t(body.expense_link);
+        if (!name) throw error(400, 'Give your trip a name');
+        if (start && end && end < start) throw error(400, 'End date is before the start date');
+        if (expense_link && !/^https?:\/\/.+/i.test(expense_link)) throw error(400, 'Enter a full http(s):// URL');
+        const descText = t(body.description).slice(0, 5000);
+        const descHtml = descText
+          ? `<p>${descText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>`
+          : '';
+        await pb.collection('trips').update(trip.id, {
+          name,
+          trip_type: t(body.trip_type).slice(0, 30),
+          location: t(body.location).slice(0, 300),
+          start_date: start ? `${start} 00:00:00.000Z` : '',
+          end_date: end ? `${end} 00:00:00.000Z` : '',
+          description: descHtml,
+          expense_link
+        });
+        break;
+      }
+
+      // Promote/demote a member (organizer only; never drop to zero organizers).
+      case 'set_role': {
+        if (!isOrganizer) throw error(403, 'Only organizers can change roles');
+        const role = String(body.role ?? '');
+        if (!['organizer', 'guest'].includes(role)) throw error(400, 'Bad role');
+        const target = await inTrip('participants', body.participantId);
+        if (role === 'guest' && target.role === 'organizer') {
+          const orgs = await pb.collection('participants').getFullList({
+            filter: pb.filter('trip = {:t} && role = "organizer"', { t: trip.id })
+          });
+          if (orgs.length <= 1) throw error(400, 'A trip needs at least one organizer');
+        }
+        await pb.collection('participants').update(target.id, { role });
+        break;
+      }
+
+      // Remove a member + their contributions (organizer only).
+      case 'remove_member': {
+        if (!isOrganizer) throw error(403, 'Only organizers can remove members');
+        const target = await inTrip('participants', body.participantId);
+        if (target.role === 'organizer') {
+          const orgs = await pb.collection('participants').getFullList({
+            filter: pb.filter('trip = {:t} && role = "organizer"', { t: trip.id })
+          });
+          if (orgs.length <= 1) throw error(400, 'Demote them first — a trip needs an organizer');
+        }
+        for (const coll of ['gear_claims', 'meal_signups', 'packing_items']) {
+          const rows = await pb
+            .collection(coll)
+            .getFullList({ filter: pb.filter('participant = {:p}', { p: target.id }) })
+            .catch(() => []);
+          for (const r of rows) await pb.collection(coll).delete(r.id).catch(() => {});
+        }
+        await pb.collection('participants').delete(target.id).catch(() => {});
+        break;
+      }
+
+      // Hide / restore a section for the whole trip (organizer only).
+      case 'section_hide':
+      case 'section_show': {
+        if (!isOrganizer) throw error(403, 'Only organizers can change sections');
+        const key = String(body.key ?? '').slice(0, 40);
+        if (!key) throw error(400, 'Section required');
+        const cur = Array.isArray(trip.hidden_sections) ? trip.hidden_sections : [];
+        const next = op === 'section_hide' ? [...new Set([...cur, key])] : cur.filter((/** @type {string} */ k) => k !== key);
+        await pb.collection('trips').update(trip.id, { hidden_sections: next });
+        break;
+      }
+
       default:
         throw error(400, 'Unknown action');
     }
