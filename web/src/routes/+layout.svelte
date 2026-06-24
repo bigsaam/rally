@@ -58,10 +58,19 @@
   );
 
   // Settings live INLINE as the trip page's "Trip settings" section (a nav row in
-  // contextual mode), so the shell's separate Settings affordance is only for the
-  // standalone /settings route (e.g. planning trips not yet on the contextual shell).
-  const onSettings = $derived(!inTrip && tripToken ? () => goto(`/${tripToken}/settings`) : null);
-  const settingsActive = $derived(path.endsWith('/settings'));
+  // contextual mode). The shell's separate Settings gear is for the standalone
+  // /settings route (planning trips not yet on the contextual shell) and, on the
+  // dashboard, for the account/profile page.
+  const onSettings = $derived(
+    inTrip
+      ? null
+      : tripToken
+        ? () => goto(`/${tripToken}/settings`)
+        : path === '/'
+          ? () => goto('/profile')
+          : null
+  );
+  const settingsActive = $derived(path.endsWith('/settings') || path === '/profile');
 </script>
 
 {#if user}
