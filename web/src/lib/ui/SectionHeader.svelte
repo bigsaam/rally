@@ -9,10 +9,11 @@
    *   emoji: string,
    *   title: string,
    *   subtitle?: string,
-   *   action?: import('svelte').Snippet
+   *   action?: import('svelte').Snippet,
+   *   onHide?: (() => void) | null
    * }}
    */
-  let { emoji, title, subtitle = '', action } = $props();
+  let { emoji, title, subtitle = '', action, onHide = null } = $props();
 </script>
 
 <div class="mb-2.5 flex items-center gap-2.5 px-1">
@@ -21,7 +22,17 @@
   {#if subtitle}
     <span class="font-body text-[13px] font-bold text-cocoa-500">{subtitle}</span>
   {/if}
-  {#if action}
-    <span class="ml-auto flex items-center gap-2">{@render action()}</span>
+  {#if action || onHide}
+    <span class="ml-auto flex items-center gap-2">
+      {#if action}{@render action()}{/if}
+      {#if onHide}
+        <button
+          type="button"
+          onclick={onHide}
+          title="Hide this section for everyone (restore from Trip settings)"
+          class="rounded-full px-2 py-0.5 font-body text-[12px] font-extrabold text-cocoa-400 transition hover:bg-sand-200 hover:text-cocoa-600"
+        >Hide</button>
+      {/if}
+    </span>
   {/if}
 </div>

@@ -10,10 +10,11 @@
    * @type {{
    *   shareToken: string,
    *   meals: Array<any>,
-   *   currentParticipantId: string | null
+   *   currentParticipantId: string | null,
+   *   onHide?: (() => void) | null
    * }}
    */
-  let { shareToken, meals, currentParticipantId } = $props();
+  let { shareToken, meals, currentParticipantId, onHide = null } = $props();
 
   let busy = $state('');
   let confirmDrop = $state(''); // meal id whose owner-drop is awaiting confirmation
@@ -81,7 +82,7 @@
   }
 </script>
 
-<SectionHeader emoji="🍳" title="Food" subtitle="— who's cooking" />
+<SectionHeader emoji="🍳" title="Food" subtitle="— who's cooking" {onHide} />
 
 <Card>
   {#each byDay as day, di}

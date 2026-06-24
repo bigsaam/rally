@@ -33,18 +33,16 @@
       style="background: linear-gradient(135deg, var(--color-sand-200), var(--color-sand-300))"
     >{emoji}</span>
     <div class="min-w-0 flex-1">
-      <div class="flex items-center gap-2">
-        <h3 class="truncate font-display text-[18px] font-semibold leading-tight text-text-strong">{trip.name}</h3>
-        {#if trip.role === 'organizer'}
-          <span class="shrink-0 rounded-full bg-sun-200 px-2 py-0.5 font-body text-[11px] font-extrabold text-cocoa-700">
-            ✨ organizer
-          </span>
-        {/if}
-      </div>
+      <h3 class="truncate font-display text-[18px] font-semibold leading-tight text-text-strong">{trip.name}</h3>
       {#if meta}
         <div class="truncate font-body text-[13px] font-extrabold text-coral-600">{meta}</div>
       {/if}
     </div>
+    {#if trip.role === 'organizer'}
+      <span class="shrink-0 self-start rounded-full bg-sun-200 px-2 py-0.5 font-body text-[11px] font-extrabold text-cocoa-700">
+        ✨ organizer
+      </span>
+    {/if}
   </div>
 
   <div class="mt-3.5 flex items-center gap-2">

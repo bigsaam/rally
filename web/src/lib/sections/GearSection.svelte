@@ -9,10 +9,11 @@
    * @type {{
    *   shareToken: string,
    *   gear: Array<any>,
-   *   currentParticipantId: string | null
+   *   currentParticipantId: string | null,
+   *   onHide?: (() => void) | null
    * }}
    */
-  let { shareToken, gear, currentParticipantId } = $props();
+  let { shareToken, gear, currentParticipantId, onHide = null } = $props();
 
   const open = $derived(gear.filter((g) => g.remaining > 0).length);
 
@@ -76,7 +77,7 @@
   }
 </script>
 
-<SectionHeader emoji="🎒" title="Gear" subtitle="— who's bringing what">
+<SectionHeader emoji="🎒" title="Gear" subtitle="— who's bringing what" {onHide}>
   {#snippet action()}
     <Tooltip label="Add gear" placement="left">
       <button
@@ -97,7 +98,7 @@
   {:else}
     {#each gear as g, i}
       {@const mine = myClaim(g)}
-      <div class="flex items-center gap-3 py-2.5 {i !== 0 ? 'border-t border-sand-200' : ''}">
+      <div class="flex items-center gap-3 py-2.5 pr-1.5 {i !== 0 ? 'border-t border-sand-200' : ''}">
         <span
           class="grid h-10 w-10 flex-none place-items-center rounded-md text-[19px]"
           style="background: {g.remaining === 0 ? 'var(--color-coral-200)' : 'var(--color-sun-200)'}"

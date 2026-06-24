@@ -30,7 +30,7 @@
   } = $props();
 </script>
 
-<div class="flex items-center gap-3 py-2.5 {divider ? 'border-t border-sand-200' : ''}">
+<div class="flex items-center gap-3 py-2.5 pr-1.5 {divider ? 'border-t border-sand-200' : ''}">
   <span
     class="grid h-10 w-10 flex-none place-items-center rounded-md text-[19px]"
     style="background: {emojiBg}"

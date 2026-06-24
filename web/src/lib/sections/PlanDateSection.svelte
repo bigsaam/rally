@@ -120,7 +120,7 @@
   {#if dateOptions.length}
     <div class="flex flex-col gap-2">
       {#each dateOptions as o (o.id)}
-        <div class="rounded-xl bg-sand-100 p-3">
+        <div class="rounded-xl bg-sand-100 px-4 py-3">
           <div class="flex items-center justify-between gap-2">
             <span class="font-display text-sm font-semibold text-cocoa-900">
               {fmtDateRange(o.start_date, o.end_date)}

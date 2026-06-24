@@ -13,10 +13,11 @@
    *   shareToken: string,
    *   participants: Array<{ id: string, display_name: string, rsvp_status: string | null, lean: number, avatar?: string }>,
    *   currentParticipantId: string | null,
-   *   ownerMode?: boolean
+   *   ownerMode?: boolean,
+   *   onHide?: (() => void) | null
    * }}
    */
-  let { shareToken, participants, currentParticipantId, ownerMode = false } = $props();
+  let { shareToken, participants, currentParticipantId, ownerMode = false, onHide = null } = $props();
 
   /** @type {Record<string, string>} */
   const statusEmoji = { going: '🔥', maybe: '🤔', out: '💤' };
@@ -70,7 +71,7 @@
   }
 </script>
 
-<SectionHeader emoji="🙌" title="Who's coming?">
+<SectionHeader emoji="🙌" title="Who's coming?" {onHide}>
   {#snippet action()}
     <Chip tone="leaf">{going} going</Chip>
     {#if maybe > 0}<Chip tone="sun">{maybe} maybe</Chip>{/if}

@@ -2,7 +2,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { tripAction } from '$lib/tripClient.js';
-  import { Card, Avatar, Button } from '@walaware/design';
+  import { Card, Button } from '@walaware/design';
   import SectionHeader from '$lib/ui/SectionHeader.svelte';
 
   /**
@@ -105,38 +105,36 @@
 </script>
 
 <SectionHeader emoji="⚙️" title="Trip settings" />
-<div class="flex flex-col gap-3.5">
+<Card>
   <!-- Everyone: your own preferences -->
   {#if me}
-    <Card>
-      <div class="flex items-center gap-3 py-1">
-        <span class="w-6 text-center text-[18px]">🔔</span>
-        <div class="min-w-0 flex-1">
-          <div class="font-body text-[14.5px] font-extrabold text-text-strong">Trip notifications</div>
-          <div class="font-body text-[12.5px] font-bold text-text-muted">Claims, RSVPs and meal updates</div>
-        </div>
-        <button
-          type="button" role="switch" aria-checked={notifyOn} aria-label="Trip notifications"
-          disabled={busy === 'notify_toggle'} onclick={() => act('notify_toggle')}
-          class="flex h-7 w-12 shrink-0 items-center rounded-full p-[3px] transition-colors {notifyOn ? 'justify-end bg-[var(--color-primary)]' : 'justify-start bg-sand-300'}"
-        ><span class="block h-[22px] w-[22px] rounded-full bg-white shadow-soft"></span></button>
+    <div class="flex items-center gap-3 py-1">
+      <span class="w-6 text-center text-[18px]">🔔</span>
+      <div class="min-w-0 flex-1">
+        <div class="font-body text-[14.5px] font-extrabold text-text-strong">Trip notifications</div>
+        <div class="font-body text-[12.5px] font-bold text-text-muted">Claims, RSVPs and meal updates</div>
       </div>
-      <div class="flex items-center justify-between gap-3 border-t border-sand-200 pt-3.5">
-        <div class="flex items-center gap-3">
-          <span class="w-6 text-center text-[18px]">🚪</span>
-          <div>
-            <div class="font-body text-[14.5px] font-extrabold text-text-strong">Leave this trip</div>
-            <div class="font-body text-[12.5px] font-bold text-text-muted">You'll stop getting updates</div>
-          </div>
+      <button
+        type="button" role="switch" aria-checked={notifyOn} aria-label="Trip notifications"
+        disabled={busy === 'notify_toggle'} onclick={() => act('notify_toggle')}
+        class="flex h-7 w-12 shrink-0 items-center rounded-full p-[3px] transition-colors {notifyOn ? 'justify-end bg-[var(--color-primary)]' : 'justify-start bg-sand-300'}"
+      ><span class="block h-[22px] w-[22px] rounded-full bg-white shadow-soft"></span></button>
+    </div>
+    <div class="flex items-center justify-between gap-3 border-t border-sand-200 pt-3.5">
+      <div class="flex items-center gap-3">
+        <span class="w-6 text-center text-[18px]">🚪</span>
+        <div>
+          <div class="font-body text-[14.5px] font-extrabold text-text-strong">Leave this trip</div>
+          <div class="font-body text-[12.5px] font-bold text-text-muted">You'll stop getting updates</div>
         </div>
-        <Button variant="ghost" size="sm" disabled={busy === 'leave'} onclick={leave}>Leave</Button>
       </div>
-    </Card>
+      <Button variant="ghost" size="sm" disabled={busy === 'leave'} onclick={leave}>Leave</Button>
+    </div>
   {/if}
 
   {#if ownerMode}
     <!-- Organizer: edit trip details -->
-    <Card>
+    <div class="{me ? 'mt-4 border-t border-sand-200 pt-4' : ''}">
       <div class="mb-2.5 flex items-center gap-2">
         <span class="font-display text-[15px] font-bold text-text-strong">Edit trip details</span>
         {#if savedFlash}<span class="font-body text-[12px] font-extrabold text-leaf-600">Saved ✓</span>{/if}
@@ -181,43 +179,42 @@
           {busy === 'trip_update' ? 'Saving…' : 'Save changes'}
         </Button>
       </div>
-    </Card>
+    </div>
 
-    <!-- Organizer: section visibility -->
+    <!-- Organizer: restore hidden sections. Hiding now happens from each
+         section's own "Hide" button, so this only appears once something's
+         hidden — no standalone toggle manager. -->
     {#if showSections}
-    <Card>
-      <div class="mb-1 font-display text-[15px] font-bold text-text-strong">Sections</div>
-      <div class="mb-2.5 font-body text-[12.5px] font-bold text-text-muted">Hide a section for everyone on the trip. Restore it any time.</div>
-      {#each HIDEABLE as [key, label], i}
-        {@const off = hidden.has(key)}
-        <div class="flex items-center gap-3 py-2.5 {i !== 0 ? 'border-t border-sand-200' : ''}">
-          <span class="min-w-0 flex-1 font-body text-[14px] font-extrabold {off ? 'text-cocoa-400' : 'text-cocoa-900'}">{label}{#if off}<span class="font-bold text-cocoa-400"> · hidden</span>{/if}</span>
-          <button
-            type="button" role="switch" aria-checked={!off} aria-label="Show {label}"
-            disabled={busy === 'sec-' + key} onclick={() => act(off ? 'section_show' : 'section_hide', { key }, 'sec-' + key)}
-            class="flex h-7 w-12 shrink-0 items-center rounded-full p-[3px] transition-colors {off ? 'justify-start bg-sand-300' : 'justify-end bg-[var(--color-primary)]'}"
-          ><span class="block h-[22px] w-[22px] rounded-full bg-white shadow-soft"></span></button>
+      {@const hiddenList = HIDEABLE.filter(([key]) => hidden.has(key))}
+      {#if hiddenList.length}
+        <div class="mt-4 border-t border-sand-200 pt-4">
+          <div class="mb-1 font-display text-[15px] font-bold text-text-strong">Hidden sections</div>
+          <div class="mb-2.5 font-body text-[12.5px] font-bold text-text-muted">Hidden for everyone on the trip — restore any to bring it back.</div>
+          <div class="flex flex-wrap gap-2">
+            {#each hiddenList as [key, label]}
+              <button
+                type="button" disabled={busy === 'sec-' + key}
+                onclick={() => act('section_show', { key }, 'sec-' + key)}
+                class="flex items-center gap-1.5 rounded-full border-2 border-sand-300 px-3 py-1.5 font-body text-[13px] font-extrabold text-cocoa-700 transition hover:border-coral-300 disabled:opacity-50"
+              >{label} <span class="text-cocoa-400">· Restore</span></button>
+            {/each}
+          </div>
         </div>
-      {/each}
-    </Card>
-
+      {/if}
     {/if}
 
-    <!-- Organizer: members -->
-    <Card>
-      <div class="mb-2.5 font-display text-[15px] font-bold text-text-strong">Members</div>
-      <div class="flex flex-col gap-2">
-        {#each members as m (m.id)}
-          <div class="flex items-center gap-2.5 rounded-xl bg-sand-50 px-2.5 py-2">
-            <Avatar name={m.display_name} size={30} />
-            <div class="min-w-0 flex-1">
-              <div class="truncate font-body text-[14px] font-extrabold text-cocoa-900">
-                {m.display_name}{#if m.id === currentParticipantId}<span class="font-bold text-cocoa-400"> (you)</span>{/if}
-              </div>
-              <div class="font-body text-[11px] font-extrabold uppercase tracking-wide {m.role === 'organizer' ? 'text-coral-600' : 'text-cocoa-400'}">
-                {m.role === 'organizer' ? '✨ Organizer' : 'Guest'}
-              </div>
-            </div>
+    <!-- Organizer: roles & access. Compact management list — no roster (everyone
+         already shows in "Who's coming"), just name + role + the controls. -->
+    <div class="mt-4 border-t border-sand-200 pt-4">
+      <div class="mb-1 font-display text-[15px] font-bold text-text-strong">Roles &amp; access</div>
+      <div class="mb-1.5 font-body text-[12.5px] font-bold text-text-muted">Promote a co-organizer or remove someone. Everyone appears in “Who's coming”.</div>
+      <div class="flex flex-col">
+        {#each members as m, i (m.id)}
+          <div class="flex items-center gap-2 py-2 pr-1.5 {i !== 0 ? 'border-t border-sand-200' : ''}">
+            <span class="min-w-0 flex-1 truncate font-body text-[14px] font-extrabold text-cocoa-900">
+              {m.display_name}{#if m.id === currentParticipantId}<span class="font-bold text-cocoa-400"> (you)</span>{/if}
+              <span class="ml-0.5 font-body text-[11px] font-extrabold uppercase tracking-wide {m.role === 'organizer' ? 'text-coral-600' : 'text-cocoa-400'}">· {m.role === 'organizer' ? 'Organizer' : 'Guest'}</span>
+            </span>
             <div class="flex shrink-0 gap-1.5">
               <button
                 type="button" disabled={busy === 'role-' + m.id}
@@ -235,17 +232,17 @@
           </div>
         {/each}
       </div>
-      <p class="mt-2.5 font-body text-[11.5px] font-bold text-cocoa-400">Name-only guests (not signed in) appear on the trip, not here.</p>
-    </Card>
+      <p class="mt-2 font-body text-[11.5px] font-bold text-cocoa-400">Name-only guests (not signed in) appear on the trip, not here.</p>
+    </div>
 
     <!-- Organizer: co-organizer link -->
-    <Card>
+    <div class="mt-4 border-t border-sand-200 pt-4">
       <div class="mb-1 font-display text-[15px] font-bold text-text-strong">Co-organizer link</div>
       <p class="mb-2.5 font-body text-[12.5px] font-bold text-text-muted">Send to someone you want to co-run the trip — they sign in and become an organizer. Keep it private.</p>
       <div class="flex gap-2">
         <input readonly value={ownerUrl} class="{inputClass} flex-1 bg-sun-100" />
         <Button variant="soft" size="md" onclick={copyOwner}>{copied ? 'Copied!' : 'Copy'}</Button>
       </div>
-    </Card>
+    </div>
   {/if}
-</div>
+</Card>

@@ -10,10 +10,11 @@
    * @type {{
    *   shareToken: string,
    *   packing: Array<any>,
-   *   currentParticipantId: string | null
+   *   currentParticipantId: string | null,
+   *   onHide?: (() => void) | null
    * }}
    */
-  let { shareToken, packing, currentParticipantId } = $props();
+  let { shareToken, packing, currentParticipantId, onHide = null } = $props();
 
   const shared = $derived(packing.filter((p) => p.is_shared));
   const mine = $derived(
@@ -116,7 +117,7 @@
   </div>
 {/snippet}
 
-<SectionHeader emoji="🧳" title="Packing" subtitle="— your personal list" />
+<SectionHeader emoji="🧳" title="Packing" subtitle="— your personal list" {onHide} />
 
 <Card>
   <div class="mb-1 flex items-center justify-between">

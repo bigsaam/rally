@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { invalidateAll } from '$app/navigation';
+  import { tripAction } from '$lib/tripClient.js';
   import OverviewSection from '$lib/sections/OverviewSection.svelte';
   import DatesSection from '$lib/sections/DatesSection.svelte';
   import PeopleSection from '$lib/sections/PeopleSection.svelte';
@@ -73,6 +74,20 @@
   const hidden = $derived(new Set(trip.hidden_sections ?? []));
   const isHidden = (/** @type {string} */ key) => hidden.has(key);
   const visibleNav = $derived(SECTION_NAV.filter((n) => !hidden.has(n.key)));
+
+  // Organizer hides a section straight from its header (restore from Trip
+  // settings). Each section gets an onHide only in ownerMode; guests never do.
+  /** @param {string} key */
+  async function hideSection(key) {
+    try {
+      await tripAction(trip.share_token, { op: 'section_hide', key });
+      await invalidateAll();
+    } catch (_) {
+      /* reconciled on next load */
+    }
+  }
+  /** @param {string} key */
+  const hideHandler = (key) => (ownerMode ? () => hideSection(key) : null);
 
   // Publish the section nav + trip name up to the layout's AppShell, flipping it
   // into contextual mode. The kit (≥v0.3.2) diffs scrollSpy by section-set content,
@@ -148,27 +163,27 @@
   </section>
   {#if !isHidden('dates')}
     <section id="dates" class="trip-section">
-      <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} />
+      <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} onHide={hideHandler('dates')} />
     </section>
   {/if}
   {#if !isHidden('crew')}
     <section id="crew" class="trip-section">
-      <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} {ownerMode} />
+      <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} {ownerMode} onHide={hideHandler('crew')} />
     </section>
   {/if}
   {#if !isHidden('gear')}
     <section id="gear" class="trip-section">
-      <GearSection shareToken={trip.share_token} {gear} {currentParticipantId} />
+      <GearSection shareToken={trip.share_token} {gear} {currentParticipantId} onHide={hideHandler('gear')} />
     </section>
   {/if}
   {#if !isHidden('food')}
     <section id="food" class="trip-section">
-      <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} />
+      <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} onHide={hideHandler('food')} />
     </section>
   {/if}
   {#if !isHidden('packing')}
     <section id="packing" class="trip-section">
-      <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} />
+      <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} onHide={hideHandler('packing')} />
     </section>
   {/if}
   {#if !isHidden('expenses')}
@@ -179,6 +194,7 @@
         settlement={data.settlement}
         {currentParticipantId}
         {ownerMode}
+        onHide={hideHandler('expenses')}
       />
     </section>
   {/if}
