@@ -11,10 +11,12 @@
    *   shareToken: string,
    *   packing: Array<any>,
    *   currentParticipantId: string | null,
-   *   onHide?: (() => void) | null
+   *   onHide?: (() => void) | null,
+   *   collapsed?: boolean,
+   *   onToggle?: (() => void) | null
    * }}
    */
-  let { shareToken, packing, currentParticipantId, onHide = null } = $props();
+  let { shareToken, packing, currentParticipantId, onHide = null, collapsed = false, onToggle = null } = $props();
 
   const shared = $derived(packing.filter((p) => p.is_shared));
   const mine = $derived(
@@ -117,7 +119,7 @@
   </div>
 {/snippet}
 
-<SectionHeader emoji="🧳" title="Packing" subtitle="— your personal list" {onHide} />
+<SectionHeader emoji="🧳" title="Packing" subtitle="— your personal list" {onHide} {collapsed} {onToggle} />
 
 <Card>
   <div class="mb-1 flex items-center justify-between">

@@ -89,6 +89,32 @@
   /** @param {string} key */
   const hideHandler = (key) => (ownerMode ? () => hideSection(key) : null);
 
+  // Per-viewer collapsed sections — folds a section's card locally for everyone
+  // who clicks (doesn't hide it for others). Persisted in localStorage so it
+  // survives reloads. The chevron + folding work for every viewer, organizer or
+  // not — distinct from Hide, which is organizer-only and trip-wide.
+  let collapsed = $state(new Set());
+  onMount(() => {
+    try {
+      const raw = localStorage.getItem(`tripwala:collapsed:${trip.id}`);
+      if (raw) collapsed = new Set(JSON.parse(raw));
+    } catch (_) {
+      /* ignore corrupt/blocked storage */
+    }
+  });
+  /** @param {string} key */
+  function toggleCollapse(key) {
+    const next = new Set(collapsed);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    collapsed = next;
+    try {
+      localStorage.setItem(`tripwala:collapsed:${trip.id}`, JSON.stringify([...next]));
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
   // Publish the section nav + trip name up to the layout's AppShell, flipping it
   // into contextual mode. The kit (≥v0.3.2) diffs scrollSpy by section-set content,
   // so re-publishing on the 4s poll is harmless. Cleared on unmount.
@@ -162,32 +188,32 @@
     <OverviewSection {trip} {participants} {gear} {meals} {ownerMode} {settingsHref} />
   </section>
   {#if !isHidden('dates')}
-    <section id="dates" class="trip-section">
-      <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} onHide={hideHandler('dates')} />
+    <section id="dates" class="trip-section" class:is-collapsed={collapsed.has('dates')}>
+      <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} onHide={hideHandler('dates')} collapsed={collapsed.has('dates')} onToggle={() => toggleCollapse('dates')} />
     </section>
   {/if}
   {#if !isHidden('crew')}
-    <section id="crew" class="trip-section">
-      <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} {ownerMode} onHide={hideHandler('crew')} />
+    <section id="crew" class="trip-section" class:is-collapsed={collapsed.has('crew')}>
+      <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} {ownerMode} onHide={hideHandler('crew')} collapsed={collapsed.has('crew')} onToggle={() => toggleCollapse('crew')} />
     </section>
   {/if}
   {#if !isHidden('gear')}
-    <section id="gear" class="trip-section">
-      <GearSection shareToken={trip.share_token} {gear} {currentParticipantId} onHide={hideHandler('gear')} />
+    <section id="gear" class="trip-section" class:is-collapsed={collapsed.has('gear')}>
+      <GearSection shareToken={trip.share_token} {gear} {currentParticipantId} onHide={hideHandler('gear')} collapsed={collapsed.has('gear')} onToggle={() => toggleCollapse('gear')} />
     </section>
   {/if}
   {#if !isHidden('food')}
-    <section id="food" class="trip-section">
-      <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} onHide={hideHandler('food')} />
+    <section id="food" class="trip-section" class:is-collapsed={collapsed.has('food')}>
+      <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} onHide={hideHandler('food')} collapsed={collapsed.has('food')} onToggle={() => toggleCollapse('food')} />
     </section>
   {/if}
   {#if !isHidden('packing')}
-    <section id="packing" class="trip-section">
-      <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} onHide={hideHandler('packing')} />
+    <section id="packing" class="trip-section" class:is-collapsed={collapsed.has('packing')}>
+      <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} onHide={hideHandler('packing')} collapsed={collapsed.has('packing')} onToggle={() => toggleCollapse('packing')} />
     </section>
   {/if}
   {#if !isHidden('expenses')}
-    <section id="expenses" class="trip-section">
+    <section id="expenses" class="trip-section" class:is-collapsed={collapsed.has('expenses')}>
       <ExpensesSection
         shareToken={trip.share_token}
         expenses={data.expenses}
@@ -195,6 +221,8 @@
         {currentParticipantId}
         {ownerMode}
         onHide={hideHandler('expenses')}
+        collapsed={collapsed.has('expenses')}
+        onToggle={() => toggleCollapse('expenses')}
       />
     </section>
   {/if}
@@ -236,5 +264,10 @@
      measured offset, but keep sections clear of the sticky header regardless. */
   .trip-section {
     scroll-margin-top: 120px;
+  }
+  /* Collapsed: fold everything below the section's header (its first child). The
+     header itself (with the chevron) stays so it can be re-expanded. */
+  .trip-section.is-collapsed > :global(*:not(:first-child)) {
+    display: none;
   }
 </style>

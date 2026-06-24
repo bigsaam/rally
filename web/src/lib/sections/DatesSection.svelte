@@ -12,10 +12,12 @@
    *   itinerary?: Record<string, { id: string, label: string }>,
    *   meals?: Array<any>,
    *   ownerMode?: boolean,
-   *   onHide?: (() => void) | null
+   *   onHide?: (() => void) | null,
+   *   collapsed?: boolean,
+   *   onToggle?: (() => void) | null
    * }}
    */
-  let { trip, shareToken, itinerary = {}, meals = [], ownerMode = false, onHide = null } = $props();
+  let { trip, shareToken, itinerary = {}, meals = [], ownerMode = false, onHide = null, collapsed = false, onToggle = null } = $props();
 
   const range = $derived(fmtDateRange(trip.start_date, trip.end_date));
   const len = $derived(tripLength(trip.start_date, trip.end_date));
@@ -57,7 +59,7 @@
   }
 </script>
 
-<SectionHeader emoji="📅" title="Dates" {onHide} />
+<SectionHeader emoji="📅" title="Dates" {onHide} {collapsed} {onToggle} />
 <Card>
   <div class="flex items-baseline gap-2.5">
     <span class="font-display text-[20px] font-bold text-text-strong">{range || 'Dates TBD'}</span>

@@ -11,10 +11,12 @@
    *   settlement: { total: number, perPerson: number, net: Array<{ id: string, name: string, net: number }>, settlements: Array<any> },
    *   currentParticipantId: string | null,
    *   ownerMode?: boolean,
-   *   onHide?: (() => void) | null
+   *   onHide?: (() => void) | null,
+   *   collapsed?: boolean,
+   *   onToggle?: (() => void) | null
    * }}
    */
-  let { shareToken, expenses, settlement, currentParticipantId, ownerMode = false, onHide = null } = $props();
+  let { shareToken, expenses, settlement, currentParticipantId, ownerMode = false, onHide = null, collapsed = false, onToggle = null } = $props();
 
   /** @param {number} n */
   const money = (n) => `$${Number.isInteger(n) ? n : n.toFixed(2)}`;
@@ -58,7 +60,7 @@
   }
 </script>
 
-<SectionHeader emoji="💸" title="Expenses" {onHide}>
+<SectionHeader emoji="💸" title="Expenses" {onHide} {collapsed} {onToggle}>
   {#snippet action()}
     {#if currentParticipantId && expenses.length}
       <Tooltip label="Add an expense" placement="left">
