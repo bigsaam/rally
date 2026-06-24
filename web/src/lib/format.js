@@ -36,6 +36,68 @@ export function fmtMonthDay(value) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
+/** Trip-type → emoji tile (the sticky header + trip-card glyph). Mirrors the
+ * type picker in PlanningView; falls back to the compass. */
+const TRIP_EMOJI = {
+  camping: '🏕️',
+  backpacking: '🎒',
+  road_trip: '🚗',
+  cabin: '🛖',
+  ski: '⛷️',
+  beach: '🏖️',
+  city: '🏙️',
+  festival: '🎪',
+  other: '🧭'
+};
+
+/**
+ * Emoji for a trip type (default 🧭).
+ * @param {string | null | undefined} type
+ */
+export function tripEmoji(type) {
+  return (type && TRIP_EMOJI[/** @type {keyof typeof TRIP_EMOJI} */ (type)]) || '🧭';
+}
+
+/**
+ * Whole-day count for an inclusive date range (e.g. Fri–Sun = 3 days, 2 nights).
+ * @param {string | null | undefined} start
+ * @param {string | null | undefined} end
+ * @returns {{ days: number, nights: number }}
+ */
+export function tripLength(start, end) {
+  if (!start) return { days: 0, nights: 0 };
+  const s = new Date(start);
+  const e = end ? new Date(end) : s;
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return { days: 0, nights: 0 };
+  const ms = Date.UTC(e.getUTCFullYear(), e.getUTCMonth(), e.getUTCDate()) -
+    Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate());
+  const nights = Math.max(0, Math.round(ms / 86400000));
+  return { days: nights + 1, nights };
+}
+
+/**
+ * Inclusive list of days in a trip, as `{ iso, weekday, monthDay }` rows for the
+ * Dates module day-plan. Capped to avoid runaway ranges.
+ * @param {string | null | undefined} start
+ * @param {string | null | undefined} end
+ */
+export function tripDays(start, end) {
+  if (!start) return [];
+  const s = new Date(start);
+  const e = end ? new Date(end) : s;
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return [];
+  /** @type {Array<{ iso: string, weekday: string, monthDay: string }>} */
+  const out = [];
+  const cur = new Date(Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate()));
+  const last = Date.UTC(e.getUTCFullYear(), e.getUTCMonth(), e.getUTCDate());
+  for (let i = 0; i < 60 && cur.getTime() <= last; i++) {
+    const iso = cur.toISOString();
+    out.push({ iso, weekday: fmtWeekday(iso), monthDay: fmtMonthDay(iso) });
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return out;
+}
+
 /**
  * "Jul 17 – 19, 2026" style range for the trip header.
  * @param {string | null | undefined} start

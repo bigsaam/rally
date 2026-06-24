@@ -18,8 +18,9 @@
   const shell = createShell();
   const inTrip = $derived(shell.trip != null);
 
-  // App-level destinations. Trips is the home list; a trip opens as a contextual
-  // section nav over one scrollable page, so Trips stays active inside one.
+  // App-level destinations (design repo → docs/apps/tripwala.md): Trips is the
+  // only live one; Calendar · Planner · Map are dimmed `soon` roadmap rows. Trips
+  // stays active while a trip is open (it opens as a contextual section nav).
   const appNav = $derived([
     {
       key: 'trips',
@@ -27,7 +28,10 @@
       icon: '🧭',
       active: path === '/' || path === '/new' || tripToken != null,
       href: '/'
-    }
+    },
+    { key: 'calendar', label: 'Calendar', icon: '📅', soon: true },
+    { key: 'planner', label: 'Planner', icon: '🗓️', soon: true },
+    { key: 'map', label: 'Map', icon: '🗺️', soon: true }
   ]);
 
   // Contextual mode swaps the global destinations for the open trip's section
@@ -36,9 +40,9 @@
   const back = $derived(inTrip ? { label: 'All trips', onClick: () => goto('/') } : null);
   const title = $derived(shell.trip ? shell.trip.title : null);
 
-  // App level has a single destination, so force the compact top-bar + drawer at
-  // all widths. A contextual trip earns a real desktop sidebar for its section nav.
-  const breakpoint = $derived(inTrip ? 920 : 100000);
+  // Always-available desktop sidebar (AppShell default): sidebar ≥ 920px, top-bar
+  // + drawer below. The soon rows give the app-level sidebar real substance.
+  const breakpoint = 920;
 
   // Sign-out is a POST action; the account button submits the hidden form below.
   /** @type {HTMLFormElement | undefined} */

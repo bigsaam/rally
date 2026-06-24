@@ -1,12 +1,15 @@
 <script>
   import { onMount } from 'svelte';
   import { invalidateAll } from '$app/navigation';
-  import { Chip, Card, CardHeader, Button } from '@walaware/design';
+  import OverviewSection from '$lib/sections/OverviewSection.svelte';
+  import DatesSection from '$lib/sections/DatesSection.svelte';
   import PeopleSection from '$lib/sections/PeopleSection.svelte';
   import GearSection from '$lib/sections/GearSection.svelte';
   import MealsSection from '$lib/sections/MealsSection.svelte';
   import PackingSection from '$lib/sections/PackingSection.svelte';
-  import { fmtDateRange } from '$lib/format.js';
+  import ExpensesSection from '$lib/sections/ExpensesSection.svelte';
+  import TripSettingsSection from '$lib/sections/TripSettingsSection.svelte';
+  import { fmtDateRange, tripEmoji } from '$lib/format.js';
   import { page } from '$app/state';
   import { useShell } from '$lib/shell.svelte.js';
 
@@ -26,40 +29,60 @@
   const gear = $derived(data.gear);
   const meals = $derived(data.meals);
 
+  const emoji = $derived(tripEmoji(trip.trip_type));
   const going = $derived(participants.filter((/** @type {any} */ p) => p.rsvp_status === 'going').length);
-  const maybe = $derived(participants.filter((/** @type {any} */ p) => p.rsvp_status === 'maybe').length);
-  const openGear = $derived(gear.filter((/** @type {any} */ g) => g.remaining > 0).length);
 
-  // Dates · location, joined with guaranteed spacing (Svelte collapses the
-  // whitespace around an inline {#if}, which would otherwise tighten the dot).
+  // dates · location · N going, joined with guaranteed spacing (Svelte collapses
+  // whitespace around an inline {#if}, which would otherwise tighten the dots).
   const meta = $derived(
-    [trip.start_date ? fmtDateRange(trip.start_date, trip.end_date) : '', trip.location]
+    [
+      trip.start_date ? fmtDateRange(trip.start_date, trip.end_date) : '',
+      trip.location,
+      `${going} going`
+    ]
       .filter(Boolean)
       .join(' · ')
   );
 
+  // The signed-in viewer's participant on this trip (for Trip settings).
+  const me = $derived.by(() => {
+    const p = participants.find((/** @type {any} */ x) => x.id === currentParticipantId);
+    return p ? { name: p.display_name, avatar: p.avatar, notify: p.notify } : null;
+  });
+
   // The trip page is one scroll of `<section id>` modules under the shell's
-  // contextual section nav (scrollSpy). Each row targets a section below; the
-  // dimmed "soon" rows are roadmap modules. Icons mirror each section's CardHeader.
+  // contextual section nav (scrollSpy). Each live row targets a `<section>`
+  // below; the dimmed "soon" rows are roadmap modules. Order + icons mirror
+  // docs/apps/tripwala.md (the design repo's contextual-nav contract).
   const SECTION_NAV = [
-    { key: 'overview', label: 'Overview', icon: '📋', href: '#overview' },
+    { key: 'overview', label: 'Overview', icon: '✨', href: '#overview' },
+    { key: 'dates', label: 'Dates', icon: '📅', href: '#dates' },
     { key: 'crew', label: "Who's coming", icon: '🙌', href: '#crew' },
     { key: 'gear', label: 'Gear', icon: '🎒', href: '#gear' },
     { key: 'food', label: 'Food', icon: '🍳', href: '#food' },
     { key: 'packing', label: 'Packing', icon: '🧳', href: '#packing' },
+    { key: 'expenses', label: 'Expenses', icon: '💸', href: '#expenses' },
+    { key: 'tripsettings', label: 'Trip settings', icon: '⚙️', href: '#tripsettings' },
     { key: 'itinerary', label: 'Itinerary', icon: '🗓️', soon: true },
     { key: 'map', label: 'Map', icon: '🗺️', soon: true },
-    { key: 'photos', label: 'Photos', icon: '📸', soon: true }
+    { key: 'photos', label: 'Photos', icon: '📷', soon: true }
   ];
 
   // Publish the section nav + trip name up to the layout's AppShell, flipping it
-  // into contextual mode. Cleared on unmount so leaving the trip restores app level.
+  // into contextual mode. Only reassign when the title actually changes — the 4s
+  // live-update poll re-derives `trip` each tick, and churning `shell.trip`
+  // identity makes the shell's scrollSpy reset scroll to the top every poll.
   const shell = useShell();
+  // Update only when the title changes (keeps shell.trip identity stable across polls).
   $effect(() => {
-    shell.trip = { title: trip.name, nav: SECTION_NAV };
-    return () => {
-      shell.trip = null;
-    };
+    const title = trip.name;
+    if (!shell.trip || shell.trip.title !== title) {
+      shell.trip = { title, nav: SECTION_NAV };
+    }
+  });
+  // Clear on unmount only — a separate effect so the poll's re-runs don't null it.
+  $effect(() => () => {
+    shell.trip = null;
   });
 
   // Live updates via short-poll (the brief allows websocket OR short-poll). The
@@ -101,16 +124,19 @@
 </script>
 
 <!-- Sticky trip header — auto-measured by the shell for the scrollSpy offset
-     (data-appshell-sticky). Compact: name + dates/location + status chips. -->
+     (data-appshell-sticky). Emoji tile + name + dates · where · N going. -->
 <header data-appshell-sticky class="trip-head" style="background: var(--color-bg-app)">
-  <h1 class="font-display text-[22px] font-bold leading-tight text-cocoa-900">{trip.name}</h1>
-  {#if meta}
-    <div class="mt-0.5 font-body text-[13px] font-extrabold text-coral-600">{meta}</div>
-  {/if}
-  <div class="mt-2 flex flex-wrap gap-1.5">
-    <Chip tone="coral">🎉 {going} going</Chip>
-    {#if maybe > 0}<Chip tone="sun">🤔 {maybe} maybe</Chip>{/if}
-    <Chip tone="berry">🎒 {openGear} open</Chip>
+  <div class="flex items-center gap-3">
+    <span
+      class="grid h-12 w-12 flex-none place-items-center rounded-md text-[26px]"
+      style="background: linear-gradient(135deg, var(--color-sand-200), var(--color-sand-300))"
+    >{emoji}</span>
+    <div class="min-w-0">
+      <h1 class="truncate font-display text-[21px] font-bold leading-tight text-cocoa-900">{trip.name}</h1>
+      {#if meta}
+        <div class="truncate font-body text-[13px] font-extrabold text-coral-600">{meta}</div>
+      {/if}
+    </div>
   </div>
 </header>
 
@@ -118,37 +144,11 @@
 
 <div class="trip-stack">
   <section id="overview" class="trip-section">
-    <Card>
-      <CardHeader icon="📋" title="Overview" />
-      {#if ownerMode}
-        <div class="mb-3 flex items-center justify-between gap-3 rounded-md bg-sun-200 px-3.5 py-2.5">
-          <span class="font-body text-[13px] font-bold text-cocoa-900">✨ You're an organizer — you can edit everything here.</span>
-          <a
-            href={settingsHref}
-            class="shrink-0 font-body text-[13px] font-extrabold text-cocoa-900 underline underline-offset-2 hover:text-coral-700"
-          >⚙️ Settings</a>
-        </div>
-      {/if}
-      {#if trip.description}
-        <!-- Trip details / directions. Links (Hipcamp, maps, …) live inline. -->
-        <div
-          class="rounded-2xl bg-sand-100 p-4 font-body text-[13.5px] leading-relaxed text-cocoa-700 [&_a]:font-extrabold [&_a]:text-coral-700 [&_a]:underline [&_a]:underline-offset-2"
-        >
-          {@html trip.description}
-        </div>
-      {:else}
-        <p class="font-body text-[13.5px] font-bold text-cocoa-500">
-          No trip details yet{#if ownerMode} — add directions, what to expect, or links in Settings{/if}.
-        </p>
-      {/if}
-      {#if trip.expense_link}
-        <Button href={trip.expense_link} target="_blank" variant="soft" size="sm" class="mt-3">
-          💸 Split expenses ↗
-        </Button>
-      {/if}
-    </Card>
+    <OverviewSection {trip} {participants} {gear} {meals} {ownerMode} {settingsHref} />
   </section>
-
+  <section id="dates" class="trip-section">
+    <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} />
+  </section>
   <section id="crew" class="trip-section">
     <PeopleSection shareToken={trip.share_token} {participants} {currentParticipantId} {ownerMode} />
   </section>
@@ -160,6 +160,18 @@
   </section>
   <section id="packing" class="trip-section">
     <PackingSection shareToken={trip.share_token} packing={data.packing} {currentParticipantId} />
+  </section>
+  <section id="expenses" class="trip-section">
+    <ExpensesSection
+      shareToken={trip.share_token}
+      expenses={data.expenses}
+      settlement={data.settlement}
+      {currentParticipantId}
+      {ownerMode}
+    />
+  </section>
+  <section id="tripsettings" class="trip-section">
+    <TripSettingsSection shareToken={trip.share_token} {ownerMode} {settingsHref} {me} />
   </section>
 
   {#if !currentParticipantId}

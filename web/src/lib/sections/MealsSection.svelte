@@ -2,8 +2,8 @@
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
   import { Card } from '@walaware/design';
-  import { CardHeader } from '@walaware/design';
   import { Avatar } from '@walaware/design';
+  import SectionHeader from '$lib/ui/SectionHeader.svelte';
   import { fmtWeekday, fmtMonthDay } from '$lib/format.js';
 
   /**
@@ -81,9 +81,9 @@
   }
 </script>
 
-<Card>
-  <CardHeader icon="🍳" iconBg="var(--color-berry-200)" title="What's for food?" />
+<SectionHeader emoji="🍳" title="Food" subtitle="— who's cooking" />
 
+<Card>
   {#each byDay as day, di}
     <div class={di !== 0 ? 'mt-3.5 border-t border-sand-200 pt-3.5' : ''}>
       {#if day.date}

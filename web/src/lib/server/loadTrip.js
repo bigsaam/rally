@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { superuserPb } from './pocketbase.js';
+import { settleUp } from './settle.js';
 
 /**
  * Load a trip and all of its related sections by share token.
@@ -28,7 +29,7 @@ export async function loadTripByShareToken(shareToken) {
 
   const tripFilter = pb.filter('trip = {:id}', { id: trip.id });
 
-  const [participants, gearItems, gearClaims, mealSlots, mealSignups, packingItems] =
+  const [participants, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows] =
     await Promise.all([
       pb.collection('participants').getFullList({ filter: tripFilter, sort: 'created', expand: 'user' }),
       pb.collection('gear_items').getFullList({ filter: tripFilter, sort: 'created' }),
@@ -39,7 +40,9 @@ export async function loadTripByShareToken(shareToken) {
       pb
         .collection('meal_signups')
         .getFullList({ filter: pb.filter('meal_slot.trip = {:id}', { id: trip.id }) }),
-      pb.collection('packing_items').getFullList({ filter: tripFilter, sort: 'created' })
+      pb.collection('packing_items').getFullList({ filter: tripFilter, sort: 'created' }),
+      pb.collection('expenses').getFullList({ filter: tripFilter, sort: '-created' }),
+      pb.collection('itinerary_items').getFullList({ filter: tripFilter, sort: 'date,sort_order' })
     ]);
 
   /** @type {Record<string, string>} */
@@ -95,6 +98,27 @@ export async function loadTripByShareToken(shareToken) {
     };
   });
 
+  // Expenses → rows (with payer name) + an equal-split settle-up across members.
+  const expenses = expenseRows.map((e) => ({
+    id: e.id,
+    title: e.title,
+    amount: e.amount,
+    paidBy: e.paid_by,
+    paidByName: e.paid_by ? (nameById[e.paid_by] ?? 'Someone') : 'Someone'
+  }));
+  const settlement = settleUp(
+    expenseRows.map((e) => ({ amount: e.amount, paid_by: e.paid_by })),
+    participants.map((p) => ({ id: p.id, display_name: p.display_name }))
+  );
+
+  // Itinerary → one editable day-plan label per UTC day.
+  /** @type {Record<string, { id: string, label: string }>} */
+  const itinerary = {};
+  for (const it of itineraryRows) {
+    const key = String(it.date || '').slice(0, 10);
+    if (key && !itinerary[key]) itinerary[key] = { id: it.id, label: it.label };
+  }
+
   return {
     trip: {
       id: trip.id,
@@ -104,7 +128,9 @@ export async function loadTripByShareToken(shareToken) {
       end_date: trip.end_date,
       description: trip.description,
       expense_link: trip.expense_link,
-      share_token: trip.share_token
+      share_token: trip.share_token,
+      trip_type: trip.trip_type || '',
+      status: trip.status || 'confirmed'
     },
     participants: participants
       .map((p) => ({
@@ -112,6 +138,7 @@ export async function loadTripByShareToken(shareToken) {
         display_name: p.display_name,
         rsvp_status: p.rsvp_status,
         lean: p.lean || 0,
+        notify: p.notify !== false, // per-member trip-notification preference (default on)
         avatar: p.expand?.user?.avatar || undefined // Google photo if the member has an account
       }))
       .sort((a, b) => a.display_name.localeCompare(b.display_name, undefined, { sensitivity: 'base' })),
@@ -125,6 +152,9 @@ export async function loadTripByShareToken(shareToken) {
       participant: p.participant,
       participantName: p.participant ? (nameById[p.participant] ?? 'Someone') : null,
       from_gear: p.from_gear || null
-    }))
+    })),
+    expenses,
+    settlement,
+    itinerary
   };
 }

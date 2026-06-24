@@ -238,6 +238,62 @@ export async function POST({ params, request, locals }) {
         break;
       }
 
+      // Log a shared cost. Anyone in the trip can add one; the payer defaults to
+      // the actor but an organizer may attribute it to someone else.
+      case 'expense_add': {
+        const title = String(body.title ?? '').trim().slice(0, 200);
+        const amount = Math.round((Number(body.amount) || 0) * 100) / 100;
+        if (!title) throw error(400, 'What was it for?');
+        if (!(amount > 0)) throw error(400, 'Amount must be greater than zero');
+        let payer = me;
+        if (body.paidBy && body.paidBy !== me.id) {
+          payer = await inTrip('participants', body.paidBy); // verifies it's this trip's member
+        }
+        await pb.collection('expenses').create({ trip: trip.id, title, amount, paid_by: payer.id });
+        break;
+      }
+
+      // Remove an expense (the payer or an organizer).
+      case 'expense_delete': {
+        const e = await inTrip('expenses', body.expenseId);
+        if (e.paid_by !== me.id && !isOrganizer) throw error(403, 'Only the payer or an organizer can remove this');
+        await pb.collection('expenses').delete(e.id);
+        break;
+      }
+
+      // Set (or clear) the day-plan label for one date. Organizers own the plan.
+      case 'itinerary_set': {
+        if (!isOrganizer) throw error(403, 'Only organizers can edit the plan');
+        const date = String(body.date ?? '').slice(0, 10);
+        if (!date) throw error(400, 'Date required');
+        const label = String(body.label ?? '').trim().slice(0, 200);
+        const existing = await firstOrNull(
+          'itinerary_items',
+          pb.filter('trip = {:t} && date ~ {:d}', { t: trip.id, d: date })
+        );
+        if (!label) {
+          if (existing) await pb.collection('itinerary_items').delete(existing.id);
+        } else if (existing) {
+          await pb.collection('itinerary_items').update(existing.id, { label });
+        } else {
+          await pb.collection('itinerary_items').create({ trip: trip.id, date: `${date} 00:00:00.000Z`, label });
+        }
+        break;
+      }
+
+      // Toggle my own trip-notification preference.
+      case 'notify_toggle': {
+        await pb.collection('participants').update(me.id, { notify: me.notify === false });
+        break;
+      }
+
+      // Leave the trip: unlink my account from this participant. The claimed name
+      // and my contributions stay as an unclaimed orphan (re-joining reclaims it).
+      case 'leave_trip': {
+        await pb.collection('participants').update(me.id, { user: '' });
+        break;
+      }
+
       default:
         throw error(400, 'Unknown action');
     }

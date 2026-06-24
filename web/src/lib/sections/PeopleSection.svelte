@@ -1,7 +1,8 @@
 <script>
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
-  import { Card, CardHeader, Avatar, SegmentedControl, LeanMeter } from '@walaware/design';
+  import { Card, Avatar, SegmentedControl, LeanMeter, Chip } from '@walaware/design';
+  import SectionHeader from '$lib/ui/SectionHeader.svelte';
 
   // LeanMeter's `lean` prop is a 1|2|3 union; narrow the raw number to it.
   /** @param {number} n @returns {1 | 2 | 3} */
@@ -30,6 +31,7 @@
     { v: 3, label: 'Leaning yes' }
   ];
   const going = $derived(participants.filter((p) => p.rsvp_status === 'going').length);
+  const maybe = $derived(participants.filter((p) => p.rsvp_status === 'maybe').length);
   const me = $derived(participants.find((p) => p.id === currentParticipantId) ?? null);
 
   let saving = $state(false);
@@ -68,45 +70,47 @@
   }
 </script>
 
-<Card>
-  <CardHeader icon="🙌" iconBg="var(--color-coral-200)" title="Who's coming?">
-    {#snippet action()}
-      <span class="font-body text-[12.5px] font-extrabold text-cocoa-500">{going} going</span>
-    {/snippet}
-  </CardHeader>
+<SectionHeader emoji="🙌" title="Who's coming?">
+  {#snippet action()}
+    <Chip tone="leaf">{going} going</Chip>
+    {#if maybe > 0}<Chip tone="sun">{maybe} maybe</Chip>{/if}
+  {/snippet}
+</SectionHeader>
 
-  <div class="mb-3.5 flex flex-col gap-2">
+<Card>
+  <!-- Crew as avatar pills (the mock's roster). Owners get inline RSVP controls
+       on each pill; everyone else sees the person's status glyph. -->
+  <div class="mb-3.5 flex flex-wrap gap-2">
     {#each participants as p}
-      <div class="flex items-center gap-2.5" class:opacity-50={p.rsvp_status === 'out'}>
-        <Avatar name={p.display_name} src={p.avatar} size={30} />
-        <span class="font-body text-sm font-extrabold text-cocoa-900">
+      <span
+        class="flex items-center gap-1.5 rounded-full bg-sand-100 py-1 pl-1 pr-3"
+        class:opacity-50={p.rsvp_status === 'out'}
+      >
+        <Avatar name={p.display_name} src={p.avatar} size={26} />
+        <span class="font-body text-[13px] font-extrabold text-cocoa-900">
           {p.display_name}{#if p.id === currentParticipantId}<span class="font-bold text-cocoa-500"> (you)</span>{/if}
         </span>
         {#if ownerMode}
-          <!-- Owner can set anyone's status; lean (self-set) shown for maybes -->
-          <span class="ml-auto flex items-center gap-2">
-            {#if p.rsvp_status === 'maybe'}<LeanMeter lean={leanOf(p.lean || 2)} showLabel={false} />{/if}
-            <span class="flex gap-1">
-              {#each RSVP_OPTS as opt}
-                <button
-                  type="button"
-                  disabled={savingId === p.id}
-                  aria-label="Set {p.display_name} {opt.value}"
-                  onclick={() => setRsvp(opt.value, p.id)}
-                  class="grid h-7 w-7 place-items-center rounded-full text-[13px] transition
-                    {p.rsvp_status === opt.value ? 'bg-white shadow-soft' : 'opacity-35 hover:opacity-70'}"
-                >
-                  {opt.emoji}
-                </button>
-              {/each}
-            </span>
+          <span class="ml-0.5 flex gap-0.5">
+            {#each RSVP_OPTS as opt}
+              <button
+                type="button"
+                disabled={savingId === p.id}
+                aria-label="Set {p.display_name} {opt.value}"
+                onclick={() => setRsvp(opt.value, p.id)}
+                class="grid h-6 w-6 place-items-center rounded-full text-[12px] transition
+                  {p.rsvp_status === opt.value ? 'bg-white shadow-soft' : 'opacity-35 hover:opacity-70'}"
+              >
+                {opt.emoji}
+              </button>
+            {/each}
           </span>
         {:else if p.rsvp_status === 'maybe'}
-          <span class="ml-auto"><LeanMeter lean={leanOf(p.lean || 2)} /></span>
-        {:else}
-          <span class="ml-auto text-[15px]">{p.rsvp_status ? statusEmoji[p.rsvp_status] : '·'}</span>
+          <LeanMeter lean={leanOf(p.lean || 2)} showLabel={false} />
+        {:else if p.rsvp_status}
+          <span class="text-[13px]">{statusEmoji[p.rsvp_status]}</span>
         {/if}
-      </div>
+      </span>
     {/each}
   </div>
 

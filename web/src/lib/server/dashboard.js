@@ -12,9 +12,11 @@
  * @property {string} end_date
  * @property {string} role
  * @property {string} status
+ * @property {string} trip_type
  * @property {number} members
  * @property {number} going
  * @property {number} maybe
+ * @property {Array<{ name: string, avatar?: string }>} crew
  * @property {string} _start
  * @property {'current' | 'upcoming' | 'past'} _bucket
  */
@@ -75,11 +77,18 @@ export async function loadUserTrips(pb, userId) {
 
   /** @type {Record<string, { members: number, going: number, maybe: number }>} */
   const stats = {};
+  /** @type {Record<string, Array<{ name: string, avatar?: string }>>} crew preview per trip (going first) */
+  const crewByTrip = {};
   for (const p of participants) {
     const s = (stats[p.trip] ??= { members: 0, going: 0, maybe: 0 });
     s.members++;
     if (p.rsvp_status === 'going') s.going++;
     else if (p.rsvp_status === 'maybe') s.maybe++;
+    const crew = (crewByTrip[p.trip] ??= []);
+    const entry = { name: p.display_name, avatar: p.avatar || undefined };
+    // Going members lead the avatar stack; everyone else trails.
+    if (p.rsvp_status === 'going') crew.unshift(entry);
+    else crew.push(entry);
   }
 
   const today = todayUtc();
@@ -96,7 +105,9 @@ export async function loadUserTrips(pb, userId) {
       end_date: t.end_date ?? '',
       role: roleByTrip[t.id] ?? 'guest',
       status: t.status || 'confirmed',
+      trip_type: t.trip_type ?? 'other',
       ...(stats[t.id] ?? { members: 0, going: 0, maybe: 0 }),
+      crew: (crewByTrip[t.id] ?? []).slice(0, 5),
       _start: start,
       _bucket: bucketOf({ start, end }, today)
     };

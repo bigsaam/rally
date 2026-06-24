@@ -2,7 +2,8 @@
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
   import { gearEmoji } from '$lib/avatar.js';
-  import { Card, CardHeader, Avatar, Button, EmptyState, Tooltip } from '@walaware/design';
+  import { Card, Avatar, Button, EmptyState, Tooltip } from '@walaware/design';
+  import SectionHeader from '$lib/ui/SectionHeader.svelte';
 
   /**
    * @type {{
@@ -75,22 +76,22 @@
   }
 </script>
 
-<Card>
-  <CardHeader icon="🎒" iconBg="var(--color-sun-200)" title="Who's bringing what?">
-    {#snippet action()}
-      <Tooltip label="Add gear" placement="left">
-        <button
-          type="button"
-          aria-label="Add gear"
-          onclick={() => (adding = !adding)}
-          class="grid h-8 w-8 place-items-center rounded-full bg-sun-200 text-lg text-sun-600 transition active:scale-90"
-        >
-          ＋
-        </button>
-      </Tooltip>
-    {/snippet}
-  </CardHeader>
+<SectionHeader emoji="🎒" title="Gear" subtitle="— who's bringing what">
+  {#snippet action()}
+    <Tooltip label="Add gear" placement="left">
+      <button
+        type="button"
+        aria-label="Add gear"
+        onclick={() => (adding = !adding)}
+        class="grid h-8 w-8 place-items-center rounded-full bg-sun-200 text-lg text-sun-600 transition active:scale-90"
+      >
+        ＋
+      </button>
+    </Tooltip>
+  {/snippet}
+</SectionHeader>
 
+<Card>
   {#if gear.length === 0 && !adding}
     <EmptyState emoji="🦗" title="Nothing on the list yet" body="Add the first thing someone needs to bring." action="Add gear" onAction={() => (adding = true)} />
   {:else}

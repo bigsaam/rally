@@ -2,7 +2,7 @@
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
   import { Card } from '@walaware/design';
-  import { CardHeader } from '@walaware/design';
+  import SectionHeader from '$lib/ui/SectionHeader.svelte';
   import Checkbox from '$lib/ui/Checkbox.svelte';
   import { Button } from '@walaware/design';
 
@@ -116,9 +116,9 @@
   </div>
 {/snippet}
 
-<Card>
-  <CardHeader icon="🧳" iconBg="var(--color-leaf-200)" title="What to pack" />
+<SectionHeader emoji="🧳" title="Packing" subtitle="— your personal list" />
 
+<Card>
   <div class="mb-1 flex items-center justify-between">
     <p class="font-body text-[11px] font-extrabold uppercase tracking-wide text-cocoa-500">Shared</p>
     {#if currentParticipantId}

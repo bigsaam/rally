@@ -9,6 +9,7 @@
   const total = $derived(
     trips ? trips.current.length + trips.upcoming.length + trips.past.length : 0
   );
+  const coming = $derived(trips ? trips.current.length + trips.upcoming.length : 0);
 </script>
 
 <svelte:head><title>tripwala — one link, everyone's in</title></svelte:head>
@@ -16,9 +17,16 @@
 {#if data.user}
   <!-- Dashboard — AppShell owns the padding + centered content column. -->
   <div>
-    <div class="flex items-center justify-between">
-      <h1 class="font-display text-[27px] font-bold tracking-tight text-text-strong">Your trips</h1>
-      <Button href="/new" variant="primary" size="md">Plan a trip 🎒</Button>
+    <div class="flex items-start justify-between gap-3 border-b border-sand-300 pb-4">
+      <div>
+        <h1 class="font-display text-[27px] font-bold tracking-tight text-text-strong">Your trips</h1>
+        {#if total > 0}
+          <p class="mt-0.5 font-body text-[15px] font-bold text-text-muted">
+            {coming} trip{coming === 1 ? '' : 's'} coming up.
+          </p>
+        {/if}
+      </div>
+      <Button href="/new" variant="primary" size="md">＋ New trip</Button>
     </div>
 
     {#if total === 0}
