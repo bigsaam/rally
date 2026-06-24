@@ -31,14 +31,55 @@ export function newClient() {
 /** @type {import('pocketbase').default | null} */
 let _pb = null;
 
-/** Returns a cached, superuser-authenticated client (re-auths when expired). */
+/** Returns a cached, superuser-authenticated client. Re-auths when the token is
+ *  locally expired, and self-heals if the server rejects it (see below). */
 export async function superuserPb() {
   if (!_pb) {
     _pb = new PocketBase(PB_URL);
     _pb.autoCancellation(false);
+    installSelfHealingAuth(_pb);
   }
   if (!_pb.authStore.isValid) {
     await _pb.collection('_superusers').authWithPassword(EMAIL, PASSWORD);
   }
   return _pb;
+}
+
+/**
+ * Wrap the client's low-level `send()` so any request the server rejects with
+ * 401/403 transparently re-authenticates as the superuser and retries once.
+ *
+ * Why: `authStore.isValid` only checks local token *expiry*. A token can be
+ * valid locally yet rejected by the server after its key was rotated — e.g. a
+ * PocketBase restart that re-runs `superuser upsert`, or a password change.
+ * Without this, the cached client keeps sending a dead token (every read 403s)
+ * until the process restarts. Zero overhead on the happy path; no per-request
+ * round-trip — we only re-auth in response to an actual rejection.
+ *
+ * @param {import('pocketbase').default} pb
+ */
+function installSelfHealingAuth(pb) {
+  const rawSend = pb.send.bind(pb);
+  /** @type {Promise<void> | null} de-dupes re-auth across concurrent failures */
+  let reauthing = null;
+
+  pb.send = async (path, options) => {
+    try {
+      return await rawSend(path, options);
+    } catch (err) {
+      const status = /** @type {any} */ (err)?.status;
+      // Only retry auth failures — and never the auth call itself (no loop).
+      if ((status !== 401 && status !== 403) || path.includes('/auth-with-password')) {
+        throw err;
+      }
+      reauthing ??= (async () => {
+        pb.authStore.clear();
+        await pb.collection('_superusers').authWithPassword(EMAIL, PASSWORD);
+      })().finally(() => {
+        reauthing = null;
+      });
+      await reauthing;
+      return await rawSend(path, options);
+    }
+  };
 }
