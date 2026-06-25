@@ -19,6 +19,10 @@ discussion live in
 - **Rich location cards** — location ideas render as a horizontal card row with
   self-hosted, SSRF-guarded link previews (OpenGraph unfurl), drag-drop/upload
   images, and the picked spot's image carried into the confirmed trip
+- **Coordination & lifecycle polish** _(v1 + v2 complete)_ — editable meal slots,
+  per-person dietary notes (shown to cooks), a trip-dates weather forecast + live
+  countdown, an emergency/safety info card, live arrival check-in, one-tap trip
+  cloning, and an auto post-trip "Wrapped" recap once the dates pass
 - One invite link per trip; **accounts** (Google OAuth2 + email/password) — sign
   in to join, and only invited members see the details (non-members get a teaser)
 - **Membership + roles** — organizer / guest; creator is auto-organizer;
