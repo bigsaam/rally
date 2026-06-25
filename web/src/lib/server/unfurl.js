@@ -5,19 +5,25 @@
 // ⚠️ SSRF surface — this fetches arbitrary user-controlled URLs from inside our
 // network. We guard hard:
 //   - only http(s)
-//   - resolve the host via DNS and REJECT any address in a private / loopback /
-//     link-local / CGNAT / metadata / reserved range (IPv4 and IPv6)
-//   - follow at most MAX_REDIRECTS hops, re-validating the host of every hop
+//   - a custom DNS `lookup` validates EVERY resolved address against private /
+//     loopback / link-local / CGNAT / metadata / reserved ranges (IPv4 + IPv6)
+//     AT CONNECTION TIME — the socket only ever connects to an address we just
+//     checked, so there's no DNS-rebinding (TOCTOU) window between check and
+//     connect. SNI/Host still use the original hostname, so TLS verifies normally.
+//   - follow at most MAX_REDIRECTS hops, re-checking scheme + host each hop
 //   - ~5s total timeout, ~1.5 MB body cap, parse only — never execute
 // The og:image we return is a URL string the BROWSER loads directly; we never
 // fetch the image bytes ourselves, so it isn't a second SSRF vector here.
 
-import dns from 'node:dns/promises';
+import dns from 'node:dns';
 import net from 'node:net';
+import http from 'node:http';
+import https from 'node:https';
 
 const TIMEOUT_MS = 5000;
 const MAX_BYTES = 1_500_000;
 const MAX_REDIRECTS = 3;
+const USER_AGENT = 'Mozilla/5.0 (compatible; tripwala-link-preview/1.0; +https://tripwala.enzoiwith.us)';
 
 /** Parse an IPv4 string to its 32-bit integer, or null. */
 function ipv4ToInt(/** @type {string} */ ip) {
@@ -77,8 +83,13 @@ function isBlockedV6(/** @type {string} */ ip) {
   return false;
 }
 
-/** @param {string} ip */
-function isBlockedIp(ip) {
+/**
+ * True if an address must never be reached. The pure, DNS-free core of the SSRF
+ * guard — exported so it can be exhaustively unit-tested (see unfurl.test.js).
+ * Anything that isn't a public IPv4/IPv6 literal (including hostnames) is unsafe.
+ * @param {string} ip
+ */
+export function isBlockedIp(ip) {
   const fam = net.isIP(ip);
   if (fam === 4) return isBlockedV4(ip);
   if (fam === 6) return isBlockedV6(ip);
@@ -86,12 +97,45 @@ function isBlockedIp(ip) {
 }
 
 /**
- * Validate a URL string and confirm every resolved address is public. Exported
- * so the SSRF guard can be unit-tested in isolation; throws on anything unsafe.
- * @param {string} raw
- * @returns {Promise<URL>} the parsed URL (throws if unsafe)
+ * A `dns.lookup`-compatible function that resolves a hostname and rejects if ANY
+ * resolved address is non-public. Used as the `lookup` option on the http(s)
+ * request so the socket connects ONLY to addresses we validated in the same
+ * call — this is what closes the DNS-rebinding window.
+ * @param {string} hostname
+ * @param {any} options
+ * @param {(err: Error|null, address?: any, family?: number) => void} callback
  */
-export async function assertSafeUrl(raw) {
+function guardedLookup(hostname, options, callback) {
+  // Node may call lookup(hostname, callback) with options omitted.
+  if (typeof options === 'function') {
+    callback = options;
+    options = {};
+  }
+  dns.lookup(hostname, { all: true }, (err, addresses) => {
+    if (err) return callback(err);
+    const list = Array.isArray(addresses) ? addresses : [];
+    if (!list.length) return callback(new Error('no address'));
+    // Reject outright if any address resolves into a forbidden range.
+    for (const a of list) {
+      if (isBlockedIp(a.address)) return callback(new Error('blocked host'));
+    }
+    // Honor a requested family (happy-eyeballs / autoSelectFamily) when set.
+    const wantFam = options && (options.family === 4 || options.family === 6) ? options.family : 0;
+    const picked = wantFam ? list.filter((a) => a.family === wantFam) : list;
+    if (!picked.length) return callback(new Error('no address'));
+    if (options && options.all) return callback(null, picked);
+    callback(null, picked[0].address, picked[0].family);
+  });
+}
+
+/**
+ * Validate a URL's scheme and any literal-IP host. Hostnames are NOT resolved
+ * here — guardedLookup validates them at connection time. Throws on anything
+ * unsafe; returns the parsed URL otherwise.
+ * @param {string} raw
+ * @returns {URL}
+ */
+function assertSafeUrl(raw) {
   let u;
   try {
     u = new URL(raw);
@@ -99,54 +143,65 @@ export async function assertSafeUrl(raw) {
     throw new Error('bad url');
   }
   if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('bad scheme');
-  // Node keeps the brackets on an IPv6 hostname ("[::1]"); strip them so net.isIP
-  // classifies the literal instead of falling through to a (failing) DNS lookup.
+  // Node keeps brackets on an IPv6 hostname ("[::1]"); strip so net.isIP matches.
   const host = u.hostname.replace(/^\[|\]$/g, '');
-  // Literal IP in the URL — check directly, no DNS.
-  if (net.isIP(host)) {
-    if (isBlockedIp(host)) throw new Error('blocked host');
-    return u;
-  }
-  // Hostname → resolve and reject if ANY address is private.
-  let records;
-  try {
-    records = await dns.lookup(host, { all: true });
-  } catch (_) {
-    throw new Error('dns failure');
-  }
-  if (!records.length) throw new Error('no address');
-  for (const r of records) {
-    if (isBlockedIp(r.address)) throw new Error('blocked host');
-  }
+  if (net.isIP(host) && isBlockedIp(host)) throw new Error('blocked host');
   return u;
 }
 
-/** Read a response body up to MAX_BYTES, then stop. */
-async function readCapped(/** @type {Response} */ res) {
-  const reader = res.body?.getReader();
-  if (!reader) return '';
-  const chunks = [];
-  let total = 0;
-  const decoder = new TextDecoder('utf-8');
-  let out = '';
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    out += decoder.decode(value, { stream: true });
-    chunks.push(value);
-    // OG tags live in <head>; bail as soon as we've seen </head> or hit the cap.
-    if (total >= MAX_BYTES || /<\/head>/i.test(out)) {
-      try {
-        await reader.cancel();
-      } catch (_) {
-        /* ignore */
+/**
+ * Issue one GET with the SSRF-guarded lookup and return the live response stream.
+ * @param {URL} u
+ * @param {AbortSignal} signal
+ * @returns {Promise<import('node:http').IncomingMessage>}
+ */
+function requestOnce(u, signal) {
+  return new Promise((resolve, reject) => {
+    const mod = u.protocol === 'https:' ? https : http;
+    const req = mod.request(
+      u,
+      {
+        method: 'GET',
+        lookup: guardedLookup,
+        signal,
+        headers: {
+          // Many sites only emit OG tags to a "real" browser/crawler UA.
+          'user-agent': USER_AGENT,
+          accept: 'text/html,application/xhtml+xml'
+        }
+      },
+      (res) => resolve(res)
+    );
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+/** Read a response stream up to MAX_BYTES (or past </head>), then stop. */
+function readCapped(/** @type {import('node:http').IncomingMessage} */ res) {
+  return new Promise((resolve, reject) => {
+    let out = '';
+    let total = 0;
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve(out);
+    };
+    res.setEncoding('utf8');
+    res.on('data', (chunk) => {
+      total += Buffer.byteLength(chunk);
+      out += chunk;
+      // OG tags live in <head>; bail as soon as we've seen </head> or hit the cap.
+      if (total >= MAX_BYTES || /<\/head>/i.test(out)) {
+        res.destroy();
+        finish();
       }
-      break;
-    }
-  }
-  out += decoder.decode();
-  return out;
+    });
+    res.on('end', finish);
+    res.on('close', finish);
+    res.on('error', (e) => (settled ? null : ((settled = true), reject(e))));
+  });
 }
 
 /** Pull a single <meta property|name="key" content="..."> value from HTML. */
@@ -175,6 +230,21 @@ function decodeEntities(/** @type {string} */ s) {
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)));
 }
 
+/** A remote og:image URL is safe to STORE (the browser loads it) if it's http(s)
+ *  and not an internal IP literal. Resolves relatives against the page URL. */
+function safeImageUrl(/** @type {string} */ image, /** @type {URL} */ base) {
+  if (!image) return '';
+  try {
+    const iu = new URL(image, base);
+    if (iu.protocol !== 'http:' && iu.protocol !== 'https:') return '';
+    const host = iu.hostname.replace(/^\[|\]$/g, '');
+    if (net.isIP(host) && isBlockedIp(host)) return ''; // never store an internal host
+    return iu.toString();
+  } catch (_) {
+    return '';
+  }
+}
+
 /**
  * Unfurl a URL into preview metadata. Best-effort: returns null on any failure
  * (bad/unsafe URL, timeout, no OG tags). Callers should mark "fetched" regardless
@@ -189,30 +259,34 @@ export async function unfurl(rawUrl) {
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     let current = rawUrl;
-    let finalUrl = await assertSafeUrl(current);
+    let finalUrl = assertSafeUrl(current);
+    /** @type {import('node:http').IncomingMessage | undefined} */
     let res;
-    // Follow redirects ourselves so we can re-validate each hop's host.
+    // Follow redirects ourselves so we can re-check scheme + host on every hop.
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-      finalUrl = await assertSafeUrl(current);
-      res = await fetch(finalUrl, {
-        redirect: 'manual',
-        signal: controller.signal,
-        headers: {
-          // Many sites only emit OG tags to a "real" browser/crawler UA.
-          'user-agent': 'Mozilla/5.0 (compatible; tripwala-link-preview/1.0; +https://tripwala.enzoiwith.us)',
-          accept: 'text/html,application/xhtml+xml'
-        }
-      });
-      if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
+      finalUrl = assertSafeUrl(current);
+      res = await requestOnce(finalUrl, controller.signal);
+      const status = res.statusCode ?? 0;
+      const location = res.headers.location;
+      if (status >= 300 && status < 400 && location) {
+        res.resume(); // drain the redirect body so the socket frees up
         if (hop === MAX_REDIRECTS) return null; // too many hops
-        current = new URL(res.headers.get('location') ?? '', finalUrl).toString();
+        current = new URL(location, finalUrl).toString();
         continue;
       }
       break;
     }
-    if (!res || !res.ok) return null;
-    const ctype = res.headers.get('content-type') || '';
-    if (ctype && !/text\/html|application\/xhtml/i.test(ctype)) return null;
+    if (!res) return null;
+    const status = res.statusCode ?? 0;
+    if (status < 200 || status >= 300) {
+      res.resume();
+      return null;
+    }
+    const ctype = String(res.headers['content-type'] || '');
+    if (ctype && !/text\/html|application\/xhtml/i.test(ctype)) {
+      res.resume();
+      return null;
+    }
 
     const html = await readCapped(res);
     const titleTag = html.match(/<title[^>]*>([^<]*)<\/title>/i);
@@ -221,19 +295,7 @@ export async function unfurl(rawUrl) {
     const description =
       metaContent(html, 'og:description') || metaContent(html, 'description') || metaContent(html, 'twitter:description');
 
-    // Resolve a relative og:image against the final URL; re-validate, since it's
-    // a remote URL we'll hand to the browser (don't ship internal hosts to it).
-    let absImage = '';
-    if (image) {
-      try {
-        const iu = new URL(image, finalUrl);
-        if ((iu.protocol === 'http:' || iu.protocol === 'https:') && !net.isIP(iu.hostname)) absImage = iu.toString();
-        else if ((iu.protocol === 'http:' || iu.protocol === 'https:') && !isBlockedIp(iu.hostname)) absImage = iu.toString();
-      } catch (_) {
-        /* drop a malformed image url */
-      }
-    }
-
+    const absImage = safeImageUrl(image, finalUrl);
     if (!absImage && !title && !description) return null;
     return {
       image: absImage.slice(0, 1000),
