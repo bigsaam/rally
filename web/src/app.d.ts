@@ -6,6 +6,9 @@ export interface SessionUser {
   email: string;
   name: string;
   avatar: string;
+  /** Optional name-display prefs (see displayName.js); default = first name only. */
+  nickname?: string;
+  show_last_name?: boolean;
 }
 
 declare global {

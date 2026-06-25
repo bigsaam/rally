@@ -13,16 +13,26 @@ const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 export async function load({ locals }) {
   if (!locals.user) throw redirect(303, '/login?next=/profile');
   // Read the live record — the pb_auth cookie's copy can be stale right after a
-  // change, so don't trust locals.user.avatar for the canonical display here.
+  // change, so don't trust locals.user.* for the canonical display here.
   let avatar = locals.user.avatar || undefined;
+  let nickname = locals.user.nickname || '';
+  let showLastName = locals.user.show_last_name === true;
   try {
     const pb = await superuserPb();
     const rec = await pb.collection('users').getOne(locals.user.id);
     avatar = avatarUrl(rec);
+    nickname = rec.nickname || '';
+    showLastName = rec.show_last_name === true;
   } catch (_) {
     /* fall back to the cookie copy */
   }
-  return { name: locals.user.name || locals.user.email, email: locals.user.email, avatar };
+  return {
+    name: locals.user.name || locals.user.email,
+    email: locals.user.email,
+    avatar,
+    nickname,
+    showLastName
+  };
 }
 
 /** Best-effort: refresh the signed-in user's token so the header avatar (read
@@ -64,6 +74,22 @@ export const actions = {
       await pb.collection('users').update(locals.user.id, { avatar: null });
     } catch (_) {
       return fail(400, { error: 'Could not remove the photo.' });
+    }
+    await refreshSession(locals);
+    throw redirect(303, '/profile');
+  },
+
+  // Name-display prefs: an optional nickname + whether to show the last name.
+  prefs: async ({ request, locals }) => {
+    if (!locals.user) return fail(401, { error: 'Please sign in again.' });
+    const form = await request.formData();
+    const nickname = String(form.get('nickname') ?? '').trim().slice(0, 100);
+    const show_last_name = form.get('show_last_name') != null;
+    const pb = await superuserPb();
+    try {
+      await pb.collection('users').update(locals.user.id, { nickname, show_last_name });
+    } catch (_) {
+      return fail(400, { error: 'Could not save your name settings.' });
     }
     await refreshSession(locals);
     throw redirect(303, '/profile');

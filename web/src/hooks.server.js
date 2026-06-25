@@ -41,7 +41,14 @@ const handleAuth = async ({ event, resolve }) => {
   event.locals.pb = pb;
   const rec = pb.authStore.record;
   event.locals.user = rec
-    ? { id: rec.id, email: rec.email, name: rec.name ?? '', avatar: avatarUrl(rec) ?? '' }
+    ? {
+        id: rec.id,
+        email: rec.email,
+        name: rec.name ?? '',
+        avatar: avatarUrl(rec) ?? '',
+        nickname: rec.nickname ?? '',
+        show_last_name: rec.show_last_name === true
+      }
     : null;
 
   const response = await resolve(event);

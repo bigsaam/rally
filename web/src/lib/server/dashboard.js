@@ -3,6 +3,7 @@
 // role and a couple of headline counts per trip.
 
 import { avatarUrl } from './userAvatar.js';
+import { participantName } from '../displayName.js';
 
 /**
  * @typedef {Object} DashTrip
@@ -87,7 +88,7 @@ export async function loadUserTrips(pb, userId) {
     if (p.rsvp_status === 'going') s.going++;
     else if (p.rsvp_status === 'maybe') s.maybe++;
     const crew = (crewByTrip[p.trip] ??= []);
-    const entry = { name: p.display_name, avatar: avatarUrl(p.expand?.user) };
+    const entry = { name: participantName(p), avatar: avatarUrl(p.expand?.user) };
     // Going members lead the avatar stack; everyone else trails.
     if (p.rsvp_status === 'going') crew.unshift(entry);
     else crew.push(entry);

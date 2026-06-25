@@ -1,11 +1,28 @@
 <script>
-  import { AvatarUpload, Card, Button } from '@walaware/design';
+  import { AvatarUpload, Card, Button, TextField } from '@walaware/design';
   import { enhance } from '$app/forms';
+  import { displayName } from '$lib/displayName.js';
 
   /** @type {{ data: import('./$types').PageData, form: import('./$types').ActionData }} */
   let { data, form } = $props();
 
   let busy = $state(false);
+
+  // Name-display prefs (live preview; the default is first name only). Seeded
+  // once from load data; the form owns the value after that.
+  // svelte-ignore state_referenced_locally
+  let nickname = $state(data.nickname || '');
+  // svelte-ignore state_referenced_locally
+  let showLast = $state(data.showLastName || false);
+  let savingPrefs = $state(false);
+  const preview = $derived(displayName(data.name, { nickname, show_last_name: showLast }));
+  const savePrefs = () => {
+    savingPrefs = true;
+    return async (/** @type {{ update: () => Promise<void> }} */ { update }) => {
+      await update();
+      savingPrefs = false;
+    };
+  };
 
   // A hidden, enhanced form does the actual multipart upload (collections are
   // superuser-locked; the action scopes the write to locals.user.id). AvatarUpload
@@ -75,6 +92,39 @@
       </div>
     {/if}
   </Card>
+
+  <!-- Display-name prefs: nickname + show-last-name (first name only by default). -->
+  <div class="mt-4">
+    <Card>
+      <div class="font-display text-[15px] font-bold text-text-strong">Display name</div>
+      <p class="mt-0.5 font-body text-[12.5px] font-bold text-text-muted">
+        How your name shows on trips. First name only by default.
+      </p>
+      <form method="POST" action="?/prefs" use:enhance={savePrefs} class="mt-3 flex flex-col gap-3">
+        <div>
+          <label for="nickname" class="mb-1 block font-body text-[12px] font-extrabold uppercase tracking-wide text-cocoa-500">
+            Nickname (optional)
+          </label>
+          <TextField id="nickname" name="nickname" bind:value={nickname} maxlength={100} placeholder={`e.g. ${(data.name || '').split(' ')[0] || 'Sam'}`} />
+        </div>
+        <label class="flex cursor-pointer items-center justify-between gap-3">
+          <span class="min-w-0">
+            <span class="block font-body text-[14px] font-extrabold text-text-strong">Show my last name</span>
+            <span class="block font-body text-[12px] font-bold text-text-muted">Off shows just your first name</span>
+          </span>
+          <input type="checkbox" name="show_last_name" bind:checked={showLast} class="h-5 w-5 flex-none accent-[var(--color-primary)]" />
+        </label>
+        <div class="rounded-lg bg-sand-100 px-3 py-2 font-body text-[13px] font-bold text-cocoa-700">
+          Shown as <span class="font-extrabold text-cocoa-900">{preview || '—'}</span>
+        </div>
+        <div>
+          <Button type="submit" variant="primary" size="md" disabled={savingPrefs}>
+            {savingPrefs ? 'Saving…' : 'Save name'}
+          </Button>
+        </div>
+      </form>
+    </Card>
+  </div>
 
   <!-- Hidden upload form driven by AvatarUpload's onPick. -->
   <form

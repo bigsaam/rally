@@ -4,6 +4,7 @@
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createShell } from '$lib/shell.svelte.js';
+  import { displayName } from '$lib/displayName.js';
 
   /** @type {{ children: import('svelte').Snippet, data: import('./$types').LayoutData }} */
   let { children, data } = $props();
@@ -50,7 +51,7 @@
   const account = $derived(
     user
       ? {
-          name: user.name || user.email,
+          name: displayName(user.name, user) || user.email,
           avatar: user.avatar || undefined, // resolved photo URL (Google CDN or /api/files/…); falls back to initial
           // The shell account avatar (sidebar + mobile top bar) opens the profile
           // editor — available everywhere, not just the dashboard.

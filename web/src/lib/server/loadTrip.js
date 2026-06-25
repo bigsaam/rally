@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import { superuserPb } from './pocketbase.js';
 import { settleUp } from './settle.js';
 import { avatarUrl } from './userAvatar.js';
+import { participantName } from '../displayName.js';
 
 /**
  * Load a trip and all of its related sections by share token.
@@ -52,7 +53,7 @@ export async function loadTripByShareToken(shareToken) {
   const participants = participantsAll.filter((p) => p.status !== 'pending');
 
   /** @type {Record<string, string>} */
-  const nameById = Object.fromEntries(participants.map((p) => [p.id, p.display_name]));
+  const nameById = Object.fromEntries(participants.map((p) => [p.id, participantName(p)]));
 
   // gear remaining = qty_needed - sum(claims)
   /** @type {Record<string, Array<{id: string, participant: string, participantName: string, qty_claimed: number}>>} */
@@ -145,12 +146,12 @@ export async function loadTripByShareToken(shareToken) {
     // Account-linked members (for the inline Trip-settings members list).
     members: participants
       .filter((p) => p.user)
-      .map((p) => ({ id: p.id, display_name: p.display_name, role: p.role || 'guest' }))
+      .map((p) => ({ id: p.id, display_name: participantName(p), role: p.role || 'guest' }))
       .sort((a, b) => (a.role === b.role ? 0 : a.role === 'organizer' ? -1 : 1)),
     participants: participants
       .map((p) => ({
         id: p.id,
-        display_name: p.display_name,
+        display_name: participantName(p),
         rsvp_status: p.rsvp_status,
         lean: p.lean || 0,
         notify: p.notify !== false, // per-member trip-notification preference (default on)

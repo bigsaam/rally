@@ -3,6 +3,8 @@
 // ideas (with upvotes). Shaped for PlanningView; the caller adds trip + the
 // viewer's membership.
 
+import { participantName } from '../displayName.js';
+
 /** @param {string|undefined|null} d a PB datetime → "YYYY-MM-DD" */
 const dateOnly = (d) => String(d ?? '').slice(0, 10);
 
@@ -17,7 +19,7 @@ export async function loadPlanning(pb, trip, myParticipantId) {
   const viaIdeaTrip = pb.filter('location_idea.trip = {:id}', { id: trip.id });
 
   const [participantsAll, dateOptions, dateVotes, ideas, locVotes] = await Promise.all([
-    pb.collection('participants').getFullList({ filter: tripFilter, sort: 'display_name' }),
+    pb.collection('participants').getFullList({ filter: tripFilter, sort: 'display_name', expand: 'user' }),
     pb.collection('date_options').getFullList({ filter: tripFilter, sort: 'start_date' }),
     pb.collection('date_votes').getFullList({ filter: viaOptionTrip }),
     pb.collection('location_ideas').getFullList({ filter: tripFilter, sort: 'created' }),
@@ -28,7 +30,7 @@ export async function loadPlanning(pb, trip, myParticipantId) {
   const participants = participantsAll.filter((p) => p.status !== 'pending');
 
   /** @type {Record<string,string>} */
-  const nameById = Object.fromEntries(participants.map((p) => [p.id, p.display_name]));
+  const nameById = Object.fromEntries(participants.map((p) => [p.id, participantName(p)]));
 
   // Date options + per-option tallies and my vote.
   /** @type {Record<string, {yes:number,maybe:number,no:number,mine:string|null}>} */
@@ -86,14 +88,14 @@ export async function loadPlanning(pb, trip, myParticipantId) {
   return {
     participants: participants.map((p) => ({
       id: p.id,
-      display_name: p.display_name,
+      display_name: participantName(p),
       role: p.role || 'guest'
     })),
     members: participants
       .filter((p) => p.user)
-      .map((p) => ({ id: p.id, display_name: p.display_name, role: p.role || 'guest' }))
+      .map((p) => ({ id: p.id, display_name: participantName(p), role: p.role || 'guest' }))
       .sort((a, b) => (a.role === b.role ? 0 : a.role === 'organizer' ? -1 : 1)),
-    me: meRec ? { name: meRec.display_name, notify: meRec.notify !== false } : null,
+    me: meRec ? { name: participantName(meRec), notify: meRec.notify !== false } : null,
     dateOptions: options,
     availability: { byDay, mine, memberCount: participants.length },
     locations

@@ -21,6 +21,26 @@ async function fetchTrip(pb, shareToken) {
   }
 }
 
+/** Lowercased first word of a name. */
+const firstWord = (/** @type {string} */ s) => String(s || '').trim().toLowerCase().split(/\s+/)[0] || '';
+
+/**
+ * Orphans worth offering to *this* user to claim: those whose name matches the
+ * user's full or first name. An established member with a non-matching name sees
+ * nothing (no nag about other people's name-only entries).
+ * @param {Array<{ id: string, display_name: string }>} orphans
+ * @param {string} userName
+ */
+function filterClaimable(orphans, userName) {
+  const full = String(userName || '').trim().toLowerCase();
+  if (!full) return [];
+  const first = firstWord(full);
+  return orphans.filter((o) => {
+    const n = String(o.display_name || '').trim().toLowerCase();
+    return n === full || n === first || firstWord(n) === first;
+  });
+}
+
 export async function load({ params, locals }) {
   const pb = await superuserPb();
   const trip = await fetchTrip(pb, params.share_token);
@@ -46,7 +66,11 @@ export async function load({ params, locals }) {
 
   const isOrganizer = membership.role === 'organizer';
   const membershipOut = { participantId: membership.id, role: membership.role || 'guest' };
-  const orphans = await listOrphans(pb, trip.id);
+  // The claim banner is only useful when an orphan might be a PRE-AUTH version of
+  // *this* user — an established member shouldn't be nagged about other people's
+  // name-only entries. Match on full or first name (case-insensitive).
+  const allOrphans = await listOrphans(pb, trip.id);
+  const orphans = filterClaimable(allOrphans, locals.user.name);
   // Approval queue, organizers only.
   const pending = isOrganizer ? await listPending(pb, trip.id) : [];
 

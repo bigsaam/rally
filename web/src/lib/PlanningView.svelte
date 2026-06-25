@@ -21,7 +21,7 @@
   // over one scrollable page. (Dates/Where are voting modules, not the read-only
   // confirmed ones.)
   const PLAN_NAV = [
-    { key: 'overview', label: 'Overview', icon: '✨', href: '#overview' },
+    { key: 'overview', label: 'The Plan', icon: '📋', href: '#overview' },
     { key: 'dates', label: 'Dates', icon: '📅', href: '#dates' },
     { key: 'where', label: 'Where', icon: '📍', href: '#where' },
     { key: 'crew', label: "Who's in", icon: '🙌', href: '#crew' },
@@ -88,7 +88,7 @@
 
 <div class="trip-stack">
   <section id="overview" class="trip-section">
-    <SectionHeader emoji="✨" title="Overview" />
+    <SectionHeader emoji="📋" title="The Plan" />
     <Card>
       <!-- Status, interested count and trip type live in the sticky header (and the
            emoji tile) — don't repeat them here. The Overview is for the plan itself. -->
