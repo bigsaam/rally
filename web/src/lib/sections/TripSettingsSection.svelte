@@ -271,7 +271,9 @@
             <input id="ts-loc" bind:value={form.location} maxlength="300" class={inputClass} />
           </div>
         </div>
-        <div class="flex gap-2.5">
+        <!-- Stack on phones: iOS Safari won't shrink native date inputs, so two
+             side by side overflow the card. Side by side on sm+. -->
+        <div class="flex flex-col gap-2.5 sm:flex-row">
           <div class="min-w-0 flex-1">
             <label class={labelClass} for="ts-start">Start</label>
             <input id="ts-start" type="date" bind:value={form.start_date} class={inputClass} />

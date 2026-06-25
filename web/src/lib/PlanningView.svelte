@@ -114,7 +114,8 @@
             </div>
           {:else}
             <div class="font-display text-[15px] font-semibold text-cocoa-900">Confirm the trip</div>
-            <div class="mt-3 flex flex-wrap gap-2">
+            <!-- Stack on phones (iOS won't shrink native date inputs); inline on sm+. -->
+            <div class="mt-3 flex flex-col gap-2 sm:flex-row">
               <label class="flex min-w-0 flex-1 flex-col gap-1">
                 <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">Start</span>
                 <input type="date" bind:value={cStart} class={inputClass} />

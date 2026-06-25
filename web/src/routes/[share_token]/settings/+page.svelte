@@ -76,7 +76,7 @@
           {#if errors.location}<p class="mt-1 font-body text-sm font-bold text-berry-600">{errors.location}</p>{/if}
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex flex-col gap-3 sm:flex-row">
           <div class="min-w-0 flex-1">
             <label class={labelClass} for="start_date">Start</label>
             <input id="start_date" name="start_date" type="date" value={values.start_date} class={inputClass} />
