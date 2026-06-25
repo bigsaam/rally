@@ -41,8 +41,8 @@ discussion live in
 - [x] ~~#1 Trip secret / passphrase invite~~ — dropped; superseded by accounts
 - [x] [#2 Weather forecast + countdown](https://github.com/walaware/tripwala/issues/2) ✅
 - [x] [#3 Dietary restrictions (feeds Meals)](https://github.com/walaware/tripwala/issues/3) ✅
-- [ ] [#4 Emergency info card](https://github.com/walaware/tripwala/issues/4)
-- [ ] [#5 Clone / template trips](https://github.com/walaware/tripwala/issues/5)
+- [x] [#4 Emergency info card](https://github.com/walaware/tripwala/issues/4) ✅
+- [x] [#5 Clone / template trips](https://github.com/walaware/tripwala/issues/5) ✅
 - [x] [#6 Add / remove meal slot control](https://github.com/walaware/tripwala/issues/6) ✅
 - [x] [#7 3-word slugs + rate limiting](https://github.com/walaware/tripwala/issues/7) ✅
 
@@ -51,7 +51,7 @@ discussion live in
 - [x] [#8 Visible organizer role + co-organizers](https://github.com/walaware/tripwala/issues/8) ✅
 - [x] [#9 Post-trip view (auto-switch after end date)](https://github.com/walaware/tripwala/issues/9) ✅
 - [x] [#10 Trip "Wrapped" recap](https://github.com/walaware/tripwala/issues/10) ✅
-- [ ] [#11 Check-in / "I've arrived" status](https://github.com/walaware/tripwala/issues/11)
+- [x] [#11 Check-in / "I've arrived" status](https://github.com/walaware/tripwala/issues/11) ✅
 
 ## v3 · Maps & Location
 
