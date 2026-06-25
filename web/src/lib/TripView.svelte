@@ -121,7 +121,7 @@
   // so re-publishing on the 4s poll is harmless. Cleared on unmount.
   const shell = useShell();
   $effect(() => {
-    shell.trip = { title: trip.name, subtitle: meta, nav: visibleNav };
+    shell.trip = { title: trip.name, subtitle: meta, emoji, nav: visibleNav };
   });
   $effect(() => () => {
     shell.trip = null;

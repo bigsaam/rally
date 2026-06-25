@@ -1,11 +1,10 @@
 <script>
   import '../app.css';
-  import { AppShell } from '@walaware/design';
+  import { AppShell, AppIcon, Wordmark } from '@walaware/design';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import { createShell } from '$lib/shell.svelte.js';
   import { displayName } from '$lib/displayName.js';
-  import { fade } from 'svelte/transition';
 
   /** @type {{ children: import('svelte').Snippet, data: import('./$types').LayoutData }} */
   let { children, data } = $props();
@@ -40,11 +39,15 @@
   // nav (in-page anchors, driven by scrollSpy) and adds a "← All trips" exit.
   const nav = $derived(shell.trip ? shell.trip.nav : appNav);
   const back = $derived(inTrip ? { label: 'All trips', onClick: () => goto('/') } : null);
-  // The open trip's page header scrolls away on mobile; once it's under the top
-  // bar (shell.collapsed) we crossfade the trip title + subtitle INTO the top bar
-  // (the ctxTitle snippet below) so there's one sticky header. Null = show the
-  // wordmark (at the top of the page, and on desktop where there's no top bar).
-  const showCtxTitle = $derived(inTrip && shell.collapsed);
+  // In a trip we render our own top-bar identity (the ctxTitle snippet): the app
+  // icon + wordmark crossfade to the trip's emoji + title + subtitle as the page
+  // header scrolls under the bar. `data-trip` on <html> hides the kit's own
+  // top-bar app icon so ours is the only one (the kit icon shows otherwise).
+  $effect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.toggleAttribute('data-trip', inTrip);
+    return () => document.documentElement.removeAttribute('data-trip');
+  });
 
   // Always-available desktop sidebar (AppShell default): sidebar ≥ 920px, top-bar
   // + drawer below. The soon rows give the app-level sidebar real substance.
@@ -76,14 +79,36 @@
   const settingsActive = $derived(path.endsWith('/settings'));
 </script>
 
-<!-- Crossfaded into the AppShell mobile top bar once the trip header scrolls
-     under it (replaces the wordmark). Fades via the {#if title} swap in the kit. -->
+<!-- The mobile top-bar identity while a trip is open: two layers stacked in the
+     same grid cell, crossfaded by opacity as the page header collapses. At the
+     top it's the app icon + wordmark; scrolled, it's the trip's emoji + title +
+     subtitle. Pure CSS opacity (reliable across the kit's snippet boundary). -->
 {#snippet ctxTitle()}
-  <span class="flex min-w-0 max-w-[56vw] flex-col leading-tight" transition:fade={{ duration: 160 }}>
-    <span class="truncate font-display text-[15px] font-bold text-cocoa-900">{shell.trip?.title ?? ''}</span>
-    {#if shell.trip?.subtitle}
-      <span class="truncate font-body text-[11px] font-extrabold text-coral-600">{shell.trip.subtitle}</span>
-    {/if}
+  <span class="grid min-w-0 items-center">
+    <span
+      class="flex min-w-0 items-center gap-2 transition-opacity duration-200 [grid-area:1/1] {shell.collapsed
+        ? 'pointer-events-none opacity-0'
+        : 'opacity-100'}"
+    >
+      <AppIcon app="tripwala" size={26} />
+      <Wordmark root="trip" size={20} />
+    </span>
+    <span
+      class="flex min-w-0 items-center gap-2 transition-opacity duration-200 [grid-area:1/1] {shell.collapsed
+        ? 'opacity-100'
+        : 'pointer-events-none opacity-0'}"
+    >
+      <span
+        class="grid h-7 w-7 flex-none place-items-center rounded-md text-[15px]"
+        style="background: linear-gradient(135deg, var(--color-sand-200), var(--color-sand-300))"
+      >{shell.trip?.emoji ?? '🧭'}</span>
+      <span class="flex min-w-0 flex-col leading-tight">
+        <span class="truncate font-display text-[14px] font-bold text-cocoa-900">{shell.trip?.title ?? ''}</span>
+        {#if shell.trip?.subtitle}
+          <span class="truncate font-body text-[10.5px] font-extrabold text-coral-600">{shell.trip.subtitle}</span>
+        {/if}
+      </span>
+    </span>
   </span>
 {/snippet}
 
@@ -95,7 +120,7 @@
     {onSettings}
     {settingsActive}
     {back}
-    title={showCtxTitle ? ctxTitle : null}
+    title={inTrip ? ctxTitle : null}
     scrollSpy={inTrip}
     {breakpoint}
   >
@@ -106,3 +131,12 @@
   <!-- Logged-out / auth pages bring their own full-bleed chrome. -->
   {@render children()}
 {/if}
+
+<style>
+  /* While a trip is open we render our own app icon inside the top-bar title
+     slot (ctxTitle), so hide the AppShell's own top-bar app icon (the squircle
+     [role="img"] that's a direct child of the top bar) to avoid two icons. */
+  :global(html[data-trip] .wala-appshell .topbar > [role='img']) {
+    display: none;
+  }
+</style>

@@ -76,14 +76,14 @@
           {#if errors.location}<p class="mt-1 font-body text-sm font-bold text-berry-600">{errors.location}</p>{/if}
         </div>
 
-        <div class="flex flex-col gap-3 sm:flex-row">
+        <div class="flex gap-3">
           <div class="min-w-0 flex-1">
             <label class={labelClass} for="start_date">Start</label>
-            <input id="start_date" name="start_date" type="date" value={values.start_date} class={inputClass} />
+            <input id="start_date" name="start_date" type="date" value={values.start_date} class="{inputClass} min-w-0 appearance-none" />
           </div>
           <div class="min-w-0 flex-1">
             <label class={labelClass} for="end_date">End</label>
-            <input id="end_date" name="end_date" type="date" value={values.end_date} class={inputClass} />
+            <input id="end_date" name="end_date" type="date" value={values.end_date} class="{inputClass} min-w-0 appearance-none" />
             {#if errors.end_date}<p class="mt-1 font-body text-sm font-bold text-berry-600">{errors.end_date}</p>{/if}
           </div>
         </div>

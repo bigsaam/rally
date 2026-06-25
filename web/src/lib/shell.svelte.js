@@ -7,7 +7,7 @@ const KEY = Symbol('wala-shell');
  * the layout's AppShell: the section nav + the record's title. When it's `null`
  * the shell stays at app level (global destinations).
  *
- * @typedef {{ title: string, subtitle?: string, nav: import('@walaware/design').NavItem[] }} TripContext
+ * @typedef {{ title: string, subtitle?: string, emoji?: string, nav: import('@walaware/design').NavItem[] }} TripContext
  * @typedef {{ trip: TripContext | null, collapsed: boolean }} Shell
  *
  * `collapsed` is set by the open trip's view once its (non-sticky on mobile)

@@ -33,7 +33,7 @@
     'In planning' + (participants.length ? ` · ${participants.length} interested` : '')
   );
   $effect(() => {
-    shell.trip = { title: trip.name, subtitle, nav: PLAN_NAV };
+    shell.trip = { title: trip.name, subtitle, emoji, nav: PLAN_NAV };
   });
   $effect(() => () => {
     shell.trip = null;
@@ -118,15 +118,16 @@
             </div>
           {:else}
             <div class="font-display text-[15px] font-semibold text-cocoa-900">Confirm the trip</div>
-            <!-- Stack on phones (iOS won't shrink native date inputs); inline on sm+. -->
-            <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+            <!-- appearance-none lets native date inputs shrink so they sit side
+                 by side without overflowing on mobile (see TripSettingsSection). -->
+            <div class="mt-3 flex gap-2">
               <label class="flex min-w-0 flex-1 flex-col gap-1">
                 <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">Start</span>
-                <input type="date" bind:value={cStart} class={inputClass} />
+                <input type="date" bind:value={cStart} class="{inputClass} min-w-0 appearance-none" />
               </label>
               <label class="flex min-w-0 flex-1 flex-col gap-1">
                 <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">End</span>
-                <input type="date" bind:value={cEnd} min={cStart} class={inputClass} />
+                <input type="date" bind:value={cEnd} min={cStart} class="{inputClass} min-w-0 appearance-none" />
               </label>
             </div>
             <label class="mt-2 block">

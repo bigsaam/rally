@@ -271,16 +271,17 @@
             <input id="ts-loc" bind:value={form.location} maxlength="300" class={inputClass} />
           </div>
         </div>
-        <!-- Stack on phones: iOS Safari won't shrink native date inputs, so two
-             side by side overflow the card. Side by side on sm+. -->
-        <div class="flex flex-col gap-2.5 sm:flex-row">
+        <!-- appearance-none strips the native date control's intrinsic min-width
+             (the real cause of the overflow on mobile Chrome/Safari) so the
+             fields shrink to share the row without spilling out of the card. -->
+        <div class="flex gap-2.5">
           <div class="min-w-0 flex-1">
             <label class={labelClass} for="ts-start">Start</label>
-            <input id="ts-start" type="date" bind:value={form.start_date} class={inputClass} />
+            <input id="ts-start" type="date" bind:value={form.start_date} class="{inputClass} min-w-0 appearance-none" />
           </div>
           <div class="min-w-0 flex-1">
             <label class={labelClass} for="ts-end">End</label>
-            <input id="ts-end" type="date" bind:value={form.end_date} min={form.start_date} class={inputClass} />
+            <input id="ts-end" type="date" bind:value={form.end_date} min={form.start_date} class="{inputClass} min-w-0 appearance-none" />
           </div>
         </div>
         <div>

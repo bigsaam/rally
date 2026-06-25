@@ -155,19 +155,19 @@
   {/if}
 
   {#if isOrganizer}
-    <!-- Stack From/To/Propose on phones (iOS Safari won't shrink native date
-         inputs, so side-by-side fields overflow); inline on sm+ where sm:mb-1
-         lifts the button's 4px lip onto the inputs' baseline. -->
-    <div class="mt-2.5 flex flex-col gap-2 sm:flex-row sm:items-end">
+    <!-- From/To sit side by side (appearance-none lets the native date inputs
+         shrink so they don't overflow); Propose wraps to a full-width button
+         below on phones (basis-full) and inline on sm+ (sm:mb-1 lifts its lip). -->
+    <div class="mt-2.5 flex flex-wrap items-end gap-2">
       <label class="flex min-w-0 flex-1 flex-col gap-1">
         <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">From</span>
-        <input type="date" bind:value={propStart} min={todayStr} class="{inputClass} w-full" />
+        <input type="date" bind:value={propStart} min={todayStr} class="{inputClass} w-full min-w-0 appearance-none" />
       </label>
       <label class="flex min-w-0 flex-1 flex-col gap-1">
         <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">To</span>
-        <input type="date" bind:value={propEnd} min={propStart || todayStr} class="{inputClass} w-full" />
+        <input type="date" bind:value={propEnd} min={propStart || todayStr} class="{inputClass} w-full min-w-0 appearance-none" />
       </label>
-      <Button variant="soft" size="sm" class="h-10 w-full whitespace-nowrap sm:mb-1 sm:w-auto" onclick={proposeRange} disabled={!propStart || busy}>
+      <Button variant="soft" size="sm" class="h-10 basis-full whitespace-nowrap sm:mb-1 sm:basis-auto" onclick={proposeRange} disabled={!propStart || busy}>
         Propose dates
       </Button>
     </div>
