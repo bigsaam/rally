@@ -214,6 +214,39 @@ export async function POST({ params, request, locals, url }) {
         break;
       }
 
+      // Add a meal slot (organizer only). `label` is the meal name (e.g. "Dinner");
+      // `date` is an optional YYYY-MM-DD that buckets it under a day.
+      case 'meal_slot_add': {
+        if (!isOrganizer) throw error(403, 'Only organizers can edit meals');
+        const label = String(body.label ?? '').trim().slice(0, 80);
+        if (!label) throw error(400, 'Name the meal');
+        const date = String(body.date ?? '').slice(0, 10);
+        if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw error(400, 'Bad date');
+        const count = (
+          await pb.collection('meal_slots').getList(1, 1, { filter: pb.filter('trip = {:t}', { t: trip.id }) })
+        ).totalItems;
+        await pb.collection('meal_slots').create({
+          trip: trip.id,
+          label,
+          date: date ? `${date} 00:00:00.000Z` : '',
+          sort_order: count
+        });
+        break;
+      }
+
+      // Remove a meal slot + its sign-ups (organizer only).
+      case 'meal_slot_remove': {
+        if (!isOrganizer) throw error(403, 'Only organizers can edit meals');
+        const slot = await inTrip('meal_slots', body.mealSlotId);
+        const signups = await pb
+          .collection('meal_signups')
+          .getFullList({ filter: pb.filter('meal_slot = {:s}', { s: slot.id }) })
+          .catch(() => []);
+        for (const su of signups) await pb.collection('meal_signups').delete(su.id).catch(() => {});
+        await pb.collection('meal_slots').delete(slot.id);
+        break;
+      }
+
       case 'pack_toggle': {
         const item = await inTrip('packing_items', body.itemId);
         // Anyone can tick a shared item; a personal item only by its owner (or an organizer).
@@ -282,6 +315,15 @@ export async function POST({ params, request, locals, url }) {
         } else {
           await pb.collection('itinerary_items').create({ trip: trip.id, date: `${date} 00:00:00.000Z`, label });
         }
+        break;
+      }
+
+      // Set my own dietary note (or, for an organizer, someone else's). Feeds the
+      // Meals section so cooks can plan around allergies / preferences.
+      case 'set_dietary': {
+        const p = await targetParticipant();
+        const dietary = String(body.dietary ?? '').trim().slice(0, 200);
+        await pb.collection('participants').update(p.id, { dietary });
         break;
       }
 

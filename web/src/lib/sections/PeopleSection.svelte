@@ -11,7 +11,7 @@
   /**
    * @type {{
    *   shareToken: string,
-   *   participants: Array<{ id: string, display_name: string, rsvp_status: string | null, lean: number, avatar?: string }>,
+   *   participants: Array<{ id: string, display_name: string, rsvp_status: string | null, lean: number, avatar?: string, dietary?: string }>,
    *   currentParticipantId: string | null,
    *   ownerMode?: boolean,
    *   onHide?: (() => void) | null,
@@ -69,6 +69,20 @@
       /* reconciled */
     } finally {
       saving = false;
+    }
+  }
+
+  // Everyone with a dietary note set — shown to the crew (and the cooks via Meals).
+  const dietaryList = $derived(participants.filter((p) => (p.dietary || '').trim()));
+
+  /** @param {string} dietary */
+  async function saveDietary(dietary) {
+    if (!currentParticipantId || (me?.dietary ?? '') === dietary) return;
+    try {
+      await tripAction(shareToken, { op: 'set_dietary', participantId: currentParticipantId, dietary });
+      await invalidateAll();
+    } catch (_) {
+      /* reconciled */
     }
   }
 </script>
@@ -148,4 +162,30 @@
       </div>
     </div>
   {/if}
+
+  <!-- Dietary needs: your own (editable) + everyone who's noted one. Surfaces in
+       Meals so cooks can plan around allergies / preferences. -->
+  <div class="mt-3.5 border-t border-sand-200 pt-3.5">
+    <div class="mb-1.5 font-body text-[12.5px] font-extrabold text-cocoa-500">🥗 Dietary needs</div>
+    {#if me}
+      <input
+        value={me.dietary ?? ''}
+        placeholder="Yours — e.g. vegetarian, no nuts, gluten-free"
+        maxlength="200"
+        onblur={(e) => saveDietary(/** @type {HTMLInputElement} */ (e.currentTarget).value.trim())}
+        class="w-full rounded-md border-2 border-sand-300 bg-white px-3 py-2 font-body text-[13px] font-bold text-cocoa-900 outline-none placeholder:font-bold placeholder:text-cocoa-400 focus:border-coral-400"
+      />
+    {/if}
+    {#if dietaryList.length}
+      <ul class="mt-2 flex flex-col gap-1">
+        {#each dietaryList as p}
+          <li class="font-body text-[13px] font-bold text-cocoa-600">
+            <span class="font-extrabold text-cocoa-900">{p.display_name}</span> — {p.dietary}
+          </li>
+        {/each}
+      </ul>
+    {:else}
+      <p class="mt-1.5 font-body text-[12.5px] font-bold text-cocoa-400">No notes yet — add yours so the cooks know.</p>
+    {/if}
+  </div>
 </Card>

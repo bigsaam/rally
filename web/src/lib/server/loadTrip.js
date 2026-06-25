@@ -176,6 +176,7 @@ export async function loadTripByShareToken(shareToken) {
         rsvp_status: p.rsvp_status,
         lean: p.lean || 0,
         notify: p.notify !== false, // per-member trip-notification preference (default on)
+        dietary: p.dietary || '', // allergies / preferences, shown to cooks
         avatar: avatarUrl(p.expand?.user) // Google photo if the member has an account
       }))
       .sort((a, b) => a.display_name.localeCompare(b.display_name, undefined, { sensitivity: 'base' })),

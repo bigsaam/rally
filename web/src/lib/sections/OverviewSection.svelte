@@ -2,6 +2,7 @@
   import { Card } from '@walaware/design';
   import SectionHeader from '$lib/ui/SectionHeader.svelte';
   import LocationHeroCard from '$lib/ui/LocationHeroCard.svelte';
+  import WeatherCard from '$lib/ui/WeatherCard.svelte';
   import { tripLength } from '$lib/format.js';
 
   /**
@@ -27,12 +28,19 @@
   );
   const pct = $derived(claimable ? Math.round((claimed / claimable) * 100) : 0);
 
-  // Countdown to the start date at UTC-day granularity.
+  // Live countdown to the start date (UTC-day granularity). `now` ticks each
+  // minute so the value rolls over (… → tomorrow → today! → now → wrapped)
+  // without a reload.
+  let now = $state(Date.now());
+  $effect(() => {
+    const id = setInterval(() => (now = Date.now()), 60000);
+    return () => clearInterval(id);
+  });
   const countdown = $derived.by(() => {
     if (trip.status === 'completed' || trip.status === 'past') return 'wrapped';
     if (!trip.start_date) return 'TBD';
-    const now = new Date();
-    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const n = new Date(now);
+    const today = Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());
     const s = new Date(trip.start_date);
     const start = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate());
     const days = Math.round((start - today) / 86400000);
@@ -77,6 +85,9 @@
       </div>
     </div>
   {/if}
+
+  <!-- Forecast for the trip dates (only renders when the trip is within range). -->
+  <WeatherCard location={trip.location} startDate={trip.start_date} endDate={trip.end_date} />
 
   {#if trip.description}
     <!-- Trip details / directions; inline links (Hipcamp, maps, …) live in the HTML. -->

@@ -7,6 +7,7 @@
   import PeopleSection from '$lib/sections/PeopleSection.svelte';
   import GearSection from '$lib/sections/GearSection.svelte';
   import MealsSection from '$lib/sections/MealsSection.svelte';
+  import WrappedSection from '$lib/sections/WrappedSection.svelte';
   import PackingSection from '$lib/sections/PackingSection.svelte';
   import ExpensesSection from '$lib/sections/ExpensesSection.svelte';
   import TripSettingsSection from '$lib/sections/TripSettingsSection.svelte';
@@ -32,6 +33,25 @@
 
   const emoji = $derived(tripEmoji(trip.trip_type));
   const going = $derived(participants.filter((/** @type {any} */ p) => p.rsvp_status === 'going').length);
+
+  // Post-trip phase: once the end date (UTC day) has passed — or the organizer
+  // marked it completed — the page leads with the Wrapped recap (#9).
+  const isPast = $derived.by(() => {
+    if (trip.status === 'completed') return true;
+    const end = trip.end_date || trip.start_date;
+    if (!end) return false;
+    const e = new Date(end);
+    if (Number.isNaN(e.getTime())) return false;
+    const n = new Date();
+    return Date.UTC(n.getFullYear(), n.getMonth(), n.getDate()) >
+      Date.UTC(e.getUTCFullYear(), e.getUTCMonth(), e.getUTCDate());
+  });
+  // Crew dietary notes (allergies / preferences) → shown to cooks in Meals.
+  const dietaryNotes = $derived(
+    participants
+      .filter((/** @type {any} */ p) => (p.dietary || '').trim())
+      .map((/** @type {any} */ p) => ({ name: p.display_name, dietary: p.dietary }))
+  );
 
   // dates · location · N going, joined with guaranteed spacing (Svelte collapses
   // whitespace around an inline {#if}, which would otherwise tighten the dots).
@@ -73,7 +93,11 @@
   // are never hideable). Drives both the nav and which `<section>`s render.
   const hidden = $derived(new Set(trip.hidden_sections ?? []));
   const isHidden = (/** @type {string} */ key) => hidden.has(key);
-  const visibleNav = $derived(SECTION_NAV.filter((n) => !hidden.has(n.key)));
+  // On a wrapped trip, lead the nav with the recap.
+  const fullNav = $derived(
+    isPast ? [{ key: 'wrapped', label: 'Wrapped', icon: '🎉', href: '#wrapped' }, ...SECTION_NAV] : SECTION_NAV
+  );
+  const visibleNav = $derived(fullNav.filter((n) => !hidden.has(n.key)));
 
   // Organizer hides a section straight from its header (restore from Trip
   // settings). Each section gets an onHide only in ownerMode; guests never do.
@@ -174,9 +198,14 @@
     >{emoji}</span>
     <div class="min-w-0">
       <h1 class="truncate font-display text-[21px] font-bold leading-tight text-cocoa-900">{trip.name}</h1>
-      {#if meta}
-        <div class="truncate font-body text-[13px] font-extrabold text-coral-600">{meta}</div>
-      {/if}
+      <div class="flex items-center gap-1.5">
+        {#if isPast}
+          <span class="flex-none rounded-full bg-berry-200 px-1.5 py-0.5 font-body text-[10px] font-extrabold text-berry-600">🎉 Wrapped</span>
+        {/if}
+        {#if meta}
+          <div class="truncate font-body text-[13px] font-extrabold text-coral-600">{meta}</div>
+        {/if}
+      </div>
     </div>
   </div>
 </header>
@@ -184,6 +213,11 @@
 {#if top}{@render top()}{/if}
 
 <div class="trip-stack">
+  {#if isPast}
+    <section id="wrapped" class="trip-section">
+      <WrappedSection {trip} {participants} {gear} {meals} expenses={data.expenses} />
+    </section>
+  {/if}
   <section id="overview" class="trip-section">
     <OverviewSection {trip} {participants} {gear} {meals} {ownerMode} {settingsHref} />
   </section>
@@ -204,7 +238,7 @@
   {/if}
   {#if !isHidden('food')}
     <section id="food" class="trip-section" class:is-collapsed={collapsed.has('food')}>
-      <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} onHide={hideHandler('food')} collapsed={collapsed.has('food')} onToggle={() => toggleCollapse('food')} />
+      <MealsSection shareToken={trip.share_token} {meals} {currentParticipantId} dietaryNotes={dietaryNotes} {trip} {ownerMode} onHide={hideHandler('food')} collapsed={collapsed.has('food')} onToggle={() => toggleCollapse('food')} />
     </section>
   {/if}
   {#if !isHidden('packing')}
