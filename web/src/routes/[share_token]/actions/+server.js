@@ -30,6 +30,9 @@ export async function POST({ params, request, locals }) {
 
   const me = /** @type {any} */ (await getMembership(pb, trip.id, locals.user.id));
   if (!me) throw error(403, 'Join this trip before making changes');
+  // A pending (unapproved) link-join can't see or act on the trip yet. They can
+  // still withdraw via the route's ?/withdraw action.
+  if (me.status === 'pending') throw error(403, 'Your request to join is awaiting approval');
   const isOrganizer = me.role === 'organizer';
 
   const body = await request.json().catch(() => ({}));
@@ -367,6 +370,40 @@ export async function POST({ params, request, locals }) {
         const cur = Array.isArray(trip.hidden_sections) ? trip.hidden_sections : [];
         const next = op === 'section_hide' ? [...new Set([...cur, key])] : cur.filter((/** @type {string} */ k) => k !== key);
         await pb.collection('trips').update(trip.id, { hidden_sections: next });
+        break;
+      }
+
+      // ---- Invite control (organizer only) ----
+
+      // How people join via the link: instant or request-to-join.
+      case 'set_join_policy': {
+        if (!isOrganizer) throw error(403, 'Only organizers can change this');
+        const value = body.value === 'approval' ? 'approval' : 'instant';
+        await pb.collection('trips').update(trip.id, { join_policy: value });
+        break;
+      }
+
+      // Who can see/share the invite link: everyone on the trip, or organizers only.
+      case 'set_invite_visibility': {
+        if (!isOrganizer) throw error(403, 'Only organizers can change this');
+        const value = body.value === 'organizers' ? 'organizers' : 'everyone';
+        await pb.collection('trips').update(trip.id, { invite_visibility: value });
+        break;
+      }
+
+      // Approve a pending request → active member.
+      case 'approve_member': {
+        if (!isOrganizer) throw error(403, 'Only organizers can approve');
+        const target = await inTrip('participants', body.participantId);
+        if (target.status === 'pending') await pb.collection('participants').update(target.id, { status: 'active' });
+        break;
+      }
+
+      // Deny a pending request → remove it.
+      case 'deny_member': {
+        if (!isOrganizer) throw error(403, 'Only organizers can deny');
+        const target = await inTrip('participants', body.participantId);
+        if (target.status === 'pending') await pb.collection('participants').delete(target.id);
         break;
       }
 

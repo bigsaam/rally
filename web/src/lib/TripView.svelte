@@ -234,6 +234,9 @@
       {trip}
       members={data.members ?? []}
       {currentParticipantId}
+      joinPolicy={trip.join_policy}
+      inviteVisibility={trip.invite_visibility}
+      pending={data.pending ?? []}
     />
   </section>
 

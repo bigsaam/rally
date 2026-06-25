@@ -16,13 +16,16 @@ export async function loadPlanning(pb, trip, myParticipantId) {
   const viaOptionTrip = pb.filter('date_option.trip = {:id}', { id: trip.id });
   const viaIdeaTrip = pb.filter('location_idea.trip = {:id}', { id: trip.id });
 
-  const [participants, dateOptions, dateVotes, ideas, locVotes] = await Promise.all([
+  const [participantsAll, dateOptions, dateVotes, ideas, locVotes] = await Promise.all([
     pb.collection('participants').getFullList({ filter: tripFilter, sort: 'display_name' }),
     pb.collection('date_options').getFullList({ filter: tripFilter, sort: 'start_date' }),
     pb.collection('date_votes').getFullList({ filter: viaOptionTrip }),
     pb.collection('location_ideas').getFullList({ filter: tripFilter, sort: 'created' }),
     pb.collection('location_votes').getFullList({ filter: viaIdeaTrip })
   ]);
+
+  // Pending link-join requests aren't members yet — exclude from crew + counts.
+  const participants = participantsAll.filter((p) => p.status !== 'pending');
 
   /** @type {Record<string,string>} */
   const nameById = Object.fromEntries(participants.map((p) => [p.id, p.display_name]));
@@ -71,6 +74,7 @@ export async function loadPlanning(pb, trip, myParticipantId) {
       id: i.id,
       label: i.label,
       url: i.url || '',
+      note: i.note || '',
       suggester: i.participant ? nameById[i.participant] ?? 'Someone' : '',
       votes: ideaVotes[i.id].count,
       mine: ideaVotes[i.id].mine

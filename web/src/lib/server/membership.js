@@ -1,6 +1,10 @@
 // Membership = a participant row linked to a signed-in user. This is the access
 // control primitive for the auth model: you can see/act on a trip only if you
-// have a membership; organizer-only powers check `role`.
+// have a membership; organizer-only powers check `role`. A membership with
+// `status === 'pending'` is a link-join awaiting organizer approval — it exists
+// but grants no access until approved.
+
+import { avatarUrl } from './userAvatar.js';
 
 /**
  * The signed-in user's membership for a trip, or null if they're not a member.
@@ -23,17 +27,19 @@ export async function getMembership(pb, tripId, userId) {
  * a fresh participant. The trip creator becomes an organizer.
  *
  * @param {import('pocketbase').default} pb superuser client
- * @param {{ id: string, created_by?: string }} trip
+ * @param {{ id: string, created_by?: string, join_policy?: string }} trip
  * @param {{ id: string, name: string, email?: string }} user
  */
 export async function joinTrip(pb, trip, user) {
   const existing = await getMembership(pb, trip.id, user.id);
   if (existing) return existing;
 
-  const role = trip.created_by === user.id ? 'organizer' : 'guest';
+  const isCreator = trip.created_by === user.id;
+  const role = isCreator ? 'organizer' : 'guest';
 
   // Adopt an unclaimed participant with the same name, so signing in links to
-  // the work already done under that name (helps migrate pre-auth trips).
+  // the work already done under that name (helps migrate pre-auth trips). They
+  // were already on the trip, so this is always an active membership.
   const name = (user.name || '').trim();
   if (name) {
     const all = await pb
@@ -43,9 +49,12 @@ export async function joinTrip(pb, trip, user) {
       (p) => !p.user && p.display_name.trim().toLowerCase() === name.toLowerCase()
     );
     if (orphan) {
-      return pb.collection('participants').update(orphan.id, { user: user.id, role });
+      return pb.collection('participants').update(orphan.id, { user: user.id, role, status: 'active' });
     }
   }
+
+  // Fresh link-join: pending if the trip needs approval (the creator bypasses).
+  const status = !isCreator && (trip.join_policy || 'instant') === 'approval' ? 'pending' : 'active';
 
   const { randomUUID } = await import('node:crypto');
   return pb.collection('participants').create({
@@ -53,8 +62,26 @@ export async function joinTrip(pb, trip, user) {
     user: user.id,
     display_name: name || user.email || 'Guest',
     role,
+    status,
     client_id: randomUUID()
   });
+}
+
+/**
+ * Pending link-join requests on a trip — shown to organizers in the approval
+ * queue. Each carries the requester's display name and (if any) photo.
+ *
+ * @param {import('pocketbase').default} pb superuser client
+ * @param {string} tripId
+ * @returns {Promise<Array<{ id: string, display_name: string, avatar?: string }>>}
+ */
+export async function listPending(pb, tripId) {
+  const all = await pb
+    .collection('participants')
+    .getFullList({ filter: pb.filter('trip = {:t}', { t: tripId }), sort: 'created', expand: 'user' });
+  return all
+    .filter((p) => p.status === 'pending')
+    .map((p) => ({ id: p.id, display_name: p.display_name, avatar: avatarUrl(p.expand?.user) }));
 }
 
 /**

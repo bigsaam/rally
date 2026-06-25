@@ -26,6 +26,7 @@ export async function POST({ params, request, locals }) {
 
   const me = /** @type {any} */ (await getMembership(pb, trip.id, locals.user.id));
   if (!me) throw error(403, 'Join this trip before making changes');
+  if (me.status === 'pending') throw error(403, 'Your request to join is awaiting approval');
   const isOrganizer = me.role === 'organizer';
   const ownerOnly = () => {
     if (!isOrganizer) throw error(403, 'Organizers only');
@@ -115,11 +116,13 @@ export async function POST({ params, request, locals }) {
         if (!label) throw error(400, 'Name the place');
         const url = String(body.url ?? '').trim();
         if (url && !/^https?:\/\/.+/i.test(url)) throw error(400, 'Links need http(s)://');
+        const note = String(body.note ?? '').trim().slice(0, 500);
         await pb.collection('location_ideas').create({
           trip: trip.id,
           participant: me.id,
           label,
-          url: url.slice(0, 500)
+          url: url.slice(0, 500),
+          note
         });
         break;
       }

@@ -32,11 +32,24 @@
   /** @param {number} y @param {number} m @param {number} d */
   const ymd = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-  // Three months at a time, pageable forward/back (trips can be far out).
+  // Pageable month grid (trips can be far out): one month at a time on phones,
+  // three on wider screens. Range/day picks span months freely regardless.
   const now = new Date();
   let monthOffset = $state(0);
+  const MAX_OFFSET = 12; // page availability up to ~a year ahead
+
+  let wide = $state(true); // SSR-safe default; corrected on mount
+  $effect(() => {
+    const mq = window.matchMedia('(min-width: 640px)');
+    const sync = () => (wide = mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  });
+  const perPage = $derived(wide ? 3 : 1);
+
   const months = $derived(
-    [0, 1, 2].map((off) => {
+    Array.from({ length: perPage }, (_, off) => {
       const base = new Date(now.getFullYear(), now.getMonth() + monthOffset + off, 1);
       const y = base.getFullYear();
       const m = base.getMonth();
@@ -142,22 +155,22 @@
   {/if}
 
   {#if isOrganizer}
-    <div class="mt-2.5 flex flex-wrap items-end gap-2">
-      <label class="flex flex-col gap-1">
+    <!-- One row even on phones: the date columns shrink (min-w-0) and the button
+         stays inline with a short "Propose" label below the sm breakpoint. -->
+    <div class="mt-2.5 flex items-end gap-2">
+      <label class="flex min-w-0 flex-1 flex-col gap-1">
         <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">From</span>
-        <input type="date" bind:value={propStart} min={todayStr} class={inputClass} />
+        <input type="date" bind:value={propStart} min={todayStr} class="{inputClass} w-full" />
       </label>
-      <label class="flex flex-col gap-1">
+      <label class="flex min-w-0 flex-1 flex-col gap-1">
         <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">To</span>
-        <input type="date" bind:value={propEnd} min={propStart || todayStr} class={inputClass} />
+        <input type="date" bind:value={propEnd} min={propStart || todayStr} class="{inputClass} w-full" />
       </label>
-      <!-- Match the labeled-input columns: an invisible label spacer keeps the
-           button on the control row, and self-stretch + flex-1 size it to the
-           inputs' height so tops and bottoms line up. -->
-      <div class="flex flex-col gap-1 self-stretch">
-        <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500 invisible" aria-hidden="true">·</span>
-        <Button variant="soft" size="sm" class="flex-1" onclick={proposeRange} disabled={!propStart || busy}>Propose dates</Button>
-      </div>
+      <!-- Match the inputs' height (h-10 = 40px) and lift by the button's 4px
+           "lip" shadow (mb-1) so its resting baseline lines up with the fields. -->
+      <Button variant="soft" size="sm" class="mb-1 h-10 flex-none whitespace-nowrap" onclick={proposeRange} disabled={!propStart || busy}>
+        <span class="sm:hidden">Propose</span><span class="hidden sm:inline">Propose dates</span>
+      </Button>
     </div>
   {/if}
 
@@ -166,8 +179,8 @@
     <div class="flex items-center justify-between">
       <p class="font-body text-[13px] font-extrabold text-cocoa-700">Or tap the days you're free</p>
       <div class="flex items-center gap-1">
-        <button type="button" onclick={() => (monthOffset = Math.max(0, monthOffset - 3))} disabled={monthOffset === 0} class="rounded-md px-2 py-0.5 font-body text-sm font-extrabold text-cocoa-500 hover:bg-sand-100 disabled:opacity-30" aria-label="earlier months">◀</button>
-        <button type="button" onclick={() => (monthOffset = Math.min(3, monthOffset + 3))} disabled={monthOffset >= 3} class="rounded-md px-2 py-0.5 font-body text-sm font-extrabold text-cocoa-500 hover:bg-sand-100 disabled:opacity-30" aria-label="later months">▶</button>
+        <button type="button" onclick={() => (monthOffset = Math.max(0, monthOffset - perPage))} disabled={monthOffset === 0} class="rounded-md px-2 py-0.5 font-body text-sm font-extrabold text-cocoa-500 hover:bg-sand-100 disabled:opacity-30" aria-label="earlier months">◀</button>
+        <button type="button" onclick={() => (monthOffset = Math.min(MAX_OFFSET, monthOffset + perPage))} disabled={monthOffset >= MAX_OFFSET} class="rounded-md px-2 py-0.5 font-body text-sm font-extrabold text-cocoa-500 hover:bg-sand-100 disabled:opacity-30" aria-label="later months">▶</button>
       </div>
     </div>
     <p class="font-body text-xs font-bold text-cocoa-400">Darker = more people free. Your picks are outlined.</p>

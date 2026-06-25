@@ -2,7 +2,7 @@
   import { goto, invalidateAll } from '$app/navigation';
   import { page } from '$app/state';
   import { tripAction } from '$lib/tripClient.js';
-  import { Card, Button } from '@walaware/design';
+  import { Card, Button, Avatar } from '@walaware/design';
   import SectionHeader from '$lib/ui/SectionHeader.svelte';
 
   /**
@@ -13,10 +13,16 @@
    *   trip: any,
    *   members?: Array<{ id: string, display_name: string, role: string }>,
    *   currentParticipantId?: string | null,
-   *   showSections?: boolean
+   *   showSections?: boolean,
+   *   joinPolicy?: string,
+   *   inviteVisibility?: string,
+   *   pending?: Array<{ id: string, display_name: string, avatar?: string }>
    * }}
    */
-  let { shareToken, ownerMode = false, me = null, trip, members = [], currentParticipantId = null, showSections = true } = $props();
+  let {
+    shareToken, ownerMode = false, me = null, trip, members = [], currentParticipantId = null,
+    showSections = true, joinPolicy = 'instant', inviteVisibility = 'everyone', pending = []
+  } = $props();
 
   const TYPES = [
     ['camping', '🏕️ Camping'], ['backpacking', '🎒 Backpacking'], ['road_trip', '🚗 Road trip'],
@@ -89,7 +95,11 @@
 
   const hidden = $derived(new Set(trip.hidden_sections ?? []));
   const ownerUrl = $derived(`${page.url.origin}/${shareToken}/edit?owner=${trip.owner_token}`);
+  const inviteUrl = $derived(`${page.url.origin}/${shareToken}`);
+  // Guests see the invite link only when the organizer allows it; organizers always do.
+  const showInvite = $derived(ownerMode || inviteVisibility === 'everyone');
   let copied = $state(false);
+  let invCopied = $state(false);
   async function copyOwner() {
     try {
       await navigator.clipboard.writeText(ownerUrl);
@@ -97,6 +107,18 @@
       setTimeout(() => (copied = false), 1500);
     } catch (_) { /* clipboard blocked */ }
   }
+  async function copyInvite() {
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      invCopied = true;
+      setTimeout(() => (invCopied = false), 1500);
+    } catch (_) { /* clipboard blocked */ }
+  }
+
+  // Segmented-control button classes for the access toggles.
+  const seg = 'flex-1 rounded-lg border-2 px-3 py-2 font-body text-[13px] font-extrabold transition';
+  const segOn = 'border-coral-400 bg-coral-200 text-coral-700';
+  const segOff = 'border-sand-300 bg-white text-cocoa-600 hover:border-coral-300';
 
   const notifyOn = $derived(me?.notify !== false);
   const inputClass =
@@ -132,9 +154,58 @@
     </div>
   {/if}
 
-  {#if ownerMode}
-    <!-- Organizer: edit trip details -->
+  <!-- Invite link — guests see it only when the organizer allows sharing. -->
+  {#if showInvite}
     <div class="{me ? 'mt-4 border-t border-sand-200 pt-4' : ''}">
+      <div class="mb-1 font-display text-[15px] font-bold text-text-strong">Invite link</div>
+      <p class="mb-2.5 font-body text-[12.5px] font-bold text-text-muted">
+        {joinPolicy === 'approval'
+          ? 'Anyone you send this to can request to join — an organizer approves them.'
+          : 'Anyone you send this to can join instantly.'}
+      </p>
+      <div class="flex gap-2">
+        <input readonly value={inviteUrl} class="{inputClass} min-w-0 flex-1 bg-sand-100" />
+        <Button variant="soft" size="md" onclick={copyInvite}>{invCopied ? 'Copied!' : 'Copy'}</Button>
+      </div>
+    </div>
+  {/if}
+
+  {#if ownerMode}
+    <!-- Organizer: who can join + who can share -->
+    <div class="mt-4 border-t border-sand-200 pt-4">
+      <div class="font-display text-[15px] font-bold text-text-strong">Access</div>
+
+      <div class="mt-2.5 font-body text-[12px] font-extrabold uppercase tracking-wide text-cocoa-500">How people join</div>
+      <div class="mt-1.5 flex gap-2">
+        <button type="button" disabled={busy === 'join_policy'} onclick={() => act('set_join_policy', { value: 'instant' }, 'join_policy')} class="{seg} {joinPolicy !== 'approval' ? segOn : segOff}">Instant</button>
+        <button type="button" disabled={busy === 'join_policy'} onclick={() => act('set_join_policy', { value: 'approval' }, 'join_policy')} class="{seg} {joinPolicy === 'approval' ? segOn : segOff}">Request to join</button>
+      </div>
+
+      <div class="mt-3 font-body text-[12px] font-extrabold uppercase tracking-wide text-cocoa-500">Who can share the invite link</div>
+      <div class="mt-1.5 flex gap-2">
+        <button type="button" disabled={busy === 'invite_vis'} onclick={() => act('set_invite_visibility', { value: 'everyone' }, 'invite_vis')} class="{seg} {inviteVisibility !== 'organizers' ? segOn : segOff}">Everyone</button>
+        <button type="button" disabled={busy === 'invite_vis'} onclick={() => act('set_invite_visibility', { value: 'organizers' }, 'invite_vis')} class="{seg} {inviteVisibility === 'organizers' ? segOn : segOff}">Organizers only</button>
+      </div>
+
+      {#if pending.length}
+        <div class="mt-3.5 rounded-xl bg-sun-100 p-3">
+          <div class="mb-1.5 font-display text-[14px] font-bold text-cocoa-900">Requests to join ({pending.length})</div>
+          <div class="flex flex-col">
+            {#each pending as p, i (p.id)}
+              <div class="flex items-center gap-2 py-1.5 {i !== 0 ? 'border-t border-sun-200' : ''}">
+                <Avatar name={p.display_name} src={p.avatar} size={28} />
+                <span class="min-w-0 flex-1 truncate font-body text-[14px] font-extrabold text-cocoa-900">{p.display_name}</span>
+                <Button variant="primary" size="sm" disabled={busy === 'ap-' + p.id} onclick={() => act('approve_member', { participantId: p.id }, 'ap-' + p.id)}>Approve</Button>
+                <button type="button" disabled={busy === 'dn-' + p.id} onclick={() => act('deny_member', { participantId: p.id }, 'dn-' + p.id)} class="rounded-full px-2.5 py-1 font-body text-[12px] font-extrabold text-berry-600 hover:bg-berry-200">Deny</button>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {/if}
+    </div>
+
+    <!-- Organizer: edit trip details -->
+    <div class="mt-4 border-t border-sand-200 pt-4">
       <div class="mb-2.5 flex items-center gap-2">
         <span class="font-display text-[15px] font-bold text-text-strong">Edit trip details</span>
         {#if savedFlash}<span class="font-body text-[12px] font-extrabold text-leaf-600">Saved ✓</span>{/if}
@@ -145,24 +216,24 @@
           <input id="ts-name" bind:value={form.name} maxlength="200" class={inputClass} />
         </div>
         <div class="flex gap-2.5">
-          <div class="flex-1">
+          <div class="min-w-0 flex-1">
             <label class={labelClass} for="ts-type">Type</label>
             <select id="ts-type" bind:value={form.trip_type} class={inputClass}>
               <option value="">Pick one…</option>
               {#each TYPES as [v, l]}<option value={v}>{l}</option>{/each}
             </select>
           </div>
-          <div class="flex-1">
+          <div class="min-w-0 flex-1">
             <label class={labelClass} for="ts-loc">Where</label>
             <input id="ts-loc" bind:value={form.location} maxlength="300" class={inputClass} />
           </div>
         </div>
         <div class="flex gap-2.5">
-          <div class="flex-1">
+          <div class="min-w-0 flex-1">
             <label class={labelClass} for="ts-start">Start</label>
             <input id="ts-start" type="date" bind:value={form.start_date} class={inputClass} />
           </div>
-          <div class="flex-1">
+          <div class="min-w-0 flex-1">
             <label class={labelClass} for="ts-end">End</label>
             <input id="ts-end" type="date" bind:value={form.end_date} min={form.start_date} class={inputClass} />
           </div>

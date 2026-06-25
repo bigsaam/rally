@@ -77,11 +77,11 @@
         </div>
 
         <div class="flex gap-3">
-          <div class="flex-1">
+          <div class="min-w-0 flex-1">
             <label class={labelClass} for="start_date">Start</label>
             <input id="start_date" name="start_date" type="date" value={values.start_date} class={inputClass} />
           </div>
-          <div class="flex-1">
+          <div class="min-w-0 flex-1">
             <label class={labelClass} for="end_date">End</label>
             <input id="end_date" name="end_date" type="date" value={values.end_date} class={inputClass} />
             {#if errors.end_date}<p class="mt-1 font-body text-sm font-bold text-berry-600">{errors.end_date}</p>{/if}

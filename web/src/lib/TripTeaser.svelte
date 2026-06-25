@@ -7,7 +7,7 @@
   /**
    * @type {{
    *   trip: { name: string, location?: string, start_date?: string, end_date?: string, descriptionPreview?: string, share_token: string },
-   *   mode: 'signin' | 'join',
+   *   mode: 'signin' | 'join' | 'pending',
    *   orphans?: Array<{ id: string, display_name: string }>,
    *   form?: any
    * }}
@@ -22,9 +22,9 @@
 <div class="min-h-full">
   <div class="mx-auto max-w-md px-4 py-12 sm:px-6">
     <div class="rounded-xl bg-white p-[22px] text-center shadow-pop">
-      <div class="text-[40px] leading-none">🧭</div>
+      <div class="text-[40px] leading-none">{mode === 'pending' ? '⏳' : '🧭'}</div>
       <p class="mt-2 font-body text-[13px] font-extrabold uppercase tracking-wide text-coral-600">
-        You're invited
+        {mode === 'pending' ? 'Request pending' : "You're invited"}
       </p>
       <h1 class="mt-1 font-display text-2xl font-bold text-cocoa-900">{trip.name}</h1>
 
@@ -44,6 +44,16 @@
           <p class="mt-3 font-body text-xs font-bold text-cocoa-500">
             tripwala uses accounts so only invited guests see the details — photos, who's coming, and more.
           </p>
+        {:else if mode === 'pending'}
+          <div class="rounded-xl bg-sun-100 px-4 py-3 font-body text-[13.5px] font-bold leading-relaxed text-cocoa-700">
+            Your request to join is in — an organizer needs to approve you before the trip details unlock. Check back soon.
+          </div>
+          <form method="POST" action="?/withdraw" use:enhance class="mt-3">
+            <Button variant="ghost" size="md" full type="submit">Withdraw request</Button>
+          </form>
+          {#if form?.withdrawError}
+            <p class="mt-2 font-body text-sm font-bold text-berry-600">{form.withdrawError}</p>
+          {/if}
         {:else}
           <form
             method="POST"

@@ -30,7 +30,7 @@ export async function loadTripByShareToken(shareToken) {
 
   const tripFilter = pb.filter('trip = {:id}', { id: trip.id });
 
-  const [participants, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows] =
+  const [participantsAll, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows] =
     await Promise.all([
       pb.collection('participants').getFullList({ filter: tripFilter, sort: 'created', expand: 'user' }),
       pb.collection('gear_items').getFullList({ filter: tripFilter, sort: 'created' }),
@@ -45,6 +45,11 @@ export async function loadTripByShareToken(shareToken) {
       pb.collection('expenses').getFullList({ filter: tripFilter, sort: '-created' }),
       pb.collection('itinerary_items').getFullList({ filter: tripFilter, sort: 'date,sort_order' })
     ]);
+
+  // Pending link-join requests aren't members yet — keep them out of every
+  // visible list (crew, members, counts). Organizers see them in the approval
+  // queue, loaded separately.
+  const participants = participantsAll.filter((p) => p.status !== 'pending');
 
   /** @type {Record<string, string>} */
   const nameById = Object.fromEntries(participants.map((p) => [p.id, p.display_name]));
@@ -133,7 +138,9 @@ export async function loadTripByShareToken(shareToken) {
       owner_token: trip.owner_token || '',
       trip_type: trip.trip_type || '',
       status: trip.status || 'confirmed',
-      hidden_sections: Array.isArray(trip.hidden_sections) ? trip.hidden_sections : []
+      hidden_sections: Array.isArray(trip.hidden_sections) ? trip.hidden_sections : [],
+      join_policy: trip.join_policy || 'instant',
+      invite_visibility: trip.invite_visibility || 'everyone'
     },
     // Account-linked members (for the inline Trip-settings members list).
     members: participants

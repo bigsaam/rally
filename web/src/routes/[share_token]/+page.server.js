@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
 import { loadTripByShareToken } from '$lib/server/loadTrip.js';
-import { getMembership, joinTrip, listOrphans, claimParticipant } from '$lib/server/membership.js';
+import { getMembership, joinTrip, listOrphans, listPending, claimParticipant } from '$lib/server/membership.js';
 import { tripTeaser } from '$lib/server/teaser.js';
 import { loadPlanning } from '$lib/server/planning.js';
 
@@ -37,9 +37,18 @@ export async function load({ params, locals }) {
     return { invite: true, trip: tripTeaser(trip), orphans: await listOrphans(pb, trip.id) };
   }
 
+  // Joined under an approval-required trip → waiting for an organizer. No trip
+  // data until approved (they aren't a member yet). Distinct from the organizer
+  // `pending` array below (the approval queue).
+  if (membership.status === 'pending') {
+    return { awaitingApproval: true, trip: tripTeaser(trip) };
+  }
+
   const isOrganizer = membership.role === 'organizer';
   const membershipOut = { participantId: membership.id, role: membership.role || 'guest' };
   const orphans = await listOrphans(pb, trip.id);
+  // Approval queue, organizers only.
+  const pending = isOrganizer ? await listPending(pb, trip.id) : [];
 
   // Planning stage → idea-gathering view (dates + locations), not the full trip.
   if ((trip.status || 'confirmed') === 'planning') {
@@ -58,12 +67,15 @@ export async function load({ params, locals }) {
         end_date: trip.end_date || '',
         expense_link: trip.expense_link || '',
         status: 'planning',
-        hidden_sections: []
+        hidden_sections: [],
+        join_policy: trip.join_policy || 'instant',
+        invite_visibility: trip.invite_visibility || 'everyone'
       },
       membership: membershipOut,
       isOrganizer,
       ...planning,
-      orphans
+      orphans,
+      pending
     };
   }
 
@@ -75,7 +87,8 @@ export async function load({ params, locals }) {
     status: trip.status || 'confirmed',
     membership: membershipOut,
     isOrganizer,
-    orphans
+    orphans,
+    pending
   };
 }
 
@@ -89,11 +102,29 @@ export const actions = {
     const pb = await superuserPb();
     const trip = await fetchTrip(pb, params.share_token);
     try {
-      await joinTrip(pb, trip, locals.user);
+      const m = await joinTrip(pb, trip, locals.user);
+      // Approval-required trips return a pending membership; the page reloads
+      // into the "waiting for approval" state on its own.
+      return { joined: true, pending: m.status === 'pending' };
     } catch (/** @type {any} */ e) {
       return fail(502, { joinError: 'Could not join right now — please try again.' });
     }
-    return { joined: true };
+  },
+
+  // Withdraw a still-pending join request (removes the pending participant).
+  withdraw: async ({ params, locals }) => {
+    if (!locals.user) throw redirect(303, '/login');
+    const pb = await superuserPb();
+    const trip = await fetchTrip(pb, params.share_token);
+    const m = await getMembership(pb, trip.id, locals.user.id);
+    if (m && m.status === 'pending') {
+      try {
+        await pb.collection('participants').delete(m.id);
+      } catch (/** @type {any} */ e) {
+        return fail(502, { withdrawError: 'Could not withdraw — please try again.' });
+      }
+    }
+    throw redirect(303, '/');
   },
 
   // Claim an existing name-only participant as yourself (merges any dup).

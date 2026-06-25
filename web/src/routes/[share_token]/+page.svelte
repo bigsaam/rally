@@ -14,6 +14,8 @@
   <TripTeaser trip={data.trip} mode="signin" />
 {:else if data.invite}
   <TripTeaser trip={data.trip} mode="join" orphans={data.orphans ?? []} {form} />
+{:else if data.awaitingApproval}
+  <TripTeaser trip={data.trip} mode="pending" {form} />
 {:else if data.planning}
   <PlanningView {data} />
 {:else}
