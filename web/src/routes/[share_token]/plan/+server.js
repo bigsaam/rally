@@ -9,6 +9,16 @@ import { getMembership } from '$lib/server/membership.js';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 /** PB date fields want a datetime; store day-granular values at UTC midnight. */
 const toPb = (/** @type {string} */ d) => (DATE_RE.test(d) ? `${d} 00:00:00.000Z` : '');
+/** Nights between two YYYY-MM-DD days (end − start in whole days). */
+const nightsBetween = (/** @type {string} */ start, /** @type {string} */ end) =>
+  Math.round((Date.parse(end) - Date.parse(start)) / 86400000);
+/** Throw if [start,end] is shorter than the trip's minimum nights. */
+function assertMinNights(/** @type {any} */ trip, /** @type {string} */ start, /** @type {string} */ end) {
+  const min = Number(trip.min_nights) || 0;
+  if (min > 0 && nightsBetween(start, end || start) < min) {
+    throw error(400, `This trip needs at least ${min} night${min === 1 ? '' : 's'} — pick a longer stretch.`);
+  }
+}
 
 export async function POST({ params, request, locals }) {
   if (!locals.user) throw error(401, 'Sign in to make changes');
@@ -71,6 +81,7 @@ export async function POST({ params, request, locals }) {
         if (!DATE_RE.test(start)) throw error(400, 'Need a start date');
         if (end && !DATE_RE.test(end)) throw error(400, 'Bad end date');
         if (end && end < start) throw error(400, 'End is before start');
+        assertMinNights(trip, start, end);
         const count = (await pb.collection('date_options').getList(1, 1, { filter: pb.filter('trip = {:t}', { t: trip.id }) })).totalItems;
         await pb.collection('date_options').create({
           trip: trip.id,
@@ -160,6 +171,7 @@ export async function POST({ params, request, locals }) {
         if (!DATE_RE.test(start)) throw error(400, 'Pick a start date to confirm');
         if (end && !DATE_RE.test(end)) throw error(400, 'Bad end date');
         if (end && end < start) throw error(400, 'End is before start');
+        assertMinNights(trip, start, end);
         /** @type {Record<string, unknown>} */
         const data = { start_date: toPb(start), end_date: end ? toPb(end) : '', status: 'confirmed' };
         const loc = String(body.location ?? '').trim();

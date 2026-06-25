@@ -313,6 +313,7 @@ export async function POST({ params, request, locals, url }) {
         const descHtml = descText
           ? `<p>${descText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>`
           : '';
+        const minNights = Math.max(0, Math.min(365, Math.round(Number(body.min_nights) || 0)));
         await pb.collection('trips').update(trip.id, {
           name,
           trip_type: t(body.trip_type).slice(0, 30),
@@ -320,7 +321,8 @@ export async function POST({ params, request, locals, url }) {
           start_date: start ? `${start} 00:00:00.000Z` : '',
           end_date: end ? `${end} 00:00:00.000Z` : '',
           description: descHtml,
-          expense_link
+          expense_link,
+          min_nights: minNights
         });
         break;
       }

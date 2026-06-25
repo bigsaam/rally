@@ -153,6 +153,7 @@
       dateOptions={data.dateOptions ?? []}
       availability={data.availability}
       {isOrganizer}
+      minNights={trip.min_nights ?? 0}
     />
   </section>
   <section id="where" class="trip-section">

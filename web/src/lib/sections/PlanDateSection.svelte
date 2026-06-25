@@ -11,10 +11,11 @@
    *   shareToken: string,
    *   dateOptions: Array<{id:string,start_date:string,end_date:string,yes:number,maybe:number,no:number,mine:string|null}>,
    *   availability: { byDay: Record<string,number>, mine: string[], memberCount: number },
-   *   isOrganizer: boolean
+   *   isOrganizer: boolean,
+   *   minNights?: number
    * }}
    */
-  let { shareToken, dateOptions, availability, isOrganizer } = $props();
+  let { shareToken, dateOptions, availability, isOrganizer, minNights = 0 } = $props();
 
   /** @type {Set<string>} */
   let mine = $state(new Set());
@@ -25,6 +26,13 @@
   let propStart = $state('');
   let propEnd = $state('');
   let busy = $state(false);
+  let proposeError = $state('');
+
+  // Nights in the currently-typed range; gate Propose on the trip's minimum.
+  const propNights = $derived(
+    propStart ? Math.round((Date.parse(propEnd || propStart) - Date.parse(propStart)) / 86400000) : 0
+  );
+  const tooShort = $derived(minNights > 0 && !!propStart && propNights < minNights);
 
   const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -89,12 +97,19 @@
 
   async function proposeRange() {
     if (!propStart || busy) return;
+    if (tooShort) {
+      proposeError = `This trip needs at least ${minNights} night${minNights === 1 ? '' : 's'}.`;
+      return;
+    }
     busy = true;
+    proposeError = '';
     try {
       await planAction(shareToken, { op: 'propose_date', start: propStart, end: propEnd || propStart });
       propStart = '';
       propEnd = '';
       await invalidateAll();
+    } catch (_) {
+      proposeError = 'Could not propose those dates.';
     } finally {
       busy = false;
     }
@@ -128,6 +143,12 @@
 
 <SectionHeader emoji="📅" title="When can everyone go?" />
 <Card>
+
+  {#if minNights > 0}
+    <div class="mb-3 rounded-xl bg-sun-100 px-3 py-2 font-body text-[12.5px] font-extrabold text-cocoa-700">
+      📏 This trip is at least {minNights} night{minNights === 1 ? '' : 's'} — pick a stretch that long.
+    </div>
+  {/if}
 
   <!-- Owner-proposed candidate ranges -->
   {#if dateOptions.length}
@@ -167,10 +188,17 @@
         <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">To</span>
         <input type="date" bind:value={propEnd} min={propStart || todayStr} class="{inputClass} w-full min-w-0 appearance-none" />
       </label>
-      <Button variant="soft" size="sm" class="h-10 basis-full whitespace-nowrap sm:mb-1 sm:basis-auto" onclick={proposeRange} disabled={!propStart || busy}>
+      <Button variant="soft" size="sm" class="h-10 basis-full whitespace-nowrap sm:mb-1 sm:basis-auto" onclick={proposeRange} disabled={!propStart || busy || tooShort}>
         Propose dates
       </Button>
     </div>
+    {#if tooShort}
+      <p class="mt-1.5 font-body text-xs font-bold text-cocoa-500">
+        That's {propNights} night{propNights === 1 ? '' : 's'} — this trip needs at least {minNights}.
+      </p>
+    {:else if proposeError}
+      <p class="mt-1.5 font-body text-xs font-bold text-berry-600">{proposeError}</p>
+    {/if}
   {/if}
 
   <!-- Free-pick availability heatmap -->

@@ -45,10 +45,10 @@
   const ymd = (d) => (d || '').slice(0, 10);
 
   // Details form state (organizer). Seeded from the trip; re-seed if it changes.
-  let form = $state({ name: '', trip_type: '', location: '', start_date: '', end_date: '', description: '', expense_link: '' });
+  let form = $state({ name: '', trip_type: '', location: '', start_date: '', end_date: '', description: '', expense_link: '', min_nights: 0 });
   let seeded = '';
   $effect(() => {
-    const sig = `${trip.name}|${trip.start_date}|${trip.description}`;
+    const sig = `${trip.name}|${trip.start_date}|${trip.description}|${trip.min_nights}`;
     if (sig !== seeded) {
       seeded = sig;
       form = {
@@ -58,7 +58,8 @@
         start_date: ymd(trip.start_date),
         end_date: ymd(trip.end_date),
         description: descToText(trip.description),
-        expense_link: trip.expense_link || ''
+        expense_link: trip.expense_link || '',
+        min_nights: trip.min_nights || 0
       };
     }
   });
@@ -283,6 +284,15 @@
             <label class={labelClass} for="ts-end">End</label>
             <input id="ts-end" type="date" bind:value={form.end_date} min={form.start_date} class="{inputClass} min-w-0 appearance-none" />
           </div>
+        </div>
+        <div>
+          <label class={labelClass} for="ts-min-nights">Minimum nights</label>
+          <input id="ts-min-nights" type="number" inputmode="numeric" min="0" max="365" bind:value={form.min_nights} class={inputClass} />
+          <p class="mt-1 font-body text-[12px] font-bold text-cocoa-400">
+            {Number(form.min_nights) > 0
+              ? `Proposed dates must span at least ${form.min_nights} night${Number(form.min_nights) === 1 ? '' : 's'}.`
+              : '0 = no minimum. Set this so nobody proposes a single-day trip.'}
+          </p>
         </div>
         <div>
           <label class={labelClass} for="ts-desc">The plan</label>

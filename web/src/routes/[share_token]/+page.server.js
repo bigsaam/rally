@@ -94,7 +94,8 @@ export async function load({ params, locals }) {
         status: 'planning',
         hidden_sections: [],
         join_policy: trip.join_policy || 'instant',
-        invite_visibility: trip.invite_visibility || 'everyone'
+        invite_visibility: trip.invite_visibility || 'everyone',
+        min_nights: trip.min_nights || 0
       },
       membership: membershipOut,
       isOrganizer,

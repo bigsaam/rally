@@ -141,7 +141,8 @@ export async function loadTripByShareToken(shareToken) {
       status: trip.status || 'confirmed',
       hidden_sections: Array.isArray(trip.hidden_sections) ? trip.hidden_sections : [],
       join_policy: trip.join_policy || 'instant',
-      invite_visibility: trip.invite_visibility || 'everyone'
+      invite_visibility: trip.invite_visibility || 'everyone',
+      min_nights: trip.min_nights || 0
     },
     // Account-linked members (for the inline Trip-settings members list).
     members: participants
