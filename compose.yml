@@ -52,6 +52,12 @@ services:
       # Same superuser the SvelteKit server authenticates with.
       - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@tripwala.local}"
       - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-tripwalaadmin123}"
+      # Optional SMTP relay for invite-by-email (empty = feature disabled).
+      - "SMTP_HOST=${SMTP_HOST:-}"
+      - "SMTP_PORT=${SMTP_PORT:-587}"
+      - "SMTP_USER=${SMTP_USER:-}"
+      - "SMTP_PASS=${SMTP_PASS:-}"
+      - "SMTP_FROM=${SMTP_FROM:-}"
     depends_on:
       pocketbase:
         condition: service_healthy

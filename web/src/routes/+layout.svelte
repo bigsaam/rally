@@ -39,7 +39,9 @@
   // nav (in-page anchors, driven by scrollSpy) and adds a "← All trips" exit.
   const nav = $derived(shell.trip ? shell.trip.nav : appNav);
   const back = $derived(inTrip ? { label: 'All trips', onClick: () => goto('/') } : null);
-  const title = $derived(shell.trip ? shell.trip.title : null);
+  // The open trip's page renders its own sticky header (emoji tile + name + status),
+  // so don't ALSO show the name in the AppShell mobile top bar — it duplicated.
+  const title = null;
 
   // Always-available desktop sidebar (AppShell default): sidebar ≥ 920px, top-bar
   // + drawer below. The soon rows give the app-level sidebar real substance.

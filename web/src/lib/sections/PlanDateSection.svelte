@@ -155,21 +155,23 @@
   {/if}
 
   {#if isOrganizer}
-    <!-- One row even on phones: the date columns shrink (min-w-0) and the button
-         stays inline with a short "Propose" label below the sm breakpoint. -->
-    <div class="mt-2.5 flex items-end gap-2">
+    <!-- From/To share the top row; Propose wraps to a full-width button below on
+         phones (iOS Safari won't shrink native date inputs, so an inline button
+         overlaps them), and sits inline on sm+. -->
+    <div class="mt-2.5 flex flex-wrap items-end gap-2">
       <label class="flex min-w-0 flex-1 flex-col gap-1">
         <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">From</span>
-        <input type="date" bind:value={propStart} min={todayStr} class="{inputClass} w-full" />
+        <input type="date" bind:value={propStart} min={todayStr} class="{inputClass} w-full min-w-0" />
       </label>
       <label class="flex min-w-0 flex-1 flex-col gap-1">
         <span class="font-body text-[11px] font-extrabold uppercase text-cocoa-500">To</span>
-        <input type="date" bind:value={propEnd} min={propStart || todayStr} class="{inputClass} w-full" />
+        <input type="date" bind:value={propEnd} min={propStart || todayStr} class="{inputClass} w-full min-w-0" />
       </label>
-      <!-- Match the inputs' height (h-10 = 40px) and lift by the button's 4px
-           "lip" shadow (mb-1) so its resting baseline lines up with the fields. -->
-      <Button variant="soft" size="sm" class="mb-1 h-10 flex-none whitespace-nowrap" onclick={proposeRange} disabled={!propStart || busy}>
-        <span class="sm:hidden">Propose</span><span class="hidden sm:inline">Propose dates</span>
+      <!-- basis-full forces the button onto its own row below the dates on phones
+           (w-full would let flex shrink it back inline); inline on sm+ where
+           sm:mb-1 lifts its 4px lip onto the inputs' baseline. -->
+      <Button variant="soft" size="sm" class="h-10 basis-full whitespace-nowrap sm:mb-1 sm:basis-auto" onclick={proposeRange} disabled={!propStart || busy}>
+        Propose dates
       </Button>
     </div>
   {/if}

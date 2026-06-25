@@ -16,12 +16,14 @@
    *   showSections?: boolean,
    *   joinPolicy?: string,
    *   inviteVisibility?: string,
-   *   pending?: Array<{ id: string, display_name: string, avatar?: string }>
+   *   pending?: Array<{ id: string, display_name: string, avatar?: string }>,
+   *   emailEnabled?: boolean
    * }}
    */
   let {
     shareToken, ownerMode = false, me = null, trip, members = [], currentParticipantId = null,
-    showSections = true, joinPolicy = 'instant', inviteVisibility = 'everyone', pending = []
+    showSections = true, joinPolicy = 'instant', inviteVisibility = 'everyone', pending = [],
+    emailEnabled = false
   } = $props();
 
   const TYPES = [
@@ -115,6 +117,28 @@
     } catch (_) { /* clipboard blocked */ }
   }
 
+  // Invite by email (only when SMTP is configured server-side).
+  let inviteEmail = $state('');
+  let inviteSent = $state(false);
+  let inviteError = $state('');
+  const validEmail = $derived(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(inviteEmail.trim()));
+  async function sendInvite() {
+    if (!validEmail || busy) return;
+    busy = 'invite_email';
+    inviteError = '';
+    inviteSent = false;
+    try {
+      await tripAction(shareToken, { op: 'invite_email', email: inviteEmail.trim() });
+      inviteSent = true;
+      inviteEmail = '';
+      setTimeout(() => (inviteSent = false), 2500);
+    } catch (_) {
+      inviteError = "Couldn't send — check the address (and that email is set up).";
+    } finally {
+      busy = '';
+    }
+  }
+
   // Segmented-control button classes for the access toggles.
   const seg = 'flex-1 rounded-lg border-2 px-3 py-2 font-body text-[13px] font-extrabold transition';
   const segOn = 'border-coral-400 bg-coral-200 text-coral-700';
@@ -167,6 +191,25 @@
         <input readonly value={inviteUrl} class="{inputClass} min-w-0 flex-1 bg-sand-100" />
         <Button variant="soft" size="md" onclick={copyInvite}>{invCopied ? 'Copied!' : 'Copy'}</Button>
       </div>
+
+      {#if emailEnabled}
+        <div class="mt-3">
+          <div class="mb-1 font-body text-[12px] font-extrabold uppercase tracking-wide text-cocoa-500">Or invite by email</div>
+          <div class="flex gap-2">
+            <input
+              type="email"
+              bind:value={inviteEmail}
+              placeholder="name@email.com"
+              class="{inputClass} min-w-0 flex-1"
+              onkeydown={(e) => e.key === 'Enter' && sendInvite()}
+            />
+            <Button variant="primary" size="md" disabled={busy === 'invite_email' || !validEmail} onclick={sendInvite}>
+              {busy === 'invite_email' ? 'Sending…' : inviteSent ? 'Sent ✓' : 'Send'}
+            </Button>
+          </div>
+          {#if inviteError}<p class="mt-1 font-body text-xs font-bold text-berry-600">{inviteError}</p>{/if}
+        </div>
+      {/if}
     </div>
   {/if}
 

@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
 import { getMembership } from '$lib/server/membership.js';
+import { isMailConfigured, sendInviteEmail } from '$lib/server/mailer.js';
 
 // All trip mutations funnel through here. PocketBase collection rules are locked
 // to superuser-only, so the browser cannot write directly — it POSTs an op to
@@ -13,7 +14,7 @@ import { getMembership } from '$lib/server/membership.js';
 // themselves; only organizers may act on another participant (e.g. setting
 // someone else's RSVP).
 
-export async function POST({ params, request, locals }) {
+export async function POST({ params, request, locals, url }) {
   if (!locals.user) throw error(401, 'Sign in to make changes');
 
   const pb = await superuserPb();
@@ -404,6 +405,30 @@ export async function POST({ params, request, locals }) {
         if (!isOrganizer) throw error(403, 'Only organizers can deny');
         const target = await inTrip('participants', body.participantId);
         if (target.status === 'pending') await pb.collection('participants').delete(target.id);
+        break;
+      }
+
+      // Email someone the invite link. Gated like sharing the link (invite_visibility):
+      // everyone may invite unless it's organizers-only. Body is fixed (no injected
+      // content) so the endpoint can't be used as a spam relay.
+      case 'invite_email': {
+        if (!isOrganizer && (trip.invite_visibility || 'everyone') === 'organizers') {
+          throw error(403, 'Only organizers can invite to this trip');
+        }
+        if (!isMailConfigured()) throw error(400, 'Email invites are not set up');
+        const to = String(body.email ?? '').trim().slice(0, 254);
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) throw error(400, 'Enter a valid email address');
+        const inviteUrl = `${url.origin}/${trip.share_token}`;
+        try {
+          await sendInviteEmail({
+            to,
+            tripName: trip.name,
+            inviterName: me.display_name || 'Someone',
+            inviteUrl
+          });
+        } catch (/** @type {any} */ e) {
+          throw error(502, 'Could not send the email — check the address and try again');
+        }
         break;
       }
 

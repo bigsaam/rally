@@ -237,6 +237,7 @@
       joinPolicy={trip.join_policy}
       inviteVisibility={trip.invite_visibility}
       pending={data.pending ?? []}
+      emailEnabled={data.emailEnabled ?? false}
     />
   </section>
 

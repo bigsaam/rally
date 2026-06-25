@@ -110,7 +110,7 @@
                 <div class="font-display text-[15px] font-semibold text-cocoa-900">Ready to lock it in?</div>
                 <div class="font-body text-[13px] font-bold text-cocoa-500">Set the final dates and it becomes a real trip.</div>
               </div>
-              <Button variant="primary" size="md" onclick={openConfirm}>Confirm trip ✅</Button>
+              <Button variant="primary" size="md" onclick={openConfirm}>Set the dates →</Button>
             </div>
           {:else}
             <div class="font-display text-[15px] font-semibold text-cocoa-900">Confirm the trip</div>
@@ -192,6 +192,7 @@
       joinPolicy={trip.join_policy}
       inviteVisibility={trip.invite_visibility}
       pending={data.pending ?? []}
+      emailEnabled={data.emailEnabled ?? false}
     />
   </section>
 </div>

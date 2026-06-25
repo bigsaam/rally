@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
 import { loadTripByShareToken } from '$lib/server/loadTrip.js';
 import { getMembership, joinTrip, listOrphans, listPending, claimParticipant } from '$lib/server/membership.js';
+import { isMailConfigured } from '$lib/server/mailer.js';
 import { tripTeaser } from '$lib/server/teaser.js';
 import { loadPlanning } from '$lib/server/planning.js';
 
@@ -99,7 +100,8 @@ export async function load({ params, locals }) {
       isOrganizer,
       ...planning,
       orphans,
-      pending
+      pending,
+      emailEnabled: isMailConfigured()
     };
   }
 
@@ -112,7 +114,8 @@ export async function load({ params, locals }) {
     membership: membershipOut,
     isOrganizer,
     orphans,
-    pending
+    pending,
+    emailEnabled: isMailConfigured()
   };
 }
 
