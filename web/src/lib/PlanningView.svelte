@@ -8,6 +8,7 @@
   import { planAction } from '$lib/planClient.js';
   import { tripEmoji } from '$lib/format.js';
   import { useShell } from '$lib/shell.svelte.js';
+  import { collapseHeader } from '$lib/collapseHeader.js';
 
   /** @type {{ data: any }} */
   let { data } = $props();
@@ -28,8 +29,11 @@
     { key: 'tripsettings', label: 'Trip settings', icon: '⚙️', href: '#tripsettings' }
   ];
   const shell = useShell();
+  const subtitle = $derived(
+    'In planning' + (participants.length ? ` · ${participants.length} interested` : '')
+  );
   $effect(() => {
-    shell.trip = { title: trip.name, nav: PLAN_NAV };
+    shell.trip = { title: trip.name, subtitle, nav: PLAN_NAV };
   });
   $effect(() => () => {
     shell.trip = null;
@@ -71,7 +75,7 @@
 </script>
 
 <!-- Sticky header (data-appshell-sticky) — emoji tile + name + planning status. -->
-<header data-appshell-sticky class="trip-head" style="background: var(--color-bg-app)">
+<header data-appshell-sticky class="trip-head" style="background: var(--color-bg-app)" use:collapseHeader={(c) => (shell.collapsed = c)}>
   <div class="flex items-center gap-3">
     <span
       class="grid h-12 w-12 flex-none place-items-center rounded-md text-[26px]"
@@ -206,6 +210,14 @@
     padding: 16px 0 14px;
     margin-bottom: var(--stack-gap, 14px);
     border-bottom: 1px solid var(--color-sand-300);
+  }
+  /* On phones the AppShell has its own sticky top bar — let this header scroll
+     away (it crossfades into the top bar) so there's one sticky header + more
+     vertical room. Stays sticky on desktop (no top bar there). */
+  @media (max-width: 919.98px) {
+    .trip-head {
+      position: static;
+    }
   }
   .trip-stack {
     display: flex;

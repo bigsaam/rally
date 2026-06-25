@@ -5,6 +5,7 @@
   import { goto } from '$app/navigation';
   import { createShell } from '$lib/shell.svelte.js';
   import { displayName } from '$lib/displayName.js';
+  import { fade } from 'svelte/transition';
 
   /** @type {{ children: import('svelte').Snippet, data: import('./$types').LayoutData }} */
   let { children, data } = $props();
@@ -39,9 +40,11 @@
   // nav (in-page anchors, driven by scrollSpy) and adds a "← All trips" exit.
   const nav = $derived(shell.trip ? shell.trip.nav : appNav);
   const back = $derived(inTrip ? { label: 'All trips', onClick: () => goto('/') } : null);
-  // The open trip's page renders its own sticky header (emoji tile + name + status),
-  // so don't ALSO show the name in the AppShell mobile top bar — it duplicated.
-  const title = null;
+  // The open trip's page header scrolls away on mobile; once it's under the top
+  // bar (shell.collapsed) we crossfade the trip title + subtitle INTO the top bar
+  // (the ctxTitle snippet below) so there's one sticky header. Null = show the
+  // wordmark (at the top of the page, and on desktop where there's no top bar).
+  const showCtxTitle = $derived(inTrip && shell.collapsed);
 
   // Always-available desktop sidebar (AppShell default): sidebar ≥ 920px, top-bar
   // + drawer below. The soon rows give the app-level sidebar real substance.
@@ -73,6 +76,17 @@
   const settingsActive = $derived(path.endsWith('/settings'));
 </script>
 
+<!-- Crossfaded into the AppShell mobile top bar once the trip header scrolls
+     under it (replaces the wordmark). Fades via the {#if title} swap in the kit. -->
+{#snippet ctxTitle()}
+  <span class="flex min-w-0 max-w-[56vw] flex-col leading-tight" transition:fade={{ duration: 160 }}>
+    <span class="truncate font-display text-[15px] font-bold text-cocoa-900">{shell.trip?.title ?? ''}</span>
+    {#if shell.trip?.subtitle}
+      <span class="truncate font-body text-[11px] font-extrabold text-coral-600">{shell.trip.subtitle}</span>
+    {/if}
+  </span>
+{/snippet}
+
 {#if user}
   <AppShell
     app="tripwala"
@@ -81,7 +95,7 @@
     {onSettings}
     {settingsActive}
     {back}
-    {title}
+    title={showCtxTitle ? ctxTitle : null}
     scrollSpy={inTrip}
     {breakpoint}
   >

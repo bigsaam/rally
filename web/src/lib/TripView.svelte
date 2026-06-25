@@ -13,6 +13,7 @@
   import { fmtDateRange, tripEmoji } from '$lib/format.js';
   import { page } from '$app/state';
   import { useShell } from '$lib/shell.svelte.js';
+  import { collapseHeader } from '$lib/collapseHeader.js';
 
   /**
    * @type {{
@@ -120,7 +121,7 @@
   // so re-publishing on the 4s poll is harmless. Cleared on unmount.
   const shell = useShell();
   $effect(() => {
-    shell.trip = { title: trip.name, nav: visibleNav };
+    shell.trip = { title: trip.name, subtitle: meta, nav: visibleNav };
   });
   $effect(() => () => {
     shell.trip = null;
@@ -166,7 +167,7 @@
 
 <!-- Sticky trip header — auto-measured by the shell for the scrollSpy offset
      (data-appshell-sticky). Emoji tile + name + dates · where · N going. -->
-<header data-appshell-sticky class="trip-head" style="background: var(--color-bg-app)">
+<header data-appshell-sticky class="trip-head" style="background: var(--color-bg-app)" use:collapseHeader={(c) => (shell.collapsed = c)}>
   <div class="flex items-center gap-3">
     <span
       class="grid h-12 w-12 flex-none place-items-center rounded-md text-[26px]"
@@ -258,6 +259,13 @@
     padding: 16px 0 14px;
     margin-bottom: var(--stack-gap, 14px);
     border-bottom: 1px solid var(--color-sand-300);
+  }
+  /* On phones the AppShell top bar is the sticky header — let this one scroll
+     away (it crossfades into the top bar). Sticky on desktop (no top bar). */
+  @media (max-width: 919.98px) {
+    .trip-head {
+      position: static;
+    }
   }
   .trip-stack {
     display: flex;
