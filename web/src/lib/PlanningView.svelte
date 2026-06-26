@@ -212,6 +212,7 @@
       joinPolicy={trip.join_policy}
       inviteVisibility={trip.invite_visibility}
       pending={data.pending ?? []}
+      invites={data.invites ?? []}
       emailEnabled={data.emailEnabled ?? false}
       collapsed={settingsCollapsed}
       onToggle={toggleSettings}

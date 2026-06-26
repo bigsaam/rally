@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
 import { loadTripByShareToken } from '$lib/server/loadTrip.js';
-import { getMembership, joinTrip, listOrphans, listPending, claimParticipant } from '$lib/server/membership.js';
+import { getMembership, joinTrip, listOrphans, listPending, listInvites, claimParticipant } from '$lib/server/membership.js';
 import { isMailConfigured } from '$lib/server/mailer.js';
 import { tripTeaser } from '$lib/server/teaser.js';
 import { loadPlanning } from '$lib/server/planning.js';
@@ -73,8 +73,9 @@ export async function load({ params, locals }) {
   // name-only entries. Match on full or first name (case-insensitive).
   const allOrphans = await listOrphans(pb, trip.id);
   const orphans = filterClaimable(allOrphans, locals.user.name);
-  // Approval queue, organizers only.
+  // Approval queue + outstanding co-organizer invites, organizers only.
   const pending = isOrganizer ? await listPending(pb, trip.id) : [];
+  const invites = isOrganizer ? await listInvites(pb, trip.id) : [];
 
   // Planning stage → idea-gathering view (dates + locations), not the full trip.
   if ((trip.status || 'confirmed') === 'planning') {
@@ -104,6 +105,7 @@ export async function load({ params, locals }) {
       ...planning,
       orphans,
       pending,
+      invites,
       emailEnabled: isMailConfigured()
     };
   }
@@ -118,6 +120,7 @@ export async function load({ params, locals }) {
     isOrganizer,
     orphans,
     pending,
+    invites,
     emailEnabled: isMailConfigured()
   };
 }

@@ -487,6 +487,50 @@ export async function POST({ params, request, locals, url }) {
         break;
       }
 
+      // Invite a co-organizer by email (#16): record an organizer invite so the
+      // account joins straight as an organizer (no owner-token link to share),
+      // and email them the invite link if SMTP is set up. The grant is what
+      // matters, so a failed/absent email doesn't fail the op.
+      case 'invite_organizer': {
+        if (!isOrganizer) throw error(403, 'Only organizers can invite co-organizers');
+        const email = String(body.email ?? '').trim().toLowerCase().slice(0, 254);
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw error(400, 'Enter a valid email address');
+
+        // Upsert one invite per (trip, email).
+        const existing = await pb
+          .collection('invites')
+          .getList(1, 1, { filter: pb.filter('trip = {:t} && email = {:e}', { t: trip.id, e: email }) });
+        if (existing.items[0]) {
+          await pb.collection('invites').update(existing.items[0].id, { role: 'organizer', invited_by: locals.user.id });
+        } else {
+          await pb.collection('invites').create({ trip: trip.id, email, role: 'organizer', invited_by: locals.user.id });
+        }
+
+        let emailed = false;
+        if (isMailConfigured()) {
+          try {
+            await sendInviteEmail({
+              to: email,
+              tripName: trip.name,
+              inviterName: me.display_name || 'Someone',
+              inviteUrl: `${url.origin}/${trip.share_token}`
+            });
+            emailed = true;
+          } catch (_) {
+            /* invite still stands; organizer can share the link manually */
+          }
+        }
+        return json({ ok: true, emailed });
+      }
+
+      // Revoke a pending co-organizer invite.
+      case 'revoke_invite': {
+        if (!isOrganizer) throw error(403, 'Only organizers can revoke invites');
+        const inv = await pb.collection('invites').getOne(String(body.inviteId ?? '')).catch(() => null);
+        if (inv && inv.trip === trip.id) await pb.collection('invites').delete(inv.id);
+        break;
+      }
+
       default:
         throw error(400, 'Unknown action');
     }

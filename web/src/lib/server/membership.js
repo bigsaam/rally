@@ -35,7 +35,11 @@ export async function joinTrip(pb, trip, user) {
   if (existing) return existing;
 
   const isCreator = trip.created_by === user.id;
-  const role = isCreator ? 'organizer' : 'guest';
+  // A co-organizer invite addressed to this account's email grants its role and
+  // skips approval (the organizer vouched for them). Consumed once applied.
+  const invite = await findInvite(pb, trip.id, user.email);
+  const invitedOrganizer = invite?.role === 'organizer';
+  const role = isCreator || invitedOrganizer ? 'organizer' : 'guest';
 
   // Adopt an unclaimed participant with the same name, so signing in links to
   // the work already done under that name (helps migrate pre-auth trips). They
@@ -49,22 +53,79 @@ export async function joinTrip(pb, trip, user) {
       (p) => !p.user && p.display_name.trim().toLowerCase() === name.toLowerCase()
     );
     if (orphan) {
-      return pb.collection('participants').update(orphan.id, { user: user.id, role, status: 'active' });
+      const m = await pb
+        .collection('participants')
+        .update(orphan.id, { user: user.id, role, status: 'active' });
+      await consumeInvite(pb, invite);
+      return m;
     }
   }
 
-  // Fresh link-join: pending if the trip needs approval (the creator bypasses).
-  const status = !isCreator && (trip.join_policy || 'instant') === 'approval' ? 'pending' : 'active';
+  // Fresh link-join: pending only if approval is required AND they weren't
+  // explicitly invited (the creator and invitees bypass the queue).
+  const needsApproval = !isCreator && !invite && (trip.join_policy || 'instant') === 'approval';
 
   const { randomUUID } = await import('node:crypto');
-  return pb.collection('participants').create({
+  const m = await pb.collection('participants').create({
     trip: trip.id,
     user: user.id,
     display_name: name || user.email || 'Guest',
     role,
-    status,
+    status: needsApproval ? 'pending' : 'active',
     client_id: randomUUID()
   });
+  await consumeInvite(pb, invite);
+  return m;
+}
+
+/**
+ * The pending invite addressed to `email` on this trip, or null. Emails are
+ * matched case-insensitively (stored lowercased).
+ *
+ * @param {import('pocketbase').default} pb superuser client
+ * @param {string} tripId
+ * @param {string | null | undefined} email
+ */
+export async function findInvite(pb, tripId, email) {
+  const e = String(email || '').trim().toLowerCase();
+  if (!e) return null;
+  try {
+    const res = await pb
+      .collection('invites')
+      .getList(1, 1, { filter: pb.filter('trip = {:t} && email = {:e}', { t: tripId, e }) });
+    return res.items[0] ?? null;
+  } catch (_) {
+    return null; // collection absent (pre-migration) or transient — treat as no invite
+  }
+}
+
+/** Delete an applied invite (best-effort). @param {any} pb @param {any} invite */
+async function consumeInvite(pb, invite) {
+  if (!invite) return;
+  try {
+    await pb.collection('invites').delete(invite.id);
+  } catch (_) {
+    /* already gone */
+  }
+}
+
+/**
+ * Outstanding co-organizer invites on a trip — shown to organizers so they can
+ * see who's been invited and revoke if needed.
+ *
+ * @param {import('pocketbase').default} pb superuser client
+ * @param {string} tripId
+ * @returns {Promise<Array<{ id: string, email: string, role: string }>>}
+ */
+export async function listInvites(pb, tripId) {
+  try {
+    const all = await pb
+      .collection('invites')
+      .getFullList({ filter: pb.filter('trip = {:t}', { t: tripId }), sort: 'created' });
+    return all.map((i) => ({ id: i.id, email: i.email, role: i.role || 'guest' }));
+  } catch (_) {
+    return [];
+  }
 }
 
 /**

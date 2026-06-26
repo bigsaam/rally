@@ -18,6 +18,7 @@
    *   joinPolicy?: string,
    *   inviteVisibility?: string,
    *   pending?: Array<{ id: string, display_name: string, avatar?: string }>,
+   *   invites?: Array<{ id: string, email: string, role: string }>,
    *   emailEnabled?: boolean,
    *   collapsed?: boolean,
    *   onToggle?: (() => void) | null
@@ -26,7 +27,7 @@
   let {
     shareToken, ownerMode = false, me = null, trip, members = [], currentParticipantId = null,
     showSections = true, joinPolicy = 'instant', inviteVisibility = 'everyone', pending = [],
-    emailEnabled = false, collapsed = false, onToggle = null
+    invites = [], emailEnabled = false, collapsed = false, onToggle = null
   } = $props();
 
   const TYPES = [
@@ -143,6 +144,36 @@
     } finally {
       busy = '';
     }
+  }
+
+  // Invite a co-organizer by email (#16): records an organizer grant so they
+  // join straight as an organizer, and emails the invite link if SMTP is set up.
+  let coOrgEmail = $state('');
+  let coOrgMsg = $state('');
+  let coOrgError = $state('');
+  const validCoOrg = $derived(/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(coOrgEmail.trim()));
+  async function inviteCoOrganizer() {
+    if (!validCoOrg || busy) return;
+    busy = 'invite_organizer';
+    coOrgError = '';
+    coOrgMsg = '';
+    try {
+      const res = await tripAction(shareToken, { op: 'invite_organizer', email: coOrgEmail.trim() });
+      coOrgMsg = res?.emailed
+        ? 'Invited — we emailed them the link.'
+        : 'Invited — share the invite link with them; they join as an organizer.';
+      coOrgEmail = '';
+      await invalidateAll();
+      setTimeout(() => (coOrgMsg = ''), 4000);
+    } catch (_) {
+      coOrgError = "Couldn't send the invite — try again.";
+    } finally {
+      busy = '';
+    }
+  }
+  /** @param {string} id */
+  async function revokeInvite(id) {
+    await act('revoke_invite', { inviteId: id }, 'rmInv-' + id);
   }
 
   // Segmented-control button classes for the access toggles.
@@ -382,10 +413,47 @@
       <p class="mt-2 font-body text-[11.5px] font-bold text-cocoa-400">Name-only guests (not signed in) appear on the trip, not here.</p>
     </div>
 
-    <!-- Organizer: co-organizer link -->
+    <!-- Organizer: invite a co-organizer by email -->
+    <div class="mt-4 border-t border-sand-200 pt-4">
+      <div class="mb-1 font-display text-[15px] font-bold text-text-strong">Add a co-organizer</div>
+      <p class="mb-2.5 font-body text-[12.5px] font-bold text-text-muted">
+        Invite by email — when they sign in to join, they land as an organizer.{#if !emailEnabled} (We'll record it; share the invite link with them since email isn't set up.){/if}
+      </p>
+      <div class="flex gap-2">
+        <input
+          type="email" bind:value={coOrgEmail} placeholder="name@email.com"
+          autocomplete="off" class="{inputClass} flex-1"
+          onkeydown={(e) => e.key === 'Enter' && inviteCoOrganizer()}
+        />
+        <Button variant="primary" size="md" onclick={inviteCoOrganizer} disabled={!validCoOrg || busy === 'invite_organizer'}>
+          {busy === 'invite_organizer' ? 'Inviting…' : 'Invite'}
+        </Button>
+      </div>
+      {#if coOrgMsg}<p class="mt-2 font-body text-[12.5px] font-bold text-leaf-600">{coOrgMsg}</p>{/if}
+      {#if coOrgError}<p class="mt-2 font-body text-[12.5px] font-bold text-berry-600">{coOrgError}</p>{/if}
+
+      {#if invites.length}
+        <div class="mt-3 flex flex-col gap-1.5">
+          <div class="font-body text-[11px] font-extrabold uppercase tracking-wide text-cocoa-400">Pending invites</div>
+          {#each invites as inv (inv.id)}
+            <div class="flex items-center gap-2 rounded-lg bg-sand-100 px-3 py-2">
+              <span class="min-w-0 flex-1 truncate font-body text-[13.5px] font-extrabold text-cocoa-900">{inv.email}</span>
+              <span class="shrink-0 font-body text-[11px] font-extrabold uppercase tracking-wide text-coral-600">{inv.role === 'organizer' ? 'Organizer' : 'Guest'}</span>
+              <button
+                type="button" disabled={busy === 'rmInv-' + inv.id} title="Revoke invite"
+                onclick={() => revokeInvite(inv.id)}
+                class="shrink-0 rounded-full px-2.5 py-1 font-body text-[12px] font-extrabold text-berry-600 hover:bg-berry-200 disabled:opacity-50"
+              >Revoke</button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+
+    <!-- Organizer: co-organizer link (no-email fallback / quick share) -->
     <div class="mt-4 border-t border-sand-200 pt-4">
       <div class="mb-1 font-display text-[15px] font-bold text-text-strong">Co-organizer link</div>
-      <p class="mb-2.5 font-body text-[12.5px] font-bold text-text-muted">Send to someone you want to co-run the trip — they sign in and become an organizer. Keep it private.</p>
+      <p class="mb-2.5 font-body text-[12.5px] font-bold text-text-muted">Or send this link to someone you want to co-run the trip — they sign in and become an organizer. Keep it private.</p>
       <div class="flex gap-2">
         <input readonly value={ownerUrl} class="{inputClass} flex-1 bg-sun-100" />
         <Button variant="soft" size="md" onclick={copyOwner}>{copied ? 'Copied!' : 'Copy'}</Button>
