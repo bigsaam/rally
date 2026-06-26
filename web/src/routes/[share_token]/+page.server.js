@@ -4,6 +4,7 @@ import { loadTripByShareToken } from '$lib/server/loadTrip.js';
 import { getMembership, joinTrip, listOrphans, listPending, listInvites, claimParticipant } from '$lib/server/membership.js';
 import { isMailConfigured } from '$lib/server/mailer.js';
 import { tripTeaser } from '$lib/server/teaser.js';
+import { tripOg } from '$lib/server/og.js';
 import { loadPlanning } from '$lib/server/planning.js';
 import { cloneTrip } from '$lib/server/cloneTrip.js';
 
@@ -16,7 +17,9 @@ async function fetchTrip(pb, shareToken) {
   try {
     return await pb
       .collection('trips')
-      .getFirstListItem(pb.filter('share_token = {:t}', { t: shareToken }));
+      .getFirstListItem(pb.filter('share_token = {:t}', { t: shareToken }), {
+        expand: 'picked_location' // the chosen idea, for the link-preview image
+      });
   } catch (/** @type {any} */ err) {
     if (err?.status === 404) throw error(404, 'Trip not found');
     throw error(502, 'Could not reach the trip backend');
@@ -43,27 +46,31 @@ function filterClaimable(orphans, userName) {
   });
 }
 
-export async function load({ params, locals }) {
+export async function load({ params, locals, url }) {
   const pb = await superuserPb();
   const trip = await fetchTrip(pb, params.share_token);
 
+  // Link-preview metadata. Computed from the public trip row so it's identical
+  // for crawlers (always unauthenticated) and members; rendered in the page head.
+  const og = await tripOg(pb, trip, url.origin);
+
   // Not signed in → public teaser only (name + short description).
   if (!locals.user) {
-    return { teaser: true, trip: tripTeaser(trip) };
+    return { teaser: true, trip: tripTeaser(trip), og };
   }
 
   // Signed in but not a member → invite screen (one tap to join, or claim an
   // existing name-only entry so signing in doesn't create a duplicate).
   const membership = await getMembership(pb, trip.id, locals.user.id);
   if (!membership) {
-    return { invite: true, trip: tripTeaser(trip), orphans: await listOrphans(pb, trip.id) };
+    return { invite: true, trip: tripTeaser(trip), orphans: await listOrphans(pb, trip.id), og };
   }
 
   // Joined under an approval-required trip → waiting for an organizer. No trip
   // data until approved (they aren't a member yet). Distinct from the organizer
   // `pending` array below (the approval queue).
   if (membership.status === 'pending') {
-    return { awaitingApproval: true, trip: tripTeaser(trip) };
+    return { awaitingApproval: true, trip: tripTeaser(trip), og };
   }
 
   const isOrganizer = membership.role === 'organizer';
@@ -106,7 +113,8 @@ export async function load({ params, locals }) {
       orphans,
       pending,
       invites,
-      emailEnabled: isMailConfigured()
+      emailEnabled: isMailConfigured(),
+      og
     };
   }
 
@@ -121,7 +129,8 @@ export async function load({ params, locals }) {
     orphans,
     pending,
     invites,
-    emailEnabled: isMailConfigured()
+    emailEnabled: isMailConfigured(),
+    og
   };
 }
 

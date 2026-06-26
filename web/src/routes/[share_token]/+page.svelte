@@ -8,7 +8,26 @@
   let { data, form } = $props();
 </script>
 
-<svelte:head><title>{data.trip?.name ?? 'tripwala'} — tripwala</title></svelte:head>
+<svelte:head>
+  <title>{data.trip?.name ?? 'tripwala'} — tripwala</title>
+  {#if data.og}
+    <meta name="description" content={data.og.description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="tripwala" />
+    <meta property="og:title" content={data.og.title} />
+    <meta property="og:description" content={data.og.description} />
+    <meta property="og:url" content={data.og.url} />
+    <meta name="twitter:title" content={data.og.title} />
+    <meta name="twitter:description" content={data.og.description} />
+    {#if data.og.image}
+      <meta property="og:image" content={data.og.image} />
+      <meta name="twitter:image" content={data.og.image} />
+      <meta name="twitter:card" content="summary_large_image" />
+    {:else}
+      <meta name="twitter:card" content="summary" />
+    {/if}
+  {/if}
+</svelte:head>
 
 {#if data.teaser}
   <TripTeaser trip={data.trip} mode="signin" />
