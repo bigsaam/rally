@@ -39,6 +39,9 @@ services:
       - PB_URL=http://pocketbase:8090
       - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:?set in .env}"
       - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:?set in .env}"
+      # Raise adapter-node's 512K default so 5 MB photo/avatar uploads don't get
+      # their request body torn down mid-stream (uploads otherwise hang). See compose.yml.
+      - "BODY_SIZE_LIMIT=${BODY_SIZE_LIMIT:-8M}"
     depends_on:
       pocketbase:
         condition: service_healthy

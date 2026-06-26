@@ -49,6 +49,11 @@ services:
       # Google OAuth redirect_uri) and for CSRF. Must match how you reach the
       # stack; default is the published Caddy port. Override for other setups.
       - "ORIGIN=${ORIGIN:-http://localhost:8080}"
+      # Max request body adapter-node will accept. Defaults to 512K, which
+      # silently kills the 5 MB photo/avatar uploads (the request body is torn
+      # down mid-stream → the upload appears to hang). Sized above the 5 MB cap
+      # those endpoints enforce, with headroom for multipart overhead.
+      - "BODY_SIZE_LIMIT=${BODY_SIZE_LIMIT:-8M}"
       # Same superuser the SvelteKit server authenticates with.
       - "PB_SUPERUSER_EMAIL=${PB_SUPERUSER_EMAIL:-admin@tripwala.local}"
       - "PB_SUPERUSER_PASSWORD=${PB_SUPERUSER_PASSWORD:-tripwalaadmin123}"
