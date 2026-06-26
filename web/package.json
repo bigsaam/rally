@@ -18,6 +18,7 @@
     "@sveltejs/kit": "^2.20.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tailwindcss/vite": "^4.1.3",
+    "@types/leaflet": "^1.9.21",
     "@types/node": "^22",
     "@types/nodemailer": "^8.0.1",
     "svelte": "^5.25.0",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "@walaware/design": "github:walaware/design#v0.5.0",
+    "leaflet": "^1.9.4",
     "nodemailer": "^9.0.1",
     "pocketbase": "^0.26.2"
   }

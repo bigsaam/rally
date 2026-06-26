@@ -4,6 +4,7 @@
   import { tripAction } from '$lib/tripClient.js';
   import OverviewSection from '$lib/sections/OverviewSection.svelte';
   import DatesSection from '$lib/sections/DatesSection.svelte';
+  import MapSection from '$lib/sections/MapSection.svelte';
   import PeopleSection from '$lib/sections/PeopleSection.svelte';
   import GearSection from '$lib/sections/GearSection.svelte';
   import MealsSection from '$lib/sections/MealsSection.svelte';
@@ -79,6 +80,7 @@
   const SECTION_NAV = [
     { key: 'overview', label: 'Overview', icon: '✨', href: '#overview' },
     { key: 'dates', label: 'Dates', icon: '📅', href: '#dates' },
+    { key: 'map', label: 'Map', icon: '🗺️', href: '#map' },
     { key: 'crew', label: 'Members', icon: '🙌', href: '#crew' },
     { key: 'gear', label: 'Gear', icon: '🎒', href: '#gear' },
     { key: 'food', label: 'Food', icon: '🍳', href: '#food' },
@@ -86,7 +88,6 @@
     { key: 'expenses', label: 'Expenses', icon: '💸', href: '#expenses' },
     { key: 'tripsettings', label: 'Settings', icon: '⚙️', href: '#tripsettings' },
     { key: 'itinerary', label: 'Itinerary', icon: '🗓️', soon: true },
-    { key: 'map', label: 'Map', icon: '🗺️', soon: true },
     { key: 'photos', label: 'Photos', icon: '📷', soon: true }
   ];
 
@@ -259,6 +260,11 @@
   {#if !isHidden('dates')}
     <section id="dates" class="trip-section" class:is-collapsed={collapsed.has('dates')}>
       <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} {isPast} onHide={hideHandler('dates')} collapsed={collapsed.has('dates')} onToggle={() => toggleCollapse('dates')} />
+    </section>
+  {/if}
+  {#if !isHidden('map')}
+    <section id="map" class="trip-section" class:is-collapsed={collapsed.has('map')}>
+      <MapSection shareToken={trip.share_token} {trip} mapPins={data.mapPins ?? []} {currentParticipantId} {ownerMode} onHide={hideHandler('map')} collapsed={collapsed.has('map')} onToggle={() => toggleCollapse('map')} />
     </section>
   {/if}
   {#if !isHidden('crew')}

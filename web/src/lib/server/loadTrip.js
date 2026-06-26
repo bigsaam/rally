@@ -33,7 +33,7 @@ export async function loadTripByShareToken(shareToken) {
 
   const tripFilter = pb.filter('trip = {:id}', { id: trip.id });
 
-  const [participantsAll, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows] =
+  const [participantsAll, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows, mapPinRows] =
     await Promise.all([
       pb.collection('participants').getFullList({ filter: tripFilter, sort: 'created', expand: 'user' }),
       pb.collection('gear_items').getFullList({ filter: tripFilter, sort: 'created' }),
@@ -46,7 +46,9 @@ export async function loadTripByShareToken(shareToken) {
         .getFullList({ filter: pb.filter('meal_slot.trip = {:id}', { id: trip.id }) }),
       pb.collection('packing_items').getFullList({ filter: tripFilter, sort: 'created' }),
       pb.collection('expenses').getFullList({ filter: tripFilter, sort: '-created' }),
-      pb.collection('itinerary_items').getFullList({ filter: tripFilter, sort: 'date,sort_order' })
+      pb.collection('itinerary_items').getFullList({ filter: tripFilter, sort: 'date,sort_order' }),
+      // map_pins is newer than some deployments' data; tolerate its absence.
+      pb.collection('map_pins').getFullList({ filter: tripFilter, sort: 'created' }).catch(() => [])
     ]);
 
   // Pending link-join requests aren't members yet — keep them out of every
@@ -195,6 +197,16 @@ export async function loadTripByShareToken(shareToken) {
     })),
     expenses,
     settlement,
-    itinerary
+    itinerary,
+    mapPins: mapPinRows.map((p) => ({
+      id: p.id,
+      label: p.label,
+      category: p.category || 'other',
+      lat: p.lat,
+      lng: p.lng,
+      note: p.note || '',
+      createdBy: p.created_by || null,
+      createdByName: p.created_by ? (nameById[p.created_by] ?? 'Someone') : null
+    }))
   };
 }

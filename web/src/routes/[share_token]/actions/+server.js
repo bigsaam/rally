@@ -64,6 +64,21 @@ export async function POST({ params, request, locals, url }) {
     return res.items[0] ?? null;
   }
 
+  // Validate + normalize a map-pin payload (shared by add/update).
+  const PIN_CATEGORIES = ['campsite', 'lodging', 'meetup', 'parking', 'trailhead', 'gas', 'food', 'water', 'viewpoint', 'other'];
+  /** @param {any} b */
+  function pinFields(b) {
+    const label = String(b.label ?? '').trim().slice(0, 200);
+    if (!label) throw error(400, 'A pin needs a label');
+    const lat = Number(b.lat);
+    const lng = Number(b.lng);
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) throw error(400, 'Bad latitude');
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) throw error(400, 'Bad longitude');
+    const category = PIN_CATEGORIES.includes(String(b.category)) ? String(b.category) : 'other';
+    const note = String(b.note ?? '').trim().slice(0, 500);
+    return { label, lat, lng, category, note };
+  }
+
   try {
     switch (op) {
       case 'rsvp': {
@@ -521,6 +536,24 @@ export async function POST({ params, request, locals, url }) {
           }
         }
         return json({ ok: true, emailed });
+      }
+
+      // ---- Map pins (#12) — any member can add/edit; creator or organizer deletes.
+      case 'pin_add': {
+        const fields = pinFields(body);
+        await pb.collection('map_pins').create({ trip: trip.id, created_by: me.id, ...fields });
+        break;
+      }
+      case 'pin_update': {
+        const pin = await inTrip('map_pins', String(body.pinId ?? ''));
+        await pb.collection('map_pins').update(pin.id, pinFields(body));
+        break;
+      }
+      case 'pin_delete': {
+        const pin = await inTrip('map_pins', String(body.pinId ?? ''));
+        if (!isOrganizer && pin.created_by !== me.id) throw error(403, 'Only the person who added a pin (or an organizer) can remove it');
+        await pb.collection('map_pins').delete(pin.id);
+        break;
       }
 
       // Revoke a pending co-organizer invite.

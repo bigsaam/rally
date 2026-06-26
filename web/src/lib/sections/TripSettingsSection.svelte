@@ -37,7 +37,7 @@
   ];
   // Hideable modules (Overview + Trip settings are always shown).
   const HIDEABLE = [
-    ['dates', '📅 Dates'], ['crew', '🙌 Members'], ['gear', '🎒 Gear'],
+    ['dates', '📅 Dates'], ['map', '🗺️ Map'], ['crew', '🙌 Members'], ['gear', '🎒 Gear'],
     ['food', '🍳 Food'], ['packing', '🧳 Packing'], ['expenses', '💸 Expenses']
   ];
 
