@@ -81,7 +81,7 @@ export async function loadPlanning(pb, trip, myParticipantId) {
       note: i.note || '',
       suggester: i.participant ? nameById[i.participant] ?? 'Someone' : '',
       mineParticipant: i.participant || '', // who suggested it (for "your idea" upload rights)
-      image: locationImageUrl(i), // uploaded/drag-dropped picture (overrides preview)
+      image: locationImageUrl(i, '416x224'), // uploaded picture, card-sized thumb (overrides preview)
       previewImage: i.preview_image || '', // og:image URL the browser loads directly
       previewTitle: i.preview_title || '',
       previewDescription: i.preview_description || '',

@@ -140,7 +140,7 @@ export async function loadTripByShareToken(shareToken) {
         label: pickedIdea.label || '',
         url: pickedIdea.url || '',
         note: pickedIdea.note || '',
-        image: locationImageUrl(pickedIdea),
+        image: locationImageUrl(pickedIdea, '1000x0'), // hero-sized thumb, aspect preserved
         previewImage: pickedIdea.preview_image || '',
         previewTitle: pickedIdea.preview_title || '',
         previewDescription: pickedIdea.preview_description || ''

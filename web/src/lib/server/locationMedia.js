@@ -6,10 +6,14 @@
 
 /**
  * @param {{ id: string, image?: string | null } | null | undefined} idea
+ * @param {string} [thumb] PocketBase thumb size (e.g. '416x224'). Must be listed
+ *   in the field's `thumbs` (see the location_image_thumbs migration) or PB
+ *   returns the original. Omit for the full-size image.
  * @returns {string | undefined}
  */
-export function locationImageUrl(idea) {
+export function locationImageUrl(idea, thumb) {
   const value = idea?.image;
   if (!value) return undefined;
-  return `/api/files/location_ideas/${idea.id}/${encodeURIComponent(value)}`;
+  const base = `/api/files/location_ideas/${idea.id}/${encodeURIComponent(value)}`;
+  return thumb ? `${base}?thumb=${encodeURIComponent(thumb)}` : base;
 }
