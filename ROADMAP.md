@@ -19,6 +19,9 @@ discussion live in
 - **Rich location cards** — location ideas render as a horizontal card row with
   self-hosted, SSRF-guarded link previews (OpenGraph unfurl), drag-drop/upload
   images, and the picked spot's image carried into the confirmed trip
+- **Trip map** — a first-class Leaflet + OpenStreetMap map (no API key) with
+  pins for campsite, meetup, parking, trailheads, gas, etc.; add by searching a
+  place (server-proxied geocoding) or tapping the map. Works for any trip type
 - **Coordination & lifecycle polish** _(v1 + v2 complete)_ — editable meal slots,
   per-person dietary notes (shown to cooks), a trip-dates weather forecast + live
   countdown, an emergency/safety info card, live arrival check-in, one-tap trip
@@ -60,8 +63,8 @@ discussion live in
 
 ## v3 · Maps & Location
 
-- [ ] [#12 Proper map support for all trip types](https://github.com/walaware/tripwala/issues/12) *(epic)*
-- [ ] [#13 Live friend location ("Find My"-style)](https://github.com/walaware/tripwala/issues/13) *(epic · needs native)*
+- [x] [#12 Proper map support for all trip types](https://github.com/walaware/tripwala/issues/12) ✅ — Leaflet + OSM map; search-or-tap pins (campsite, meetup, parking, trailhead, …) per trip
+- [ ] [#13 Live friend location ("Find My"-style)](https://github.com/walaware/tripwala/issues/13) *(epic · blocked on native — see [#26](https://github.com/walaware/tripwala/issues/26))*
 
 ## v4 · Identity & Multi-Trip
 
