@@ -26,7 +26,8 @@ discussion live in
 - One invite link per trip; **accounts** (Google OAuth2 + email/password) — sign
   in to join, and only invited members see the details (non-members get a teaser)
 - **Membership + roles** — organizer / guest; creator is auto-organizer;
-  membership-gated, server-mediated writes
+  membership-gated, server-mediated writes; invite co-organizers by email (they
+  join straight as an organizer)
 - **Participant claim/merge** — sign in and claim your pre-auth name (no dupes)
 - **Multi-trip dashboard** — your trips bucketed Happening now / Upcoming / Past
   with counts, organizer badges, and a "no trips yet" empty state
@@ -66,7 +67,7 @@ discussion live in
 
 - [x] [#14 Auth / identity system](https://github.com/walaware/tripwala/issues/14) ✅ *(keystone)*
 - [x] [#15 Trip dashboard (past / current / upcoming + stats)](https://github.com/walaware/tripwala/issues/15) ✅
-- [ ] [#16 Invite a co-organizer by account](https://github.com/walaware/tripwala/issues/16)
+- [x] [#16 Invite a co-organizer by account/email](https://github.com/walaware/tripwala/issues/16) ✅
 
 ## v5 · Collaboration
 
