@@ -79,6 +79,15 @@ export async function POST({ params, request, locals, url }) {
     return { label, lat, lng, category, note };
   }
 
+  // Fetch an itinerary_option and assert it (via its parent item) is in this trip.
+  async function optionInTrip(/** @type {string} */ id) {
+    const opt = await pb.collection('itinerary_options').getOne(id);
+    const item = await pb.collection('itinerary_items').getOne(opt.itinerary_item);
+    if (item.trip !== trip.id) throw error(403, 'That item is not part of this trip');
+    return { opt, item };
+  }
+  const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
   try {
     switch (op) {
       case 'rsvp': {
@@ -313,22 +322,119 @@ export async function POST({ params, request, locals, url }) {
         break;
       }
 
-      // Set (or clear) the day-plan label for one date. Organizers own the plan.
-      case 'itinerary_set': {
-        if (!isOrganizer) throw error(403, 'Only organizers can edit the plan');
-        const date = String(body.date ?? '').slice(0, 10);
-        if (!date) throw error(400, 'Date required');
+      // ---- Itinerary (#18) — day-by-day plan items that can carry votable
+      // options (#17's contextual half). Any member adds items/options and votes;
+      // the item's creator or an organizer edits, removes, and picks the winner.
+
+      // Add a plan item. `date` optional (omit → an undated "to decide" decision).
+      case 'itin_item_add': {
         const label = String(body.label ?? '').trim().slice(0, 200);
-        const existing = await firstOrNull(
-          'itinerary_items',
-          pb.filter('trip = {:t} && date ~ {:d}', { t: trip.id, d: date })
-        );
-        if (!label) {
-          if (existing) await pb.collection('itinerary_items').delete(existing.id);
-        } else if (existing) {
-          await pb.collection('itinerary_items').update(existing.id, { label });
+        if (!label) throw error(400, 'Name the plan');
+        const date = String(body.date ?? '').slice(0, 10);
+        if (date && !DATE_ONLY.test(date)) throw error(400, 'Bad date');
+        const time = String(body.time ?? '').trim().slice(0, 40);
+        const sameDay = pb.filter('trip = {:t} && date = {:d}', {
+          t: trip.id,
+          d: date ? `${date} 00:00:00.000Z` : ''
+        });
+        const count = (await pb.collection('itinerary_items').getList(1, 1, { filter: sameDay })).totalItems;
+        await pb.collection('itinerary_items').create({
+          trip: trip.id,
+          date: date ? `${date} 00:00:00.000Z` : '',
+          time,
+          label,
+          sort_order: count,
+          created_by: me.id
+        });
+        break;
+      }
+
+      // Edit an item's label / time / date (creator or organizer).
+      case 'itin_item_update': {
+        const item = await inTrip('itinerary_items', String(body.itemId ?? ''));
+        if (item.created_by !== me.id && !isOrganizer) throw error(403, 'Only the person who added this (or an organizer) can edit it');
+        /** @type {Record<string, unknown>} */
+        const data = {};
+        if (body.label !== undefined) {
+          const label = String(body.label ?? '').trim().slice(0, 200);
+          if (!label) throw error(400, 'Name the plan');
+          data.label = label;
+        }
+        if (body.time !== undefined) data.time = String(body.time ?? '').trim().slice(0, 40);
+        if (body.date !== undefined) {
+          const date = String(body.date ?? '').slice(0, 10);
+          if (date && !DATE_ONLY.test(date)) throw error(400, 'Bad date');
+          data.date = date ? `${date} 00:00:00.000Z` : '';
+        }
+        await pb.collection('itinerary_items').update(item.id, data);
+        break;
+      }
+
+      // Remove an item (creator or organizer). Cascade drops its options + votes.
+      case 'itin_item_remove': {
+        const item = await inTrip('itinerary_items', String(body.itemId ?? ''));
+        if (item.created_by !== me.id && !isOrganizer) throw error(403, 'Only the person who added this (or an organizer) can remove it');
+        await pb.collection('itinerary_items').delete(item.id);
+        break;
+      }
+
+      // Suggest an option on an item (any member).
+      case 'itin_option_add': {
+        const item = await inTrip('itinerary_items', String(body.itemId ?? ''));
+        const label = String(body.label ?? '').trim().slice(0, 200);
+        if (!label) throw error(400, 'Name the option');
+        const urlRaw = String(body.url ?? '').trim();
+        if (urlRaw && !/^https?:\/\/.+/i.test(urlRaw)) throw error(400, 'Links need http(s)://');
+        const count = (
+          await pb.collection('itinerary_options').getList(1, 1, { filter: pb.filter('itinerary_item = {:i}', { i: item.id }) })
+        ).totalItems;
+        await pb.collection('itinerary_options').create({
+          itinerary_item: item.id,
+          label,
+          url: urlRaw.slice(0, 500),
+          created_by: me.id,
+          sort_order: count
+        });
+        break;
+      }
+
+      // Remove an option (its suggester or an organizer). Cascade drops its votes;
+      // if it was the picked winner, clear that too.
+      case 'itin_option_remove': {
+        const { opt, item } = await optionInTrip(String(body.optionId ?? ''));
+        if (opt.created_by !== me.id && !isOrganizer) throw error(403, 'Only the person who suggested this (or an organizer) can remove it');
+        if (item.picked_option === opt.id) await pb.collection('itinerary_items').update(item.id, { picked_option: '' });
+        await pb.collection('itinerary_options').delete(opt.id);
+        break;
+      }
+
+      // Vote for an option (any member). Single choice per item: re-tapping my pick
+      // clears it; picking another moves my vote.
+      case 'itin_vote': {
+        const { opt, item } = await optionInTrip(String(body.optionId ?? ''));
+        // My existing vote(s) anywhere on this item (single choice → at most one).
+        const mine = await pb.collection('itinerary_votes').getFullList({
+          filter: pb.filter('participant = {:p} && itinerary_option.itinerary_item = {:i}', { p: me.id, i: item.id })
+        });
+        const alreadyOnThis = mine.some((m) => m.itinerary_option === opt.id);
+        for (const m of mine) await pb.collection('itinerary_votes').delete(m.id);
+        if (!alreadyOnThis) {
+          await pb.collection('itinerary_votes').create({ itinerary_option: opt.id, participant: me.id });
+        }
+        break;
+      }
+
+      // Lock in (or clear) the winning option (item creator or organizer).
+      case 'itin_pick': {
+        const item = await inTrip('itinerary_items', String(body.itemId ?? ''));
+        if (item.created_by !== me.id && !isOrganizer) throw error(403, 'Only the person who added this (or an organizer) can pick the plan');
+        const optionId = String(body.optionId ?? '');
+        if (!optionId) {
+          await pb.collection('itinerary_items').update(item.id, { picked_option: '' });
         } else {
-          await pb.collection('itinerary_items').create({ trip: trip.id, date: `${date} 00:00:00.000Z`, label });
+          const { item: owner } = await optionInTrip(optionId);
+          if (owner.id !== item.id) throw error(400, 'That option is not on this item');
+          await pb.collection('itinerary_items').update(item.id, { picked_option: optionId });
         }
         break;
       }

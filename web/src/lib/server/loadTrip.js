@@ -4,6 +4,7 @@ import { settleUp } from './settle.js';
 import { avatarUrl } from './userAvatar.js';
 import { locationImageUrl } from './locationMedia.js';
 import { participantName } from '../displayName.js';
+import { shapeItinerary } from './itinerary.js';
 
 /**
  * Load a trip and all of its related sections by share token.
@@ -16,8 +17,9 @@ import { participantName } from '../displayName.js';
  * before exposing write paths publicly.
  *
  * @param {string} shareToken
+ * @param {string|null} currentParticipantId  the viewer's participant, for their own vote state
  */
-export async function loadTripByShareToken(shareToken) {
+export async function loadTripByShareToken(shareToken, currentParticipantId = null) {
   const pb = await superuserPb();
 
   let trip;
@@ -33,7 +35,8 @@ export async function loadTripByShareToken(shareToken) {
 
   const tripFilter = pb.filter('trip = {:id}', { id: trip.id });
 
-  const [participantsAll, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows, mapPinRows] =
+  const viaItemTrip = pb.filter('itinerary_item.trip = {:id}', { id: trip.id });
+  const [participantsAll, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows, itineraryOptions, itineraryVotes, mapPinRows] =
     await Promise.all([
       pb.collection('participants').getFullList({ filter: tripFilter, sort: 'created', expand: 'user' }),
       pb.collection('gear_items').getFullList({ filter: tripFilter, sort: 'created' }),
@@ -47,6 +50,9 @@ export async function loadTripByShareToken(shareToken) {
       pb.collection('packing_items').getFullList({ filter: tripFilter, sort: 'created' }),
       pb.collection('expenses').getFullList({ filter: tripFilter, sort: '-created' }),
       pb.collection('itinerary_items').getFullList({ filter: tripFilter, sort: 'date,sort_order' }),
+      // itinerary options/votes are newer than some deployments' data; tolerate absence.
+      pb.collection('itinerary_options').getFullList({ filter: viaItemTrip, sort: 'sort_order' }).catch(() => []),
+      pb.collection('itinerary_votes').getFullList({ filter: pb.filter('itinerary_option.itinerary_item.trip = {:id}', { id: trip.id }) }).catch(() => []),
       // map_pins is newer than some deployments' data; tolerate its absence.
       pb.collection('map_pins').getFullList({ filter: tripFilter, sort: 'created' }).catch(() => [])
     ]);
@@ -122,13 +128,8 @@ export async function loadTripByShareToken(shareToken) {
     participants.map((p) => ({ id: p.id, display_name: p.display_name }))
   );
 
-  // Itinerary → one editable day-plan label per UTC day.
-  /** @type {Record<string, { id: string, label: string }>} */
-  const itinerary = {};
-  for (const it of itineraryRows) {
-    const key = String(it.date || '').slice(0, 10);
-    if (key && !itinerary[key]) itinerary[key] = { id: it.id, label: it.label };
-  }
+  // Itinerary → day-by-day items, each with votable options + the viewer's pick.
+  const itineraryItems = shapeItinerary(itineraryRows, itineraryOptions, itineraryVotes, nameById, currentParticipantId);
 
   // The picked location idea (if any) carries its image + link preview into the
   // confirmed trip, for the expanded location card. Custom image wins over the
@@ -197,7 +198,7 @@ export async function loadTripByShareToken(shareToken) {
     })),
     expenses,
     settlement,
-    itinerary,
+    itineraryItems,
     mapPins: mapPinRows.map((p) => ({
       id: p.id,
       label: p.label,

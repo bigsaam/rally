@@ -22,6 +22,10 @@ discussion live in
 - **Trip map** — a first-class Leaflet + OpenStreetMap map (no API key) with
   pins for campsite, meetup, parking, trailheads, gas, etc.; add by searching a
   place (server-proxied geocoding) or tapping the map. Works for any trip type
+- **Itinerary + voting** — a day-by-day plan where any item can carry suggested
+  options the crew votes on (one pick per person, live tallies) and an organizer
+  locks in the winner; undated "to decide" items are free-form group polls — so
+  "where do we eat" lives in the plan, not a separate poll module
 - **Coordination & lifecycle polish** _(v1 + v2 complete)_ — editable meal slots,
   per-person dietary notes (shown to cooks), a trip-dates weather forecast + live
   countdown, an emergency/safety info card, live arrival check-in, one-tap trip
@@ -74,8 +78,8 @@ discussion live in
 
 ## v5 · Collaboration
 
-- [ ] [#17 Polls / voting](https://github.com/walaware/tripwala/issues/17)
-- [ ] [#18 Itinerary timeline](https://github.com/walaware/tripwala/issues/18)
+- [x] [#18 Itinerary timeline](https://github.com/walaware/tripwala/issues/18) ✅ — day-by-day plan; each item can carry suggested options the crew votes on, with a locked-in "✓ Plan" winner
+- [x] [#17 Polls / voting](https://github.com/walaware/tripwala/issues/17) ✅ — folded into the itinerary rather than a separate module: dated items vote on choices ("where do we eat"), and undated "to decide" items are free-form group polls. Date/destination voting already lived in the planning phase
 - [ ] [#19 Lightweight chat / comments](https://github.com/walaware/tripwala/issues/19)
 - [ ] [#20 Web push notifications](https://github.com/walaware/tripwala/issues/20)
 

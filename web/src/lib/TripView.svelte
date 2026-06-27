@@ -4,6 +4,7 @@
   import { tripAction } from '$lib/tripClient.js';
   import OverviewSection from '$lib/sections/OverviewSection.svelte';
   import DatesSection from '$lib/sections/DatesSection.svelte';
+  import ItinerarySection from '$lib/sections/ItinerarySection.svelte';
   import MapSection from '$lib/sections/MapSection.svelte';
   import PeopleSection from '$lib/sections/PeopleSection.svelte';
   import GearSection from '$lib/sections/GearSection.svelte';
@@ -80,6 +81,7 @@
   const SECTION_NAV = [
     { key: 'overview', label: 'Overview', icon: '✨', href: '#overview' },
     { key: 'dates', label: 'Dates', icon: '📅', href: '#dates' },
+    { key: 'itinerary', label: 'Itinerary', icon: '🗓️', href: '#itinerary' },
     { key: 'map', label: 'Map', icon: '🗺️', href: '#map' },
     { key: 'crew', label: 'Members', icon: '🙌', href: '#crew' },
     { key: 'gear', label: 'Gear', icon: '🎒', href: '#gear' },
@@ -87,7 +89,6 @@
     { key: 'packing', label: 'Packing', icon: '🧳', href: '#packing' },
     { key: 'expenses', label: 'Expenses', icon: '💸', href: '#expenses' },
     { key: 'tripsettings', label: 'Settings', icon: '⚙️', href: '#tripsettings' },
-    { key: 'itinerary', label: 'Itinerary', icon: '🗓️', soon: true },
     { key: 'photos', label: 'Photos', icon: '📷', soon: true }
   ];
 
@@ -259,7 +260,12 @@
   {/if}
   {#if !isHidden('dates')}
     <section id="dates" class="trip-section" class:is-collapsed={collapsed.has('dates')}>
-      <DatesSection {trip} shareToken={trip.share_token} itinerary={data.itinerary} {meals} {ownerMode} {isPast} onHide={hideHandler('dates')} collapsed={collapsed.has('dates')} onToggle={() => toggleCollapse('dates')} />
+      <DatesSection {trip} {isPast} onHide={hideHandler('dates')} collapsed={collapsed.has('dates')} onToggle={() => toggleCollapse('dates')} />
+    </section>
+  {/if}
+  {#if !isHidden('itinerary')}
+    <section id="itinerary" class="trip-section" class:is-collapsed={collapsed.has('itinerary')}>
+      <ItinerarySection shareToken={trip.share_token} itineraryItems={data.itineraryItems ?? []} {trip} {currentParticipantId} {ownerMode} onHide={hideHandler('itinerary')} collapsed={collapsed.has('itinerary')} onToggle={() => toggleCollapse('itinerary')} />
     </section>
   {/if}
   {#if !isHidden('map')}

@@ -120,7 +120,7 @@ export async function load({ params, locals, url }) {
 
   // Confirmed / completed → full trip. Surface any unclaimed entries so a member
   // who came in under a fresh account can still merge into their pre-auth name.
-  const data = await loadTripByShareToken(params.share_token);
+  const data = await loadTripByShareToken(params.share_token, membership.id);
   return {
     ...data,
     status: trip.status || 'confirmed',
