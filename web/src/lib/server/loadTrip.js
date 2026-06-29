@@ -35,8 +35,7 @@ export async function loadTripByShareToken(shareToken, currentParticipantId = nu
 
   const tripFilter = pb.filter('trip = {:id}', { id: trip.id });
 
-  const viaItemTrip = pb.filter('itinerary_item.trip = {:id}', { id: trip.id });
-  const [participantsAll, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows, itineraryOptions, itineraryVotes, mapPinRows] =
+  const [participantsAll, gearItems, gearClaims, mealSlots, mealSignups, packingItems, expenseRows, itineraryRows, itineraryVotes, mapPinRows] =
     await Promise.all([
       pb.collection('participants').getFullList({ filter: tripFilter, sort: 'created', expand: 'user' }),
       pb.collection('gear_items').getFullList({ filter: tripFilter, sort: 'created' }),
@@ -50,9 +49,8 @@ export async function loadTripByShareToken(shareToken, currentParticipantId = nu
       pb.collection('packing_items').getFullList({ filter: tripFilter, sort: 'created' }),
       pb.collection('expenses').getFullList({ filter: tripFilter, sort: '-created' }),
       pb.collection('itinerary_items').getFullList({ filter: tripFilter, sort: 'date,sort_order' }),
-      // itinerary options/votes are newer than some deployments' data; tolerate absence.
-      pb.collection('itinerary_options').getFullList({ filter: viaItemTrip, sort: 'sort_order' }).catch(() => []),
-      pb.collection('itinerary_votes').getFullList({ filter: pb.filter('itinerary_option.itinerary_item.trip = {:id}', { id: trip.id }) }).catch(() => []),
+      // item-level votes are newer than some deployments' data; tolerate absence.
+      pb.collection('itinerary_votes').getFullList({ filter: pb.filter('itinerary_item.trip = {:id}', { id: trip.id }) }).catch(() => []),
       // map_pins is newer than some deployments' data; tolerate its absence.
       pb.collection('map_pins').getFullList({ filter: tripFilter, sort: 'created' }).catch(() => [])
     ]);
@@ -64,6 +62,8 @@ export async function loadTripByShareToken(shareToken, currentParticipantId = nu
 
   /** @type {Record<string, string>} */
   const nameById = Object.fromEntries(participants.map((p) => [p.id, participantName(p)]));
+  /** @type {Record<string, string>} */
+  const avatarById = Object.fromEntries(participants.map((p) => [p.id, avatarUrl(p.expand?.user) || '']));
 
   // gear remaining = qty_needed - sum(claims)
   /** @type {Record<string, Array<{id: string, participant: string, participantName: string, qty_claimed: number}>>} */
@@ -128,8 +128,9 @@ export async function loadTripByShareToken(shareToken, currentParticipantId = nu
     participants.map((p) => ({ id: p.id, display_name: p.display_name }))
   );
 
-  // Itinerary → day-by-day items, each with votable options + the viewer's pick.
-  const itineraryItems = shapeItinerary(itineraryRows, itineraryOptions, itineraryVotes, nameById, currentParticipantId);
+  // Itinerary → day-by-day items: fixed schedule entries + flexible suggestions
+  // the crew upvotes (the viewer's own vote flagged via `mine`).
+  const itineraryItems = shapeItinerary(itineraryRows, itineraryVotes, nameById, avatarById, currentParticipantId);
 
   // The picked location idea (if any) carries its image + link preview into the
   // confirmed trip, for the expanded location card. Custom image wins over the
