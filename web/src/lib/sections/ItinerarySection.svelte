@@ -3,7 +3,7 @@
   import { tripAction } from '$lib/tripClient.js';
   import { Card, Button, EmptyState, Tooltip } from '@walaware/design';
   import SectionHeader from '$lib/ui/SectionHeader.svelte';
-  import { tripDays, fmtWeekday, fmtMonthDay } from '$lib/format.js';
+  import { tripDays, fmtWeekday, fmtMonthDay, fmtDateRange, tripLength } from '$lib/format.js';
 
   /**
    * @typedef {{ id: string, label: string, url: string, createdBy: string|null, votes: number, voters: string[], mine: boolean }} ItinOption
@@ -33,6 +33,8 @@
     onToggle = null
   } = $props();
 
+  const range = $derived(fmtDateRange(trip.start_date, trip.end_date));
+  const len = $derived(tripLength(trip.start_date, trip.end_date));
   const canVote = $derived(!!currentParticipantId);
   /** Creator of the item or an organizer may edit / remove / pick. */
   const canManage = (/** @type {ItinItem} */ it) => ownerMode || (!!currentParticipantId && it.createdBy === currentParticipantId);
@@ -142,6 +144,14 @@
 
 <SectionHeader emoji="🗓️" title="Itinerary" subtitle={total ? `${total} planned` : ''} {onHide} {collapsed} {onToggle} />
 <Card>
+  <!-- The trip dates lead the plan (no separate Dates section). -->
+  <div class="mb-3 flex items-baseline gap-2.5">
+    <span class="font-display text-[20px] font-bold text-text-strong">{range || 'Dates TBD'}</span>
+    {#if len.nights > 0}
+      <span class="font-body text-[13px] font-extrabold text-text-muted">{len.nights} night{len.nights === 1 ? '' : 's'}</span>
+    {/if}
+  </div>
+
   {#if !days.length && !total}
     <EmptyState
       emoji="🗓️"

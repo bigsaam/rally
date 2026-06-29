@@ -3,7 +3,6 @@
   import { invalidateAll } from '$app/navigation';
   import { tripAction } from '$lib/tripClient.js';
   import OverviewSection from '$lib/sections/OverviewSection.svelte';
-  import DatesSection from '$lib/sections/DatesSection.svelte';
   import ItinerarySection from '$lib/sections/ItinerarySection.svelte';
   import MapSection from '$lib/sections/MapSection.svelte';
   import PeopleSection from '$lib/sections/PeopleSection.svelte';
@@ -80,7 +79,6 @@
   // docs/apps/tripwala.md (the design repo's contextual-nav contract).
   const SECTION_NAV = [
     { key: 'overview', label: 'Overview', icon: '✨', href: '#overview' },
-    { key: 'dates', label: 'Dates', icon: '📅', href: '#dates' },
     { key: 'itinerary', label: 'Itinerary', icon: '🗓️', href: '#itinerary' },
     { key: 'map', label: 'Map', icon: '🗺️', href: '#map' },
     { key: 'crew', label: 'Members', icon: '🙌', href: '#crew' },
@@ -256,11 +254,6 @@
   {#if hasSafety}
     <section id="safety" class="trip-section" class:is-collapsed={collapsed.has('safety')}>
       <SafetySection info={trip.emergency_info} collapsed={collapsed.has('safety')} onToggle={() => toggleCollapse('safety')} />
-    </section>
-  {/if}
-  {#if !isHidden('dates')}
-    <section id="dates" class="trip-section" class:is-collapsed={collapsed.has('dates')}>
-      <DatesSection {trip} {isPast} onHide={hideHandler('dates')} collapsed={collapsed.has('dates')} onToggle={() => toggleCollapse('dates')} />
     </section>
   {/if}
   {#if !isHidden('itinerary')}
