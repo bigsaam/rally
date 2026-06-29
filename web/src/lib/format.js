@@ -58,6 +58,41 @@ export function tripEmoji(type) {
   return (type && TRIP_EMOJI[/** @type {keyof typeof TRIP_EMOJI} */ (type)]) || '🧭';
 }
 
+/** Trip-type → plain label (no emoji), for prose like the Immich album name. */
+const TRIP_TYPE_LABEL = {
+  camping: 'Camping',
+  backpacking: 'Backpacking',
+  road_trip: 'Road trip',
+  cabin: 'Cabin',
+  ski: 'Ski',
+  beach: 'Beach',
+  city: 'City',
+  festival: 'Festival',
+  other: 'Trip'
+};
+
+/**
+ * Human label for a trip type (default 'Trip').
+ * @param {string | null | undefined} type
+ */
+export function tripTypeLabel(type) {
+  return (type && TRIP_TYPE_LABEL[/** @type {keyof typeof TRIP_TYPE_LABEL} */ (type)]) || 'Trip';
+}
+
+/**
+ * Immich album name for a trip, by convention "Type - Trip Name" (e.g.
+ * "City - Japan 2024"). Untyped/"other" trips drop the prefix to avoid an
+ * awkward "Trip - …". Kept in sync when the trip is renamed/retyped.
+ * @param {{ name?: string, trip_type?: string | null } | null | undefined} trip
+ * @returns {string}
+ */
+export function albumName(trip) {
+  const name = String(trip?.name || '').trim() || 'Untitled trip';
+  const type = trip?.trip_type;
+  if (!type || type === 'other') return name;
+  return `${tripTypeLabel(type)} - ${name}`;
+}
+
 /**
  * Whole-day count for an inclusive date range (e.g. Fri–Sun = 3 days, 2 nights).
  * @param {string | null | undefined} start

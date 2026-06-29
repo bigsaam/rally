@@ -10,6 +10,7 @@
   import MealsSection from '$lib/sections/MealsSection.svelte';
   import WrappedSection from '$lib/sections/WrappedSection.svelte';
   import SafetySection from '$lib/sections/SafetySection.svelte';
+  import ImmichSection from '$lib/sections/ImmichSection.svelte';
   import PackingSection from '$lib/sections/PackingSection.svelte';
   import ExpensesSection from '$lib/sections/ExpensesSection.svelte';
   import TripSettingsSection from '$lib/sections/TripSettingsSection.svelte';
@@ -86,8 +87,7 @@
     { key: 'food', label: 'Food', icon: '🍳', href: '#food' },
     { key: 'packing', label: 'Packing', icon: '🧳', href: '#packing' },
     { key: 'expenses', label: 'Expenses', icon: '💸', href: '#expenses' },
-    { key: 'tripsettings', label: 'Settings', icon: '⚙️', href: '#tripsettings' },
-    { key: 'photos', label: 'Photos', icon: '📷', soon: true }
+    { key: 'tripsettings', label: 'Settings', icon: '⚙️', href: '#tripsettings' }
   ];
 
   // Sections an organizer has hidden for the whole trip (Overview + Trip settings
@@ -97,6 +97,8 @@
   // A Safety card appears (just after Overview) only when the organizer filled in
   // emergency info; a wrapped trip leads the nav with the recap.
   const hasSafety = $derived(!!(trip.emergency_info || '').trim());
+  // A Photos section appears when a shared Immich album is linked (opt-in).
+  const hasPhotos = $derived(!!(trip.immich_album_url || '').trim());
   const fullNav = $derived.by(() => {
     let nav = [...SECTION_NAV];
     if (isPast) {
@@ -110,6 +112,12 @@
       const leadKey = isPast ? 'wrapped' : 'overview';
       const i = nav.findIndex((n) => n.key === leadKey);
       nav.splice(i + 1, 0, { key: 'safety', label: 'Safety', icon: '🚨', href: '#safety' });
+    }
+    if (hasPhotos) {
+      // Photos follows the lead/safety rows.
+      const afterKey = hasSafety ? 'safety' : isPast ? 'wrapped' : 'overview';
+      const i = nav.findIndex((n) => n.key === afterKey);
+      nav.splice(i + 1, 0, { key: 'photos', label: 'Photos', icon: '📷', href: '#photos' });
     }
     return nav;
   });
@@ -256,6 +264,11 @@
       <SafetySection info={trip.emergency_info} collapsed={collapsed.has('safety')} onToggle={() => toggleCollapse('safety')} />
     </section>
   {/if}
+  {#if hasPhotos && !isHidden('photos')}
+    <section id="photos" class="trip-section" class:is-collapsed={collapsed.has('photos')}>
+      <ImmichSection url={trip.immich_album_url} onHide={hideHandler('photos')} collapsed={collapsed.has('photos')} onToggle={() => toggleCollapse('photos')} />
+    </section>
+  {/if}
   {#if !isHidden('itinerary')}
     <section id="itinerary" class="trip-section" class:is-collapsed={collapsed.has('itinerary')}>
       <ItinerarySection shareToken={trip.share_token} itineraryItems={data.itineraryItems ?? []} {trip} {currentParticipantId} {ownerMode} onHide={hideHandler('itinerary')} collapsed={collapsed.has('itinerary')} onToggle={() => toggleCollapse('itinerary')} />
@@ -313,6 +326,7 @@
       pending={data.pending ?? []}
       invites={data.invites ?? []}
       emailEnabled={data.emailEnabled ?? false}
+      immichEnabled={data.immichEnabled ?? false}
       collapsed={collapsed.has('tripsettings')}
       onToggle={() => toggleCollapse('tripsettings')}
     />

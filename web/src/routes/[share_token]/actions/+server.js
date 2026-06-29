@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
 import { getMembership } from '$lib/server/membership.js';
 import { isMailConfigured, sendInviteEmail } from '$lib/server/mailer.js';
+import { immichConfigured, createTripAlbum, syncAlbumName, parseShareLink } from '$lib/server/immich.js';
 
 // All trip mutations funnel through here. PocketBase collection rules are locked
 // to superuser-only, so the browser cannot write directly — it POSTs an op to
@@ -438,6 +439,50 @@ export async function POST({ params, request, locals, url }) {
           min_nights: minNights,
           emergency_info: t(body.emergency_info).slice(0, 2000)
         });
+        // Keep a linked Immich album's name in sync with "Type - Trip Name"
+        // (best-effort — a rename failure must not block saving the trip).
+        if (trip.immich_album_id) {
+          try {
+            await syncAlbumName({ immich_album_id: trip.immich_album_id, name, trip_type: t(body.trip_type).slice(0, 30) });
+          } catch (_) {
+            // ignore; the trip is saved regardless
+          }
+        }
+        break;
+      }
+
+      // ---- Immich album (organizer only; opt-in, never automatic) ----
+
+      // Create a shared Immich album for this trip and link it.
+      case 'album_create': {
+        if (!isOrganizer) throw error(403, 'Only organizers can manage the album');
+        if (trip.immich_album_id || trip.immich_album_url) throw error(400, 'This trip already has an album');
+        if (!(await immichConfigured())) throw error(400, 'Immich is not set up for this instance');
+        let result;
+        try {
+          result = await createTripAlbum(trip);
+        } catch (/** @type {any} */ e) {
+          throw error(502, e?.message || 'Could not create the Immich album');
+        }
+        await pb.collection('trips').update(trip.id, { immich_album_id: result.albumId, immich_album_url: result.albumUrl });
+        return json({ ok: true, albumUrl: result.albumUrl });
+      }
+
+      // Link an existing Immich shared album by pasting its share link. We can
+      // embed it but not rename it (we don't own its album id), so the
+      // "Type - Name" sync doesn't apply to manually-linked albums.
+      case 'album_link': {
+        if (!isOrganizer) throw error(403, 'Only organizers can manage the album');
+        const parsed = parseShareLink(body.url);
+        if (!parsed?.url) throw error(400, 'Paste a full Immich share link (…/share/<key>)');
+        await pb.collection('trips').update(trip.id, { immich_album_url: parsed.url, immich_album_id: '' });
+        return json({ ok: true, albumUrl: parsed.url });
+      }
+
+      // Unlink the album from the trip (does NOT delete it in Immich).
+      case 'album_unlink': {
+        if (!isOrganizer) throw error(403, 'Only organizers can manage the album');
+        await pb.collection('trips').update(trip.id, { immich_album_id: '', immich_album_url: '' });
         break;
       }
 

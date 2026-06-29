@@ -85,7 +85,7 @@ discussion live in
 
 ## v6 · Media & Integrations
 
-- [ ] [#21 Immich auto-album](https://github.com/walaware/tripwala/issues/21)
+- [ ] [#21 Immich album — opt-in per trip](https://github.com/walaware/tripwala/issues/21) — user chooses to create a shared album (at trip creation and/or in settings); **never auto-created**. Named by convention "Type - Trip Name" and kept in sync when the trip is renamed/retyped; embed the shared link.
 - [ ] [#22 Shared photo wall](https://github.com/walaware/tripwala/issues/22)
 - [ ] [#23 Collaborative playlist](https://github.com/walaware/tripwala/issues/23)
 

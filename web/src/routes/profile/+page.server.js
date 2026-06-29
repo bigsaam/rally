@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { superuserPb } from '$lib/server/pocketbase.js';
 import { avatarUrl } from '$lib/server/userAvatar.js';
+import { isAdmin } from '$lib/server/admin.js';
 
 // Account/profile surface for the signed-in user. Collections are locked to
 // superuser-only, so writes go through the superuser client — but ALWAYS scoped
@@ -31,7 +32,8 @@ export async function load({ locals }) {
     email: locals.user.email,
     avatar,
     nickname,
-    showLastName
+    showLastName,
+    isAdmin: await isAdmin(locals.user)
   };
 }
 

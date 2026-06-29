@@ -3,9 +3,10 @@
   import { page } from '$app/state';
   import { Card, Button, TextField, DateField } from '@walaware/design';
 
-  /** @type {{ form: any }} */
-  let { form } = $props();
+  /** @type {{ form: any, data: { immichEnabled?: boolean } }} */
+  let { form, data } = $props();
 
+  const immichEnabled = $derived(Boolean(data?.immichEnabled));
   const created = $derived(form?.created);
   const errors = $derived(form?.errors ?? {});
   const values = $derived(form?.values ?? {});
@@ -56,6 +57,8 @@
         <p class="mt-1 text-center font-body font-bold text-cocoa-500">
           Drop this link in the group chat — anyone you invite signs in to join.
           {#if created.mealSlots}<br />We set up {created.mealSlots} meal slots from your dates.{/if}
+          {#if created.albumCreated}<br />📷 A shared Immich album is linked — open the trip to add photos.
+          {:else if created.albumRequested}<br />⚠ Couldn't reach Immich to make the album — retry anytime from trip settings.{/if}
         </p>
 
         <p class="mb-1.5 mt-5 font-display text-sm font-semibold text-cocoa-900">Share link</p>
@@ -183,6 +186,18 @@
           />
           {#if errors.expense_link}<p class="mt-1 font-body text-sm font-bold text-berry-600">{errors.expense_link}</p>{/if}
         </div>
+
+        {#if immichEnabled}
+          <label class="flex cursor-pointer items-start gap-3 rounded-md border-2 border-sand-300 bg-white px-3.5 py-3 transition hover:border-coral-300">
+            <input type="checkbox" name="create_album" value="1" class="mt-0.5 h-5 w-5 accent-coral-400" />
+            <span>
+              <span class="block font-display text-sm font-semibold text-cocoa-900">📷 Create a shared Immich album</span>
+              <span class="mt-0.5 block font-body text-xs font-bold text-cocoa-500">
+                Makes an empty album in Immich (named like "City - {values.name || 'Trip name'}") and links it here for everyone to add photos to. Off by default.
+              </span>
+            </span>
+          </label>
+        {/if}
 
         <Button variant="primary" size="lg" full type="submit">Create trip & get link 🎉</Button>
       </form>

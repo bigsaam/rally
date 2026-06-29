@@ -5,6 +5,7 @@
   import { tripAction } from '$lib/tripClient.js';
   import { Card, Button, Avatar, DateField } from '@walaware/design';
   import SectionHeader from '$lib/ui/SectionHeader.svelte';
+  import { albumName } from '$lib/format.js';
 
   /**
    * @type {{
@@ -20,6 +21,7 @@
    *   pending?: Array<{ id: string, display_name: string, avatar?: string }>,
    *   invites?: Array<{ id: string, email: string, role: string }>,
    *   emailEnabled?: boolean,
+   *   immichEnabled?: boolean,
    *   collapsed?: boolean,
    *   onToggle?: (() => void) | null
    * }}
@@ -27,7 +29,7 @@
   let {
     shareToken, ownerMode = false, me = null, trip, members = [], currentParticipantId = null,
     showSections = true, joinPolicy = 'instant', inviteVisibility = 'everyone', pending = [],
-    invites = [], emailEnabled = false, collapsed = false, onToggle = null
+    invites = [], emailEnabled = false, immichEnabled = false, collapsed = false, onToggle = null
   } = $props();
 
   const TYPES = [
@@ -87,6 +89,28 @@
       /* reconciled on next load */
     } finally {
       busy = '';
+    }
+  }
+
+  // Immich album (organizer): create / link / unlink. Separate from act() so we
+  // can surface the failure reason (Immich down, misconfigured, bad link).
+  let albumBusy = $state('');
+  let albumError = $state('');
+  let linkUrl = $state('');
+  const hasAlbum = $derived(!!(trip.immich_album_url || '').trim());
+  /** @param {string} op @param {Record<string, unknown>} payload @param {string} tag */
+  async function albumAct(op, payload, tag) {
+    if (albumBusy) return;
+    albumBusy = tag;
+    albumError = '';
+    try {
+      await tripAction(shareToken, { op, ...payload });
+      await invalidateAll();
+      linkUrl = '';
+    } catch (/** @type {any} */ e) {
+      albumError = e?.message || 'Something went wrong';
+    } finally {
+      albumBusy = '';
     }
   }
 
@@ -304,6 +328,46 @@
           </div>
         </div>
       {/if}
+    </div>
+
+    <!-- Organizer: shared photo album (Immich) — opt-in, never automatic -->
+    <div class="mt-4 border-t border-sand-200 pt-4">
+      <div class="font-display text-[15px] font-bold text-text-strong">📷 Photos</div>
+      {#if hasAlbum}
+        <p class="mt-1 font-body text-[12.5px] font-bold text-text-muted">
+          A shared Immich album is linked to this trip.{#if trip.immich_album_linked} Its name stays in sync as "{albumName(trip)}".{/if}
+        </p>
+        <input readonly value={trip.immich_album_url} class="{inputClass} mt-2 w-full bg-sand-100" />
+        <div class="mt-2 flex items-center gap-4">
+          <a href={trip.immich_album_url} target="_blank" rel="noopener noreferrer" class="font-body text-[13px] font-bold text-coral-600 hover:underline">Open album ↗</a>
+          <button type="button" disabled={albumBusy === 'unlink'} onclick={() => albumAct('album_unlink', {}, 'unlink')} class="font-body text-[12px] font-extrabold text-berry-600 hover:underline disabled:opacity-50">{albumBusy === 'unlink' ? 'Unlinking…' : 'Unlink'}</button>
+        </div>
+      {:else}
+        {#if immichEnabled}
+          <p class="mt-1 font-body text-[12.5px] font-bold text-text-muted">
+            Create an empty shared album in Immich (named "{albumName(trip)}") for everyone to add photos to.
+          </p>
+          <div class="mt-2">
+            <Button variant="primary" size="md" disabled={albumBusy === 'create'} onclick={() => albumAct('album_create', {}, 'create')}>
+              {albumBusy === 'create' ? 'Creating…' : 'Create shared album'}
+            </Button>
+          </div>
+        {:else}
+          <p class="mt-1 font-body text-[12.5px] font-bold text-text-muted">
+            Immich isn't set up for this instance — the admin can add it in global settings. You can still paste an existing album's share link below.
+          </p>
+        {/if}
+        <div class="mt-3">
+          <div class={labelClass}>Or link an existing album</div>
+          <div class="flex gap-2">
+            <input bind:value={linkUrl} placeholder="https://photos.example/share/…" class="{inputClass} min-w-0 flex-1" />
+            <Button variant="soft" size="md" disabled={albumBusy === 'link' || !linkUrl.trim()} onclick={() => albumAct('album_link', { url: linkUrl }, 'link')}>
+              {albumBusy === 'link' ? 'Linking…' : 'Link'}
+            </Button>
+          </div>
+        </div>
+      {/if}
+      {#if albumError}<p class="mt-1.5 font-body text-xs font-bold text-berry-600">{albumError}</p>{/if}
     </div>
 
     <!-- Organizer: edit trip details -->

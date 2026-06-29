@@ -13,6 +13,17 @@ export async function tripAction(shareToken, body) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body)
   });
-  if (!res.ok) throw new Error(`Trip action "${body.op}" failed (${res.status})`);
+  if (!res.ok) {
+    // Surface the server's error message (SvelteKit error() → { message }) so
+    // callers can show why, e.g. an Immich album create that couldn't connect.
+    let msg = `Trip action "${body.op}" failed (${res.status})`;
+    try {
+      const data = await res.json();
+      if (data?.message) msg = data.message;
+    } catch (_) {
+      /* keep the generic message */
+    }
+    throw new Error(msg);
+  }
   return res.json();
 }

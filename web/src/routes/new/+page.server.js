@@ -4,15 +4,18 @@ import { generateOwnerToken } from '$lib/server/tokens.js';
 import { generateSlug } from '$lib/server/slug.js';
 import { generateSlotsFromDates } from '$lib/server/mealSlots.js';
 import { joinTrip } from '$lib/server/membership.js';
+import { immichConfigured, createTripAlbum } from '$lib/server/immich.js';
 
 const MAX = { name: 200, location: 300, description: 5000 };
 
 /** @param {string} v */
 const clean = (v) => v.trim();
 
-export function load({ locals }) {
+export async function load({ locals }) {
   // Must be signed in to plan a trip.
   if (!locals.user) throw redirect(303, '/login?next=/new');
+  // Only offer the Immich album opt-in when the instance has Immich configured.
+  return { immichEnabled: await immichConfigured() };
 }
 
 export const actions = {
@@ -28,6 +31,7 @@ export const actions = {
     let status = clean(String(form.get('status') ?? 'confirmed'));
     if (!['planning', 'confirmed', 'completed'].includes(status)) status = 'confirmed';
     const trip_type = clean(String(form.get('trip_type') ?? ''));
+    const create_album = Boolean(form.get('create_album'));
 
     // Boundary validation — fail fast with field-level messages.
     /** @type {Record<string, string>} */
@@ -108,12 +112,28 @@ export const actions = {
       }
     }
 
+    // Opt-in: create a shared Immich album for the trip. Best-effort — a failure
+    // (Immich down, misconfigured) must never lose the trip; the user can create
+    // or link an album later from trip settings.
+    let albumCreated = false;
+    if (create_album && (await immichConfigured())) {
+      try {
+        const { albumId, albumUrl } = await createTripAlbum(/** @type {any} */ (trip));
+        await pb.collection('trips').update(trip.id, { immich_album_id: albumId, immich_album_url: albumUrl });
+        albumCreated = true;
+      } catch (_) {
+        // non-fatal; surfaced as albumCreated:false so the UI can hint
+      }
+    }
+
     return {
       created: {
         name: trip.name,
         share_token,
         owner_token,
-        mealSlots: slots.length
+        mealSlots: slots.length,
+        albumRequested: create_album,
+        albumCreated
       }
     };
   }

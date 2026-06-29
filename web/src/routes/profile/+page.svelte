@@ -126,6 +126,21 @@
     </Card>
   </div>
 
+  {#if data.isAdmin}
+    <!-- Instance admin: link to app-wide settings (Immich, etc.). -->
+    <div class="mt-4">
+      <Card>
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="font-display text-[15px] font-bold text-text-strong">⚙️ Instance settings</div>
+            <div class="font-body text-[12.5px] font-bold text-text-muted">Connect Immich for shared photo albums</div>
+          </div>
+          <Button href="/admin" variant="soft" size="sm">Open</Button>
+        </div>
+      </Card>
+    </div>
+  {/if}
+
   <!-- Hidden upload form driven by AvatarUpload's onPick. -->
   <form
     bind:this={uploadForm}

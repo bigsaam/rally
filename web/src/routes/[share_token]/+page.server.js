@@ -3,6 +3,7 @@ import { superuserPb } from '$lib/server/pocketbase.js';
 import { loadTripByShareToken } from '$lib/server/loadTrip.js';
 import { getMembership, joinTrip, listOrphans, listPending, listInvites, claimParticipant } from '$lib/server/membership.js';
 import { isMailConfigured } from '$lib/server/mailer.js';
+import { immichConfigured } from '$lib/server/immich.js';
 import { tripTeaser } from '$lib/server/teaser.js';
 import { tripOg } from '$lib/server/og.js';
 import { loadPlanning } from '$lib/server/planning.js';
@@ -114,6 +115,7 @@ export async function load({ params, locals, url }) {
       pending,
       invites,
       emailEnabled: isMailConfigured(),
+      immichEnabled: await immichConfigured(),
       og
     };
   }
@@ -130,6 +132,7 @@ export async function load({ params, locals, url }) {
     pending,
     invites,
     emailEnabled: isMailConfigured(),
+    immichEnabled: await immichConfigured(),
     og
   };
 }
