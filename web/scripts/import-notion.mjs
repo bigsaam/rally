@@ -20,8 +20,8 @@ import { generateSlug } from '../src/lib/server/slug.js';
 import { generateOwnerToken } from '../src/lib/server/tokens.js';
 
 const args = parseArgs(process.argv.slice(2));
-if (!args.dir) {
-  console.error('Usage: node scripts/import-notion.mjs --dir <export-dir> [--apply] [--out <dir>] [--limit N]');
+if (!args.dir && !args.bundles) {
+  console.error('Usage: node scripts/import-notion.mjs (--dir <export-dir> | --bundles <file.json>) [--apply] [--out <dir>] [--limit N]');
   process.exit(1);
 }
 
@@ -30,15 +30,24 @@ const DEMO_PASSWORD = 'demotripwala123';
 const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 const toPb = (ymd) => (ymd ? `${ymd} 00:00:00.000Z` : '');
 
-const bundles = await loadBundles(args.dir, args.limit);
-console.log(`Parsed ${bundles.length} trip(s) from ${args.dir}\n`);
+// Either parse a raw Notion export (--dir) or load pre-curated bundles (--bundles).
+// Curated bundles are hand-structured trips that skip the heuristic parser but
+// flow through the same idempotent upsert.
+const raw = args.bundles
+  ? JSON.parse(await readFile(args.bundles, 'utf8'))
+  : await loadBundles(args.dir, args.limit);
+const bundles = (args.limit ? raw.slice(0, args.limit) : raw).map((b) => ({
+  itinerary: [], warnings: [], immich_album_url: '', location: '', description: '',
+  trip_type: 'other', status: 'completed', ...b
+}));
+console.log(`Loaded ${bundles.length} trip(s) from ${args.bundles || args.dir}\n`);
 for (const b of bundles) {
   const flag = b.warnings.length ? `  ⚠ ${b.warnings.join('; ')}` : '';
   console.log(`• ${b.name}  [${b.start_date || '????'}→${b.end_date || '?'}]  ${b.itinerary.length} item(s)${flag}`);
 }
 
 if (!args.apply) {
-  const out = args.out || join(args.dir, '_previews');
+  const out = args.out || (args.dir ? join(args.dir, '_previews') : 'import-previews');
   await mkdir(out, { recursive: true });
   for (const b of bundles) {
     await writeFile(join(out, `${norm(b.name) || b.externalId}.json`), JSON.stringify(b, null, 2));
@@ -192,6 +201,7 @@ function parseArgs(argv) {
     const k = argv[i];
     if (k === '--apply') a.apply = true;
     else if (k === '--dir') a.dir = argv[++i];
+    else if (k === '--bundles') a.bundles = argv[++i];
     else if (k === '--out') a.out = argv[++i];
     else if (k === '--limit') a.limit = parseInt(argv[++i], 10);
   }
