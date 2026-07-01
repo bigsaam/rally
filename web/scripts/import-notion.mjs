@@ -141,6 +141,14 @@ async function ensureOwnerParticipant(pb, tripId, me) {
 
 async function resolveOwner(pb) {
   const users = await pb.collection('users').getFullList({ sort: '-created' });
+  // Pin the owner explicitly (IMPORT_OWNER_EMAIL) — essential on a SHARED instance
+  // where "most recent user" could be someone else. Falls back to newest non-demo.
+  const pinned = String(process.env.IMPORT_OWNER_EMAIL || '').trim().toLowerCase();
+  if (pinned) {
+    const owner = users.find((u) => String(u.email || '').toLowerCase() === pinned);
+    if (!owner) throw new Error(`IMPORT_OWNER_EMAIL=${pinned} not found among ${users.length} users`);
+    return owner;
+  }
   let me = users.find((u) => u.email !== DEMO_EMAIL) || users.find((u) => u.email === DEMO_EMAIL);
   if (!me) {
     me = await pb.collection('users').create({
