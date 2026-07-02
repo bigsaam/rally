@@ -1,4 +1,5 @@
 <script>
+  import { tick } from 'svelte';
   import { Composer, EmptyState } from '@walaware/design';
   import { enhance } from '$app/forms';
   import TripCard from '$lib/TripCard.svelte';
@@ -17,10 +18,14 @@
   let quickAdd = $state();
 
   /** @param {string} title */
-  function createIdea(title) {
+  async function createIdea(title) {
     const name = title.trim();
     if (!name) return;
     pendingName = name;
+    // Wait for the hidden input's value to flush to the DOM before submitting —
+    // requestSubmit() reads the DOM synchronously, so without this the form
+    // posts an empty name.
+    await tick();
     createForm?.requestSubmit();
   }
 
@@ -37,7 +42,7 @@
   <div class="border-b border-sand-300 pb-4">
     <h1 class="font-display text-[27px] font-bold tracking-tight text-text-strong">Someday 💭</h1>
     <p class="mt-0.5 font-body text-[15px] font-bold text-text-muted">
-      Trips you're daydreaming about. Private to you, or a co-organizer you invite.
+      Private trip ideas, no dates yet — just you and anyone you invite.
     </p>
   </div>
 
@@ -45,7 +50,7 @@
   <div bind:this={quickAdd} class="mt-5">
     <Composer
       me={null}
-      placeholder="Somewhere you're dreaming about…"
+      placeholder="Somewhere you'd love to go…"
       onSend={createIdea}
     />
     {#if form?.createError}
@@ -74,8 +79,8 @@
     <div class="mt-8">
       <EmptyState
         emoji="💭"
-        title="Nothing on the someday list yet"
-        body="Capture a trip you're daydreaming about — no dates needed."
+        title="Nothing here yet"
+        body="Jot down a trip you've been meaning to take."
         action="Add an idea"
         onAction={focusQuickAdd}
       />
